@@ -1,0 +1,6 @@
+bin/
+build/
+out/
+!*/src/**/build
+.gradle/
+.idea/
