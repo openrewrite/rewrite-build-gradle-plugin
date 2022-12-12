@@ -49,7 +49,7 @@ public class RewriteJavaPlugin implements Plugin<Project> {
         project.getPlugins().apply(JavaLibraryPlugin.class);
         project.getPlugins().apply(SourceJarPlugin.class);
         project.getPlugins().apply(JavadocJarPlugin.class);
-        project.getPlugins().apply(TestRetryPlugin.class);
+//        project.getPlugins().apply(TestRetryPlugin.class);
 
         project.getExtensions().configure(JavaPluginExtension.class, java -> java.toolchain(toolchain -> toolchain.getLanguageVersion()
                 .set(JavaLanguageVersion.of(17))));
@@ -110,9 +110,10 @@ public class RewriteJavaPlugin implements Plugin<Project> {
     }
 
     private static void configureTesting(Project project) {
-        project.getExtensions().configure(TestRetryTaskExtension.class, ext -> {
-            ext.getMaxFailures().set(4);
-        });
+//        project.getTasks().withType(Test.class).configureEach(task ->
+//                project.getExtensions().configure(TestRetryTaskExtension.class, ext ->
+//                        ext.getMaxFailures().set(4))
+//        );
 
         project.getTasks().named("test", Test.class, task -> {
             task.getExtensions().getExtraProperties().set(
