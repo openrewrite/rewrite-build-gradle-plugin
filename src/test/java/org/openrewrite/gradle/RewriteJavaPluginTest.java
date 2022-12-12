@@ -27,6 +27,7 @@ import java.nio.file.Files;
 
 import static java.util.Objects.requireNonNull;
 import static org.gradle.testkit.runner.TaskOutcome.NO_SOURCE;
+import static org.gradle.testkit.runner.TaskOutcome.SUCCESS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class RewriteJavaPluginTest {
@@ -68,18 +69,23 @@ public class RewriteJavaPluginTest {
                 plugins {
                     id 'org.openrewrite.build.language-library'
                 }
+                
+                dependencies {
+                    compileOnly(platform("org.jetbrains.kotlin:kotlin-bom"))
+                    compileOnly("org.jetbrains.kotlin:kotlin-reflect")
+                }
                 """;
         writeFile(buildFile, buildFileContent);
 
         BuildResult result = GradleRunner.create()
                 .withProjectDir(testProjectDir)
-                .withArguments("test")
+                .withArguments("compileKotlin", "dependencies")
                 .withPluginClasspath()
                 .build();
 
         assertEquals(NO_SOURCE, requireNonNull(result.task(":compileKotlin")).getOutcome());
+        assertEquals(SUCCESS, requireNonNull(result.task(":dependencies")).getOutcome());
     }
-
 
     private void writeFile(File destination, String content) throws IOException {
         Files.write(destination.toPath(), content.getBytes());
