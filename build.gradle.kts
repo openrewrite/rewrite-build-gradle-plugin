@@ -32,7 +32,7 @@ nexusPublishing {
 pluginBundle {
     website = "https://github.com/openrewrite/rewrite-build-gradle-plugin"
     vcsUrl = "https://github.com/openrewrite/rewrite-build-gradle-plugin.git"
-    tags = listOf("rewrite", "refactoring", "java", "gradle")
+    tags = listOf("rewrite", "refactoring", "java")
 }
 
 gradlePlugin {
