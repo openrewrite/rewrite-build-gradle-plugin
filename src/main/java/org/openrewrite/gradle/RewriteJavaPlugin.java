@@ -39,11 +39,11 @@ public class RewriteJavaPlugin implements Plugin<Project> {
     @Override
     public void apply(Project project) {
         RewriteJavaExtension ext = project.getExtensions().create("rewriteJava", RewriteJavaExtension.class);
-        ext.getKotlinTests().convention(false);
         ext.getJacksonVersion().convention("2.13.4.20221013");
 
         project.getPlugins().apply(JavaLibraryPlugin.class);
         project.getPlugins().apply(RewriteDependencyRepositoriesPlugin.class);
+        project.getPlugins().apply(KotlinPlatformJvmPlugin.class);
 //        project.getPlugins().apply(TestRetryPlugin.class);
 
         project.getExtensions().configure(JavaPluginExtension.class, java -> java.toolchain(toolchain -> toolchain.getLanguageVersion()
@@ -61,7 +61,7 @@ public class RewriteJavaPlugin implements Plugin<Project> {
         addDependencies(project, ext);
         configureJavaCompile(project);
         configureTesting(project);
-        maybeConfigureKotlin(project, ext);
+        maybeConfigureKotlin(project);
 
         project.getTasks().withType(Javadoc.class).configureEach(task -> {
             task.setVerbose(false);
@@ -130,13 +130,7 @@ public class RewriteJavaPlugin implements Plugin<Project> {
         });
     }
 
-    private static void maybeConfigureKotlin(Project project, RewriteJavaExtension ext) {
-        if (!ext.getKotlinTests().get()) {
-            return;
-        }
-
-        project.getPlugins().apply(KotlinPlatformJvmPlugin.class);
-
+    private static void maybeConfigureKotlin(Project project) {
         project.getTasks().withType(JavaCompile.class).getByName("compileJava", task -> {
             task.setSourceCompatibility("1.8");
             task.setTargetCompatibility("1.8");

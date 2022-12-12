@@ -19,15 +19,5 @@ import org.gradle.api.provider.Property;
 
 public interface RewriteJavaExtension {
 
-    /**
-     * @return <code>true</code> if the project requires Kotlin for its unit tests.
-     * The core OpenRewrite projects should be moving away from Kotlin now that
-     * template strings are available as a GA feature in Java. While the team doesn't
-     * find there to be anything inherently wrong with Kotlin, using Java in the core
-     * projects makes configuration simpler and hopefully reaches a broader audience of
-     * JVM developers.
-     */
-    Property<Boolean> getKotlinTests();
-
     Property<String> getJacksonVersion();
 }

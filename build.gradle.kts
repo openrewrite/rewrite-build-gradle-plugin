@@ -114,7 +114,7 @@ dependencies {
     implementation("org.gradle:test-retry-gradle-plugin:latest.release")
 
     // TODO remove this once Rewrite core modules no longer use Kotlin for tests
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:latest.release")
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.7+")
 
     testImplementation(platform("org.junit:junit-bom:latest.release"))
     testImplementation("org.junit.jupiter:junit-jupiter-api")
