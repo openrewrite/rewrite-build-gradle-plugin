@@ -19,6 +19,8 @@ import nebula.plugin.publishing.maven.MavenPublishPlugin;
 import nebula.plugin.publishing.maven.MavenResolvedDependenciesPlugin;
 import nebula.plugin.publishing.maven.MavenShadowPublishPlugin;
 import nebula.plugin.publishing.maven.license.MavenApacheLicensePlugin;
+import nebula.plugin.publishing.publications.JavadocJarPlugin;
+import nebula.plugin.publishing.publications.SourceJarPlugin;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.plugins.JavaBasePlugin;
@@ -36,6 +38,8 @@ public class RewritePublishPlugin implements Plugin<Project> {
     @Override
     public void apply(Project project) {
         project.getPlugins().apply(JavaBasePlugin.class);
+        project.getPlugins().apply(SourceJarPlugin.class);
+        project.getPlugins().apply(JavadocJarPlugin.class);
         project.getPlugins().apply(SigningPlugin.class);
         project.getPlugins().apply(MavenPublishPlugin.class);
         project.getPlugins().apply(MavenResolvedDependenciesPlugin.class);

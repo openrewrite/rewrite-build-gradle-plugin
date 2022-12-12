@@ -43,6 +43,18 @@ gradlePlugin {
             description = "Core language module"
             implementationClass = "org.openrewrite.gradle.RewriteLanguageLibraryPlugin"
         }
+        create("build-java-base") {
+            id = "org.openrewrite.build.java-base"
+            displayName = "Rewrite Java"
+            description = "A module that is built with Java but does not publish artifacts"
+            implementationClass = "org.openrewrite.gradle.RewriteJavaPlugin"
+        }
+        create("build-publish") {
+            id = "org.openrewrite.build.publish"
+            displayName = "Rewrite Maven publishing"
+            description = "Configures publishing to Maven repositories"
+            implementationClass = "org.openrewrite.gradle.RewritePublishPlugin"
+        }
         create("build-shadow") {
             id = "org.openrewrite.build.shadow"
             displayName = "Rewrite shadow configuration"

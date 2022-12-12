@@ -21,11 +21,10 @@ import org.gradle.api.Project;
 public class RewriteLanguageLibraryPlugin implements Plugin<Project> {
 
     public void apply(Project project) {
-        project.getPlugins().apply(RewriteDependencyRepositoriesPlugin.class);
+        project.getPlugins().apply(RewriteJavaPlugin.class);
         project.getPlugins().apply(RewriteLicensePlugin.class);
         project.getPlugins().apply(RewriteMetadataPlugin.class);
         project.getPlugins().apply(RewriteDependencyCheckPlugin.class);
-        project.getPlugins().apply(RewriteJavaPlugin.class);
         project.getPlugins().apply(RewriteBuildInputLoggingPlugin.class);
         project.getPlugins().apply(RewritePublishPlugin.class);
     }

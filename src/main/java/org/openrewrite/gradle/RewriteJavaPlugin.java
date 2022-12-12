@@ -15,8 +15,6 @@
  */
 package org.openrewrite.gradle;
 
-import nebula.plugin.publishing.publications.JavadocJarPlugin;
-import nebula.plugin.publishing.publications.SourceJarPlugin;
 import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -30,8 +28,6 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat;
 import org.gradle.api.tasks.testing.logging.TestLoggingContainer;
 import org.gradle.external.javadoc.CoreJavadocOptions;
 import org.gradle.jvm.toolchain.JavaLanguageVersion;
-import org.gradle.testretry.TestRetryPlugin;
-import org.gradle.testretry.TestRetryTaskExtension;
 import org.jetbrains.kotlin.gradle.dsl.KotlinCompile;
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions;
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformJvmPlugin;
@@ -47,8 +43,7 @@ public class RewriteJavaPlugin implements Plugin<Project> {
         ext.getJacksonVersion().convention("2.13.4.20221013");
 
         project.getPlugins().apply(JavaLibraryPlugin.class);
-        project.getPlugins().apply(SourceJarPlugin.class);
-        project.getPlugins().apply(JavadocJarPlugin.class);
+        project.getPlugins().apply(RewriteDependencyRepositoriesPlugin.class);
 //        project.getPlugins().apply(TestRetryPlugin.class);
 
         project.getExtensions().configure(JavaPluginExtension.class, java -> java.toolchain(toolchain -> toolchain.getLanguageVersion()
