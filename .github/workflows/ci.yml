@@ -43,7 +43,7 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: ${{ env.GRADLE_SWITCHES }} snapshot :plugin:publishPluginMavenPublicationToSonatypeRepository -x test -x publishPlugins
+          arguments: ${{ env.GRADLE_SWITCHES }} snapshot :publishPluginMavenPublicationToSonatypeRepository -x test -x publishPlugins
         env:
           ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.OSSRH_USERNAME }}
           ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.OSSRH_TOKEN }}
