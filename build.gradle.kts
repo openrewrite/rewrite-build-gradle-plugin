@@ -43,6 +43,12 @@ gradlePlugin {
             description = "Core language module"
             implementationClass = "org.openrewrite.gradle.RewriteLanguageLibraryPlugin"
         }
+        create("build-recipe-library") {
+            id = "org.openrewrite.build.recipe-library"
+            displayName = "Rewrite recipe library"
+            description = "A recipe library"
+            implementationClass = "org.openrewrite.gradle.RewriteRecipeLibraryPlugin"
+        }
         create("build-java-base") {
             id = "org.openrewrite.build.java-base"
             displayName = "Rewrite Java"

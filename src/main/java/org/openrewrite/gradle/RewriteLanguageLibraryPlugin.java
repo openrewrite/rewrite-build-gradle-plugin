@@ -22,6 +22,7 @@ public class RewriteLanguageLibraryPlugin implements Plugin<Project> {
 
     public void apply(Project project) {
         project.getPlugins().apply(RewriteJavaPlugin.class);
+        project.getPlugins().apply(RewriteKotlinPlugin.class);
         project.getPlugins().apply(RewriteLicensePlugin.class);
         project.getPlugins().apply(RewriteMetadataPlugin.class);
         project.getPlugins().apply(RewriteDependencyCheckPlugin.class);

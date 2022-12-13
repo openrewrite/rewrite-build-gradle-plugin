@@ -15,7 +15,6 @@
  */
 package org.openrewrite.gradle;
 
-import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
@@ -28,11 +27,9 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat;
 import org.gradle.api.tasks.testing.logging.TestLoggingContainer;
 import org.gradle.external.javadoc.CoreJavadocOptions;
 import org.gradle.jvm.toolchain.JavaLanguageVersion;
-import org.jetbrains.kotlin.gradle.dsl.KotlinCompile;
-import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions;
-import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformJvmPlugin;
 
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 
 public class RewriteJavaPlugin implements Plugin<Project> {
 
@@ -43,8 +40,12 @@ public class RewriteJavaPlugin implements Plugin<Project> {
 
         project.getPlugins().apply(JavaLibraryPlugin.class);
         project.getPlugins().apply(RewriteDependencyRepositoriesPlugin.class);
-        project.getPlugins().apply(KotlinPlatformJvmPlugin.class);
 //        project.getPlugins().apply(TestRetryPlugin.class);
+
+        project.getConfigurations().all(config -> {
+            config.getResolutionStrategy().cacheChangingModulesFor(0, TimeUnit.SECONDS);
+            config.getResolutionStrategy().cacheDynamicVersionsFor(0, TimeUnit.SECONDS);
+        });
 
         project.getExtensions().configure(JavaPluginExtension.class, java -> java.toolchain(toolchain -> toolchain.getLanguageVersion()
                 .set(JavaLanguageVersion.of(17))));
@@ -61,7 +62,6 @@ public class RewriteJavaPlugin implements Plugin<Project> {
         addDependencies(project, ext);
         configureJavaCompile(project);
         configureTesting(project);
-        maybeConfigureKotlin(project);
 
         project.getTasks().withType(Javadoc.class).configureEach(task -> {
             task.setVerbose(false);
@@ -128,24 +128,5 @@ public class RewriteJavaPlugin implements Plugin<Project> {
             log.setShowCauses(true);
             log.setShowStackTraces(true);
         });
-    }
-
-    private static void maybeConfigureKotlin(Project project) {
-        project.getTasks().withType(JavaCompile.class).getByName("compileJava", task -> {
-            task.setSourceCompatibility("1.8");
-            task.setTargetCompatibility("1.8");
-        });
-
-        project.getTasks().withType(KotlinCompile.class).configureEach(task -> {
-            //noinspection unchecked
-            task.kotlinOptions(((Action<KotlinJvmOptions>) opt -> opt.setJvmTarget("1.8")));
-        });
-
-        DependencyHandler deps = project.getDependencies();
-        deps.add("testImplementation", deps.platform("org.jetbrains.kotlin:kotlin-bom"));
-        deps.add("testImplementation", "org.jetbrains.kotlin:kotlin-reflect");
-        deps.add("testImplementation", "org.jetbrains.kotlin:kotlin-stdlib");
-        deps.add("testImplementation", "org.jetbrains.kotlin:kotlin-stdlib-jdk8");
-        deps.add("testImplementation", "org.jetbrains.kotlin:kotlin-stdlib-common");
     }
 }
