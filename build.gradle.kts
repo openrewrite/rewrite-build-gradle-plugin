@@ -68,6 +68,12 @@ gradlePlugin {
                     "the shaded jar without a classifier"
             implementationClass = "org.openrewrite.gradle.RewriteShadowPlugin"
         }
+        create("build-metadata") {
+            id = "org.openrewrite.build.metadata"
+            displayName = "Rewrite metadata configuration"
+            description = "Contacts and SCM data"
+            implementationClass = "org.openrewrite.gradle.RewriteMetadataPlugin"
+        }
         create("build-root") {
             id = "org.openrewrite.build.root"
             displayName = "Rewrite root"

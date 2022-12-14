@@ -15,6 +15,7 @@
  */
 package org.openrewrite.gradle;
 
+import nebula.plugin.publishing.verification.PublishVerificationPlugin;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 
@@ -35,6 +36,7 @@ public class RewriteRecipeLibraryPlugin implements Plugin<Project> {
         project.getPlugins().apply(RewriteDependencyCheckPlugin.class);
         project.getPlugins().apply(RewriteBuildInputLoggingPlugin.class);
         project.getPlugins().apply(RewritePublishPlugin.class);
+        project.getPlugins().apply(PublishVerificationPlugin.class);
 
         project.getDependencies().add("testImplementation",
                 "org.openrewrite:rewrite-test:" + ext.getRewriteVersion().get());
