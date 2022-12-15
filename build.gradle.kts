@@ -74,6 +74,12 @@ gradlePlugin {
             description = "Contacts and SCM data"
             implementationClass = "org.openrewrite.gradle.RewriteMetadataPlugin"
         }
+        create("build-java8-text-blocks") {
+            id = "org.openrewrite.build.java8-text-blocks"
+            displayName = "Java 8 text blocks"
+            description = "Text blocks compiled to Java 8 bytecode"
+            implementationClass = "org.openrewrite.gradle.RewriteJava8TextBlocksPlugin"
+        }
         create("build-root") {
             id = "org.openrewrite.build.root"
             displayName = "Rewrite root"

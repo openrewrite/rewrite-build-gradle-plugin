@@ -93,9 +93,8 @@ public class RewriteJavaPlugin implements Plugin<Project> {
     }
 
     private static void configureJavaCompile(Project project) {
-        project.getTasks().withType(JavaCompile.class).getByName("compileJava", task -> {
-            task.getOptions().getRelease().set(8);
-        });
+        project.getTasks().withType(JavaCompile.class).getByName("compileJava", task ->
+                task.getOptions().getRelease().set(8));
 
         project.getTasks().withType(JavaCompile.class).configureEach(task -> {
             task.getOptions().setEncoding("UTF-8");
