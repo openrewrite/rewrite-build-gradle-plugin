@@ -15,8 +15,10 @@
  */
 package org.openrewrite.gradle;
 
+import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.Task;
 import org.gradle.api.tasks.compile.JavaCompile;
 
 import java.io.File;
@@ -31,17 +33,42 @@ public class RewriteJava8TextBlocksPlugin implements Plugin<Project> {
         project.getTasks().withType(JavaCompile.class).getByName("compileJava", task ->
                 task.getOptions().getRelease().set((Integer) null));
 
-        project.getTasks().withType(JavaCompile.class).getByName("compileJava", task -> task.doLast(task2 -> {
-            for (File out : task2.getOutputs().getFiles()) {
-                for (File clazz : project.fileTree(out, tree -> tree.include("**/*.class")).getFiles()) {
-                    try(RandomAccessFile file = new RandomAccessFile(clazz, "rw")) {
-                        file.seek(6);
-                        file.writeShort(52);
-                    } catch (IOException e) {
-                        throw new UncheckedIOException(e);
-                    }
+        project.getTasks().withType(JavaCompile.class).getByName("compileJava",
+                new MarkClassfileWithLanguageLevel8(project));
+    }
+}
+
+class MarkClassfileWithLanguageLevel8 implements Action<Task> {
+    private final Project project;
+
+    MarkClassfileWithLanguageLevel8(Project project) {
+        this.project = project;
+    }
+
+    @Override
+    public void execute(Task task) {
+        task.doLast(new MarkClassfileWithLanguageLevel8DoLast(project));
+    }
+}
+
+class MarkClassfileWithLanguageLevel8DoLast implements Action<Task> {
+    private final Project project;
+
+    MarkClassfileWithLanguageLevel8DoLast(Project project) {
+        this.project = project;
+    }
+
+    @Override
+    public void execute(Task task) {
+        for (File out : task.getOutputs().getFiles()) {
+            for (File clazz : project.fileTree(out, tree -> tree.include("**/*.class")).getFiles()) {
+                try (RandomAccessFile file = new RandomAccessFile(clazz, "rw")) {
+                    file.seek(6);
+                    file.writeShort(52);
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
                 }
             }
-        }));
+        }
     }
 }
