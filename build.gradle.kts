@@ -2,11 +2,11 @@ import nl.javadude.gradle.plugins.license.LicenseExtension
 import java.util.*
 
 plugins {
-    id("nebula.release") version "16.0.0"
-    id("io.github.gradle-nexus.publish-plugin") version "1.0.0"
-    id("org.owasp.dependencycheck") version "7.1.0.1"
-    id("nebula.maven-resolved-dependencies") version "18.2.0"
-    id("com.gradle.plugin-publish") version "1.0.0"
+    id("nebula.release") version "17.1.0"
+    id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
+    id("org.owasp.dependencycheck") version "8.0.1"
+    id("nebula.maven-resolved-dependencies") version "18.4.0"
+    id("com.gradle.plugin-publish") version "1.1.0"
     id("com.github.hierynomus.license") version "0.16.1"
 }
 
