@@ -25,7 +25,7 @@ public class RewriteRecipeLibraryPlugin implements Plugin<Project> {
     public void apply(Project project) {
         RewriteRecipeLibraryExtension ext = project.getExtensions().create("rewriteRecipe", RewriteRecipeLibraryExtension.class);
         ext.getRewriteVersion().convention(project.hasProperty("releasing") ?
-            "latest.release" : "latest.integration");
+                "latest.release" : "latest.integration");
 
         // recipe jars are generally single-module projects for which the root project is the only module
         project.getPlugins().apply(RewriteRootProjectPlugin.class);
@@ -40,5 +40,8 @@ public class RewriteRecipeLibraryPlugin implements Plugin<Project> {
 
         project.getDependencies().add("testImplementation",
                 "org.openrewrite:rewrite-test:" + ext.getRewriteVersion().get());
+
+        project.getExtensions().create("recipeDependencies", RecipeDependenciesExtension.class);
+        project.getTasks().register("downloadRecipeDependencies", RecipeDependenciesDownloadTask.class);
     }
 }

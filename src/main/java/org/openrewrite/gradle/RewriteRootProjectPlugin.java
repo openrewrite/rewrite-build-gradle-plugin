@@ -32,8 +32,10 @@ public class RewriteRootProjectPlugin implements Plugin<Project> {
 
         project.getExtensions().configure(NexusPublishExtension.class, ext -> ext.getRepositories().sonatype());
 
-        project.getExtensions().configure(ReleasePluginExtension.class, ext ->
-                ext.setDefaultVersionStrategy(NetflixOssStrategies.SNAPSHOT(project)));
+        if (project.getExtensions().findByType(ReleasePluginExtension.class) != null) {
+            project.getExtensions().configure(ReleasePluginExtension.class, ext ->
+                    ext.setDefaultVersionStrategy(NetflixOssStrategies.SNAPSHOT(project)));
+        }
 
         project.defaultTasks("build");
     }
