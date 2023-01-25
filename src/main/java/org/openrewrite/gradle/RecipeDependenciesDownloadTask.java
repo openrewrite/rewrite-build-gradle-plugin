@@ -21,13 +21,9 @@ import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.tasks.TaskAction;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.jar.JarOutputStream;
-import java.util.zip.ZipFile;
 
 public class RecipeDependenciesDownloadTask extends DefaultTask {
 
