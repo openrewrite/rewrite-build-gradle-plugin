@@ -18,7 +18,7 @@ package org.openrewrite.gradle;
 import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.ExternalModuleDependency;
-import org.gradle.api.internal.artifacts.dsl.dependencies.DependencyFactory;
+import org.gradle.api.artifacts.dsl.DependencyHandler;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -27,19 +27,19 @@ import java.util.Set;
 
 public class RecipeDependenciesExtension {
     private final ConfigurationContainer configurationContainer;
-    private final DependencyFactory dependencyFactory;
+    private final DependencyHandler dependencyHandler;
 
     private final Set<File> resolved = new HashSet<>();
 
     @Inject
     public RecipeDependenciesExtension(ConfigurationContainer configurationContainer,
-                                       DependencyFactory dependencyFactory) {
+                                       DependencyHandler dependencyHandler) {
         this.configurationContainer = configurationContainer;
-        this.dependencyFactory = dependencyFactory;
+        this.dependencyHandler = dependencyHandler;
     }
 
     public void parserClasspath(String dependencyNotation) {
-        Dependency dependency = dependencyFactory.createDependency(dependencyNotation);
+        Dependency dependency = dependencyHandler.create(dependencyNotation);
         if (!(dependency instanceof ExternalModuleDependency)) {
             throw new IllegalArgumentException("Only external module dependencies are supported as recipe dependencies.");
         }
