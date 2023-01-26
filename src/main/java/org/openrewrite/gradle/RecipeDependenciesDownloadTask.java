@@ -36,7 +36,7 @@ public class RecipeDependenciesDownloadTask extends DefaultTask {
 
         for (File sourceDirectory : resources.getSourceDirectories()) {
             File parserClasspath = new File(sourceDirectory, "META-INF/rewrite/classpath");
-            if (!parserClasspath.mkdirs()) {
+            if (!parserClasspath.exists() && !parserClasspath.mkdirs()) {
                 throw new IllegalStateException("Unable to create directory " + parserClasspath);
             }
             for (File dependency : getProject().getExtensions().getByType(RecipeDependenciesExtension.class).getResolved()) {
