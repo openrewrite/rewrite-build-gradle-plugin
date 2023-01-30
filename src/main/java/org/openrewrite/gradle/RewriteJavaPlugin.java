@@ -78,7 +78,7 @@ public class RewriteJavaPlugin implements Plugin<Project> {
         deps.add("compileOnly", "org.projectlombok:lombok:latest.release");
         deps.add("testCompileOnly", "org.projectlombok:lombok:latest.release");
         deps.add("annotationProcessor", "org.projectlombok:lombok:latest.release");
-
+        deps.add("testAnnotationProcessor", "org.projectlombok:lombok:latest.release");
         deps.add("api", deps.platform("com.fasterxml.jackson:jackson-bom:" + ext.getJacksonVersion().get()));
 
         deps.add("implementation", "org.jetbrains:annotations:latest.release");
