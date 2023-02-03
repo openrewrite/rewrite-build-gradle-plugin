@@ -18,6 +18,7 @@ package org.openrewrite.gradle;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
+import org.gradle.api.file.DuplicatesStrategy;
 import org.gradle.api.plugins.JavaLibraryPlugin;
 import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.tasks.compile.JavaCompile;
@@ -26,6 +27,7 @@ import org.gradle.api.tasks.testing.Test;
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat;
 import org.gradle.api.tasks.testing.logging.TestLoggingContainer;
 import org.gradle.external.javadoc.CoreJavadocOptions;
+import org.gradle.jvm.tasks.Jar;
 import org.gradle.jvm.toolchain.JavaLanguageVersion;
 
 import java.util.HashMap;
@@ -70,6 +72,12 @@ public class RewriteJavaPlugin implements Plugin<Project> {
                         .addStringOption("Xdoclint:none", "-quiet");
                 opt.encoding("UTF-8");
             });
+        });
+
+        // Work around build error relating to an IntelliJ file named classpath.index that is locally being included
+        // multiple times within our jars. Unclear why this is happening, but it would not affect CI so working around for now
+        project.getTasks().withType(Jar.class).configureEach(task -> {
+            task.setDuplicatesStrategy(DuplicatesStrategy.EXCLUDE);
         });
     }
 
