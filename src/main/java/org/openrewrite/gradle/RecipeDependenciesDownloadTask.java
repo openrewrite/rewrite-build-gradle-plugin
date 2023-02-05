@@ -78,9 +78,14 @@ public class RecipeDependenciesDownloadTask extends DefaultTask {
     }
 
     static boolean shouldReplace(Dependency dependency, String otherName) {
-        return versionMatcher.accept(
-                ModuleRevisionId.newInstance("group", "artifact", requireNonNull(dependency.getVersion())),
-                ModuleRevisionId.newInstance("group", "name", otherName.substring(dependency.getName().length() + 1))
-        );
+        try {
+            return otherName.startsWith(dependency.getName()) && versionMatcher.accept(
+                    ModuleRevisionId.newInstance("group", "artifact", requireNonNull(dependency.getVersion())),
+                    ModuleRevisionId.newInstance("group", "name",
+                            otherName.substring(dependency.getName().length() + 1))
+            );
+        } catch (Throwable t) {
+            throw new IllegalStateException("Failed to check for replacement of " + dependency + " with " + otherName, t);
+        }
     }
 }

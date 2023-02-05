@@ -44,17 +44,54 @@ public class RewriteRecipeLibraryPluginTest {
     }
 
     @Test
-    public void parserClasspathDependencies() throws IOException {
+    void replaceWithNewerDependency() throws IOException {
         writeFile(settingsFile, "rootProject.name = 'my-project'");
+        File cp = new File(projectDir, "src/main/resources/META-INF/rewrite/classpath");
+        assertThat(cp.mkdirs()).isTrue();
+        writeFile(new File(cp, "spring-boot-actuator-2.2.11.RELEASE.jar"), "test");
+        writeFile(new File(cp, "spring-web-6.0.4.jar"), "test");
 
         //language=groovy
         String buildFileContent = """
                 plugins {
                     id 'org.openrewrite.build.recipe-library'
                 }
-                
+                                
                 version = '1.0'
-                
+                                
+                recipeDependencies {
+                    parserClasspath 'org.springframework.boot:spring-boot-actuator:2.+'
+                }
+                """;
+
+        writeFile(buildFile, buildFileContent);
+
+        BuildResult result = GradleRunner.create()
+                .withProjectDir(projectDir)
+                .withArguments("downloadRecipeDependencies", "--stacktrace")
+                .withPluginClasspath()
+                .withDebug(true)
+                .build();
+
+        assertEquals(SUCCESS, requireNonNull(result.task(":downloadRecipeDependencies")).getOutcome());
+
+        assertThat(cp.list()).containsExactlyInAnyOrder("spring-boot-actuator-2.7.8.jar", "spring-web-6.0.4.jar");
+    }
+
+    @Test
+    void parserClasspathDependencies() throws IOException {
+        writeFile(settingsFile, "rootProject.name = 'my-project'");
+        File cp = new File(projectDir, "src/main/resources/META-INF/rewrite/classpath");
+        assertThat(cp.mkdirs()).isTrue();
+
+        //language=groovy
+        String buildFileContent = """
+                plugins {
+                    id 'org.openrewrite.build.recipe-library'
+                }
+                                
+                version = '1.0'
+                                
                 recipeDependencies {
                     parserClasspath 'com.google.guava:guava:30.1-jre'
                     parserClasspath 'com.google.guava:guava:31.1-jre'
@@ -72,8 +109,7 @@ public class RewriteRecipeLibraryPluginTest {
 
         assertEquals(SUCCESS, requireNonNull(result.task(":downloadRecipeDependencies")).getOutcome());
 
-        assertThat(projectDir.toPath().resolve("src/main/resources/META-INF/rewrite/classpath").toFile().list())
-                .containsExactlyInAnyOrder("guava-30.1-jre.jar", "guava-31.1-jre.jar");
+        assertThat(cp.list()).containsExactlyInAnyOrder("guava-30.1-jre.jar", "guava-31.1-jre.jar");
     }
 
     private void writeFile(File destination, String content) throws IOException {
