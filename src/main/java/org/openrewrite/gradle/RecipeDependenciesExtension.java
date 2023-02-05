@@ -22,14 +22,16 @@ import org.gradle.api.artifacts.dsl.DependencyHandler;
 
 import javax.inject.Inject;
 import java.io.File;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class RecipeDependenciesExtension {
     private final ConfigurationContainer configurationContainer;
     private final DependencyHandler dependencyHandler;
 
-    private final Set<File> resolved = new HashSet<>();
+    private final Set<String> dependencies = new HashSet<>();
 
     @Inject
     public RecipeDependenciesExtension(ConfigurationContainer configurationContainer,
@@ -38,16 +40,25 @@ public class RecipeDependenciesExtension {
         this.dependencyHandler = dependencyHandler;
     }
 
+    @SuppressWarnings("unused")
     public void parserClasspath(String dependencyNotation) {
-        Dependency dependency = dependencyHandler.create(dependencyNotation);
-        if (!(dependency instanceof ExternalModuleDependency)) {
-            throw new IllegalArgumentException("Only external module dependencies are supported as recipe dependencies.");
-        }
-        ((ExternalModuleDependency) dependency).setTransitive(false);
-        resolved.addAll(configurationContainer.detachedConfiguration(dependency).resolve());
+        dependencies.add(dependencyNotation);
     }
 
-    Set<File> getResolved() {
+    Map<Dependency, File> getResolved() {
+        Map<Dependency, File> resolved = new HashMap<>();
+
+        for (String dependencyNotation : dependencies) {
+            Dependency dependency = dependencyHandler.create(dependencyNotation);
+            if (!(dependency instanceof ExternalModuleDependency)) {
+                throw new IllegalArgumentException("Only external module dependencies are supported as recipe dependencies.");
+            }
+            ((ExternalModuleDependency) dependency).setTransitive(false);
+            for (File file : configurationContainer.detachedConfiguration(dependency).resolve()) {
+                resolved.put(dependency, file);
+            }
+        }
+
         return resolved;
     }
 }
