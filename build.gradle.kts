@@ -119,6 +119,7 @@ tasks.named<JavaCompile>("compileJava") {
 }
 
 dependencies {
+    implementation("org.apache.ivy:ivy:2.5.1")
     implementation("gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:latest.release")
     implementation("com.github.jk1:gradle-license-report:latest.release")
     implementation("org.owasp:dependency-check-gradle:latest.release")

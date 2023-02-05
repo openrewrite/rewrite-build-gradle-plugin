@@ -15,14 +15,14 @@
  */
 package org.openrewrite.gradle;
 
+import org.apache.ivy.core.module.id.ModuleRevisionId;
+import org.apache.ivy.plugins.latest.LatestLexicographicStrategy;
+import org.apache.ivy.plugins.version.*;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.file.SourceDirectorySet;
 import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.tasks.TaskAction;
-import org.gradle.internal.impldep.org.apache.ivy.core.module.id.ModuleRevisionId;
-import org.gradle.internal.impldep.org.apache.ivy.plugins.latest.LatestLexicographicStrategy;
-import org.gradle.internal.impldep.org.apache.ivy.plugins.version.*;
 
 import java.io.File;
 import java.io.IOException;
