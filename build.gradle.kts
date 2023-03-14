@@ -87,6 +87,12 @@ gradlePlugin {
             description = "Configures the root project"
             implementationClass = "org.openrewrite.gradle.RewriteRootProjectPlugin"
         }
+        create("build-recipe-author-attribution") {
+            id = "org.openrewrite.build.recipe-author-attribution"
+            displayName = "Rewrite recipe author attribution"
+            description = "Produces a `/META-INF/rewrite/recipe-authors.yml` file containing recipe author attribution"
+            implementationClass = "org.openrewrite.gradle.RewriteRecipeAuthorAttributionPlugin"
+        }
     }
 }
 
@@ -132,6 +138,11 @@ dependencies {
     implementation("io.github.gradle-nexus:publish-plugin:latest.release")
     implementation("gradle.plugin.com.github.johnrengelman:shadow:latest.release")
     implementation("org.gradle:test-retry-gradle-plugin:latest.release")
+    implementation("com.fasterxml.jackson.core:jackson-core:latest.release")
+    implementation("com.fasterxml.jackson.core:jackson-databind:latest.release")
+    implementation("org.yaml:snakeyaml:latest.release")
+    implementation("io.github.classgraph:classgraph:latest.release")
+    implementation("org.eclipse.jgit:org.eclipse.jgit:latest.release")
 
     testImplementation(platform("org.junit:junit-bom:latest.release"))
     testImplementation("org.junit.jupiter:junit-jupiter-api")
