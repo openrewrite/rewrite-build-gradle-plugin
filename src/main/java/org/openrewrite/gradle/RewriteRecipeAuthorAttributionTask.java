@@ -1,0 +1,141 @@
+package org.openrewrite.gradle;
+
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import io.github.classgraph.*;
+import lombok.Value;
+import lombok.With;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.blame.BlameResult;
+import org.eclipse.jgit.lib.PersonIdent;
+import org.gradle.api.DefaultTask;
+import org.gradle.api.file.DirectoryProperty;
+import org.gradle.api.file.FileCollection;
+import org.gradle.api.tasks.*;
+import org.gradle.work.ChangeType;
+import org.gradle.work.FileChange;
+import org.gradle.work.InputChanges;
+
+import java.io.File;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.stream.Collectors;
+
+@CacheableTask
+public class RewriteRecipeAuthorAttributionTask extends DefaultTask {
+
+    private final DirectoryProperty sources = getProject().getObjects().directoryProperty();
+
+    public void setSources(File sourceDirectory) {
+        sources.set(sourceDirectory);
+    }
+
+    @SkipWhenEmpty
+    @InputDirectory
+    @PathSensitive(PathSensitivity.NAME_ONLY)
+    @IgnoreEmptyDirectories
+    public DirectoryProperty getSources() {
+        return sources;
+    }
+
+    private Set<URI> classpath;
+
+    public void setClasspath(FileCollection classpath) {
+        this.classpath = classpath.getFiles().stream().map(File::toURI).collect(Collectors.toSet());
+    }
+
+    @Internal
+    public Set<URI> getClasspath() {
+        return classpath;
+    }
+
+    @OutputDirectory
+    public Path getOutputDirectory() {
+        return getProject().getBuildDir().toPath().resolve("rewrite/attribution")
+                .resolve(sources.get().getAsFile().getName());
+    }
+
+    @Value
+    static class Contributor {
+        String name;
+        String email;
+
+        @With
+
+        int lineCount;
+    }
+
+    @Value
+    static class Attribution {
+        String type;
+        String recipeName;
+        List<Contributor> contributors;
+    }
+
+    @TaskAction
+    void execute(InputChanges inputChanges) {
+        try (Git g = Git.open(getProject().getRootDir())) {
+            Map<String, String> recipeFileNameToFqn = new HashMap<>();
+            try (ScanResult scanResult = new ClassGraph().enableClassInfo()
+                    .overrideClasspath(classpath)
+                    .scan()) {
+                ClassInfoList recipeClasses = scanResult.getSubclasses("org.openrewrite.Recipe");
+                for(ClassInfo recipeClass : recipeClasses) {
+                    recipeFileNameToFqn.put(recipeClass.getSourceFile(), recipeClass.getPackageName() + "." + recipeClass.getName());
+                }
+
+                // TODO: Yaml recipes
+//            scanResult.getResourcesWithPath("META-INF/rewrite").stream()
+//                    .filter(resource -> resource.getPath().endsWith(".yaml") || resource.getPath().endsWith(".yml"))
+//                    .collect(Collectors.toList());
+            }
+            YAMLMapper mapper = new YAMLMapper();
+            Path outputDir = getOutputDirectory();
+            for(FileChange change : inputChanges.getFileChanges(sources)) {
+                File recipeFile = change.getFile();
+                String recipeFqn = recipeFileNameToFqn.get(recipeFile.getName());
+                if(recipeFqn == null) {
+                    continue;
+                }
+                Path targetPath = outputDir.resolve(recipeFqn + ".yml");
+                if(change.getChangeType() == ChangeType.REMOVED) {
+                    Files.delete(targetPath);
+                    continue;
+                }
+
+                // git commands only accept forward slashes in paths, regardless of operating system
+                String relativePath = getProject().getRootDir().toPath()
+                        .relativize(recipeFile.toPath()).toString()
+                        .replace('\\', '/');
+                List<Contributor> contributors = listContributors(g, relativePath);
+
+                Attribution attribution = new Attribution("specs.openrewrite.org/v1beta/attribution", recipeFqn, contributors);
+                String yaml = mapper.writeValueAsString(attribution);
+
+                Files.createDirectories(targetPath.getParent());
+                Files.write(targetPath, yaml.getBytes());
+            }
+
+        } catch (Exception e) {
+            getLogger().warn("Unable to complete attribution of recipe authors", e);
+        }
+    }
+
+    private static List<Contributor> listContributors(Git g, String relativeUnixStylePath) throws GitAPIException {
+        Map<Contributor, Integer> contributors = new HashMap<>();
+
+        BlameResult blame = g.blame().setFilePath(relativeUnixStylePath).call();
+
+        for(int i = 0; i < blame.getResultContents().size(); i++) {
+            PersonIdent author = blame.getSourceAuthor(i);
+            contributors.compute(new Contributor(author.getName(), author.getEmailAddress(), 0), (k, v) -> v == null ? 1 : v + 1);
+        }
+
+        return contributors.entrySet().stream()
+                .map(entry -> entry.getKey().withLineCount(entry.getValue()))
+                .sorted(Comparator.comparing(Contributor::getLineCount).reversed())
+                .collect(Collectors.toList());
+    }
+}
