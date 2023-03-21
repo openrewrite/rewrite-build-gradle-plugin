@@ -127,7 +127,7 @@ tasks.named<JavaCompile>("compileJava") {
 
 dependencies {
     compileOnly("org.projectlombok:lombok:latest.release")
-    annotationProcessor("org.projectlombok:lombok:latest.release");
+    annotationProcessor("org.projectlombok:lombok:latest.release")
 
     implementation("org.apache.ivy:ivy:2.5.1")
     implementation("gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:latest.release")
@@ -141,9 +141,13 @@ dependencies {
     implementation("io.github.gradle-nexus:publish-plugin:latest.release")
     implementation("gradle.plugin.com.github.johnrengelman:shadow:7.1.2") // Pinned till we upgrade everything to Gradle 8.0
     implementation("org.gradle:test-retry-gradle-plugin:latest.release")
-    implementation("com.fasterxml.jackson.core:jackson-core:latest.release")
-    implementation("com.fasterxml.jackson.core:jackson-databind:latest.release")
-    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:latest.release")
+
+    // Manage jackson versions through BOM, to ignore 2.15.0-rc1
+    implementation(platform("com.fasterxml.jackson:jackson-bom:2.14.+"))
+    implementation("com.fasterxml.jackson.core:jackson-core")
+    implementation("com.fasterxml.jackson.core:jackson-databind")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml")
+
     implementation("org.yaml:snakeyaml:latest.release")
     implementation("io.github.classgraph:classgraph:latest.release")
     implementation("org.eclipse.jgit:org.eclipse.jgit:latest.release")
