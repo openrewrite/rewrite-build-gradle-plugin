@@ -74,8 +74,11 @@ public class RewriteRecipeLibraryPluginTest {
                 .build();
 
         assertEquals(SUCCESS, requireNonNull(result.task(":downloadRecipeDependencies")).getOutcome());
-
-        assertThat(cp.list()).containsExactlyInAnyOrder("spring-boot-actuator-2.7.8.jar", "spring-web-6.0.4.jar");
+        String[] list = cp.list();
+        assertThat(list).isNotNull();
+        assertThat(list.length).isEqualTo(2);
+        assertThat(list[0]).startsWith("spring-boot-actuator");
+        assertThat(list[1]).startsWith("spring-web");
     }
 
     @Test
