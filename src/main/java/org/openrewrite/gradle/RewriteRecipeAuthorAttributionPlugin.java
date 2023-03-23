@@ -66,12 +66,7 @@ public class RewriteRecipeAuthorAttributionPlugin implements Plugin<Project> {
         }
         SourceSet mainSource = java.getSourceSets().getByName("main");
         TaskProvider<Copy> copyAttribution = project.getTasks().register("copyAttribution", Copy.class);
-        project.getTasks().named("jar", Jar.class)
-                .configure(task -> task.dependsOn(copyAttribution));
-        Task maybeJavadoc = project.getTasks().findByPath("javadoc");
-        if (maybeJavadoc != null) {
-            maybeJavadoc.dependsOn(copyAttribution);
-        }
+        project.getTasks().named("classes").configure(task -> task.dependsOn(copyAttribution));
         for (File sourceDir : mainSource.getAllSource().getSrcDirs()) {
             TaskProvider<RewriteRecipeAuthorAttributionTask> attr = project.getTasks().register(
                     "rewriteRecipeAuthorAttribution" + capitalize(sourceDir.getName()), RewriteRecipeAuthorAttributionTask.class,
