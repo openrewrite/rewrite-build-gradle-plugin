@@ -100,11 +100,6 @@ public class RewriteRecipeAuthorAttributionTask extends DefaultTask {
                 for(ClassInfo recipeClass : recipeClasses) {
                     recipeFileNameToFqn.put(recipeClass.getSourceFile(), recipeClass.getPackageName() + "." + recipeClass.getName());
                 }
-
-                // TODO: Yaml recipes
-//            scanResult.getResourcesWithPath("META-INF/rewrite").stream()
-//                    .filter(resource -> resource.getPath().endsWith(".yaml") || resource.getPath().endsWith(".yml"))
-//                    .collect(Collectors.toList());
             }
             YAMLMapper mapper = new YAMLMapper();
             Path outputDir = getOutputDirectory();
