@@ -28,6 +28,8 @@ import java.io.UncheckedIOException;
 import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -37,10 +39,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class RewriteRecipeAuthorAttributionTest {
 
     static BuildResult runGradle(Path buildRoot, String... args) {
+        String[] argsWithStacktrace = Stream.concat(
+                        Arrays.stream(args),
+                        Stream.of("--stacktrace"))
+                .toArray(String[]::new);
         return GradleRunner.create()
                 .withProjectDir(buildRoot.toFile())
                 .withDebug(ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0)
-                .withArguments(args)
+                .withArguments(argsWithStacktrace)
                 .forwardOutput()
                 .withPluginClasspath()
                 .build();
