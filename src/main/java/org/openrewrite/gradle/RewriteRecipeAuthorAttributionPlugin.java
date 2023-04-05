@@ -71,7 +71,6 @@ public class RewriteRecipeAuthorAttributionPlugin implements Plugin<Project> {
         //noinspection UnstableApiUsage
         tasks.named("processResources", ProcessResources.class).configure(task -> {
             task.dependsOn(copyAttribution);
-            task.from(copyAttribution);
         });
         for (File sourceDir : mainSource.getAllSource().getSrcDirs()) {
             TaskProvider<RewriteRecipeAuthorAttributionTask> attr = tasks.register(

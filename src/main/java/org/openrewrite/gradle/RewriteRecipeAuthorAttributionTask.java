@@ -98,7 +98,7 @@ public class RewriteRecipeAuthorAttributionTask extends DefaultTask {
                     .scan()) {
                 ClassInfoList recipeClasses = scanResult.getSubclasses("org.openrewrite.Recipe");
                 for(ClassInfo recipeClass : recipeClasses) {
-                    recipeFileNameToFqn.put(recipeClass.getSourceFile(), recipeClass.getPackageName() + "." + recipeClass.getName());
+                    recipeFileNameToFqn.put(recipeClass.getSourceFile(), recipeClass.getName());
                 }
             }
             YAMLMapper mapper = new YAMLMapper();
