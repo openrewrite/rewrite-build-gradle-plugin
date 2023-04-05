@@ -30,6 +30,7 @@ import org.gradle.api.Task;
 import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.tasks.*;
 import org.gradle.jvm.tasks.Jar;
+import org.gradle.language.jvm.tasks.ProcessResources;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.nodes.*;
 
@@ -65,10 +66,15 @@ public class RewriteRecipeAuthorAttributionPlugin implements Plugin<Project> {
             return;
         }
         SourceSet mainSource = java.getSourceSets().getByName("main");
-        TaskProvider<Copy> copyAttribution = project.getTasks().register("copyAttribution", Copy.class);
-        project.getTasks().named("classes").configure(task -> task.dependsOn(copyAttribution));
+        TaskContainer tasks = project.getTasks();
+        TaskProvider<Copy> copyAttribution = tasks.register("copyAttribution", Copy.class);
+        //noinspection UnstableApiUsage
+        tasks.named("processResources", ProcessResources.class).configure(task -> {
+            task.dependsOn(copyAttribution);
+            task.from(copyAttribution);
+        });
         for (File sourceDir : mainSource.getAllSource().getSrcDirs()) {
-            TaskProvider<RewriteRecipeAuthorAttributionTask> attr = project.getTasks().register(
+            TaskProvider<RewriteRecipeAuthorAttributionTask> attr = tasks.register(
                     "rewriteRecipeAuthorAttribution" + capitalize(sourceDir.getName()), RewriteRecipeAuthorAttributionTask.class,
                     task -> {
                         task.dependsOn(mainSource.getCompileJavaTaskName());

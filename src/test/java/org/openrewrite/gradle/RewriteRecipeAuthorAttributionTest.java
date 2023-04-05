@@ -55,7 +55,7 @@ public class RewriteRecipeAuthorAttributionTest {
     @Test
     void javaAttribution(@TempDir Path repositoryRoot) throws IOException {
         writeSampleProject(repositoryRoot);
-        BuildResult result = runGradle(repositoryRoot, "assemble", "-Dorg.gradle.caching=true");
+        BuildResult result = runGradle(repositoryRoot, "jar", "-Dorg.gradle.caching=true");
         assertThat(requireNonNull(result.task(":rewriteRecipeAuthorAttributionJava")).getOutcome())
                 .isEqualTo(TaskOutcome.SUCCESS);
         File expectedOutput = new File(repositoryRoot.toFile(), "build/resources/main/META-INF/rewrite/attribution/org.openrewrite.org.openrewrite.ExampleRecipe.yml");
@@ -64,7 +64,7 @@ public class RewriteRecipeAuthorAttributionTest {
         assertThat(contents).contains("email: \"sam@moderne.io\"");
         assertThat(contents).contains("recipeName: \"org.openrewrite.org.openrewrite.ExampleRecipe\"");
 
-        BuildResult rerunResult = runGradle(repositoryRoot, "clean", "assemble", "-Dorg.gradle.caching=true");
+        BuildResult rerunResult = runGradle(repositoryRoot, "clean", "jar", "-Dorg.gradle.caching=true");
         assertThat(requireNonNull(rerunResult.task(":rewriteRecipeAuthorAttributionJava")).getOutcome())
                 .as("Task should have been cached on the first execution and retrieved from the cache after cleaning")
                 .isEqualTo(TaskOutcome.FROM_CACHE);
