@@ -143,9 +143,18 @@ public class RewriteRecipeAuthorAttributionTask extends DefaultTask {
             contributors.compute(new Contributor(author.getName(), author.getEmailAddress(), 0), (k, v) -> v == null ? 1 : v + 1);
         }
 
-        return contributors.entrySet().stream()
+        List<Contributor> contribs = contributors.entrySet().stream()
                 .map(entry -> entry.getKey().withLineCount(entry.getValue()))
                 .sorted(Comparator.comparing(Contributor::getLineCount).reversed())
                 .collect(Collectors.toList());
+
+        List<Contributor> deduped = new ArrayList<>(contribs.size());
+        for (Contributor contrib : contribs) {
+            if (deduped.stream().noneMatch(c -> c.getEmail().equals(contrib.getEmail()))) {
+                deduped.add(contrib);
+            }
+        }
+
+        return contribs;
     }
 }
