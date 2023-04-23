@@ -93,6 +93,20 @@ gradlePlugin {
             description = "Produces a `/META-INF/rewrite/recipe-authors.yml` file containing recipe author attribution"
             implementationClass = "org.openrewrite.gradle.RewriteRecipeAuthorAttributionPlugin"
         }
+
+        create("build-recipe-examples") {
+            id = "org.openrewrite.build.recipe-examples"
+            displayName = "Rewrite recipe examples"
+            description = "Produces a `/META-INF/rewrite/recipe-example.yml` file containing recipe examples"
+            implementationClass = "org.openrewrite.gradle.RewriteRecipeExamplesPlugin"
+        }
+
+//        create("process-recipe-tests-processing") {
+//            id = "org.openrewrite.build.tests-processing"
+//            displayName = "process-tests"
+//            description = "process-tests"
+//            implementationClass = "org.openrewrite.gradle.TestsPlugin"
+//        }
     }
 }
 

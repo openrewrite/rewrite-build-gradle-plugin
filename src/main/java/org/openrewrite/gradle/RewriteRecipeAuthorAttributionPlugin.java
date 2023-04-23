@@ -15,42 +15,12 @@
  */
 package org.openrewrite.gradle;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import io.github.classgraph.ClassGraph;
-import io.github.classgraph.ClassInfo;
-import io.github.classgraph.Resource;
-import io.github.classgraph.ScanResult;
-import org.eclipse.jgit.util.StringUtils;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.Task;
 import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.tasks.*;
-import org.gradle.jvm.tasks.Jar;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.nodes.*;
 
-import javax.annotation.Nullable;
 import java.io.File;
-import java.io.IOException;
-import java.io.StringReader;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
-
-import static java.util.stream.Collectors.toSet;
 import static org.eclipse.jgit.util.StringUtils.capitalize;
 
 public class RewriteRecipeAuthorAttributionPlugin implements Plugin<Project> {
