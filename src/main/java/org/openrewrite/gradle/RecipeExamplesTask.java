@@ -4,17 +4,19 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.tasks.InputDirectory;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
+import org.openrewrite.*;
+import org.openrewrite.java.ExamplesExtractor;
+import org.openrewrite.java.JavaParser;
+import org.openrewrite.java.TreeVisitingPrinter;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class RecipeExamplesTask extends DefaultTask {
 
     private File sourceDir;
     private File destinationDir;
-    private int stopCount = 0;
 
     @InputDirectory
     public File getSourceDir() {
@@ -36,36 +38,19 @@ public class RecipeExamplesTask extends DefaultTask {
 
     @TaskAction
     void processTests() {
-        System.out.println("Processing unit tests from " + sourceDir + " to " + destinationDir);
-
-        printFilesRecursive(sourceDir);
-
-        System.out.println("ExampleTaskIsRunning");
+        extractFilesRecursive(sourceDir);
     }
 
-
-    private void printFilesRecursive(File directory) {
-        if (stopCount > 1) {
-            return;
-        }
-
+    private void extractFilesRecursive(File directory) {
         File[] files = directory.listFiles();
-
         if (files != null) {
             for (File file : files) {
                 if (file.isDirectory()) {
-                    printFilesRecursive(file);
+                    extractFilesRecursive(file);
                 } else {
-                    System.out.println(file.getAbsolutePath());
-                    System.out.println(file.getName());
-
                     if (file.getName().endsWith(".java")) {
-                        // todo, extract recipe examples
-                        //
 
-                        stopCount++;
-                        System.out.println("PRINT JAVA FILE " + file.getName());
-
+                        // print file, to be removed
                         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
                             String line;
                             while ((line = reader.readLine()) != null) {
@@ -74,9 +59,40 @@ public class RecipeExamplesTask extends DefaultTask {
                         } catch (IOException e) {
                             throw new RuntimeException("Error reading file: " + file.getAbsolutePath(), e);
                         }
+
+                        extractExamples(file, new InMemoryExecutionContext());
                     }
                 }
             }
         }
+    }
+
+    private void extractExamples(File file, ExecutionContext ctx) {
+        Parser.Builder javaParserBuilder = JavaParser.fromJavaVersion();
+        Parser<?> parser = javaParserBuilder.build();
+        List<Parser.Input> inputs = new ArrayList<>();
+        List<SourceFile> sourceFiles;
+
+        Parser.Input input = new Parser.Input(file.toPath(),
+            () -> {
+                try {
+                    return new FileInputStream(file);
+                } catch (FileNotFoundException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        inputs.add(input);
+        sourceFiles = (List<SourceFile>) parser.parseInputs(inputs, null, ctx);
+
+        for (SourceFile s : sourceFiles) {
+            System.out.println(TreeVisitingPrinter.printTree(s));
+
+            ExamplesExtractor examplesExtractor = new ExamplesExtractor();
+            examplesExtractor.visit(s, ctx);
+
+            System.out.println(examplesExtractor.printRecipeExampleYaml());
+        }
+
+
     }
 }

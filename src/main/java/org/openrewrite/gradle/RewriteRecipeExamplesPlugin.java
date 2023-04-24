@@ -15,25 +15,14 @@
  */
 package org.openrewrite.gradle;
 
-
-import org.gradle.api.DefaultTask;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.tasks.*;
-
-import javax.inject.Inject;
 import java.io.File;
-// import org.openrewrite.gradle.ProcessTestsTask;
 
 public class RewriteRecipeExamplesPlugin implements Plugin<Project> {
     @Override
     public void apply(Project project) {
-//        project.getTasks().register("testsProcessing", ExampleTask.class, task -> {
-//            task.setSourceDir(project.file("src/test"));
-//            task.setDestinationDir(project.file("build/test-output"));
-//        });
-
         SourceSetContainer sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
         SourceSet testSourceSet = sourceSets.getByName("test");
         File testDir = testSourceSet.getJava().getSourceDirectories().getSingleFile();
@@ -41,17 +30,6 @@ public class RewriteRecipeExamplesPlugin implements Plugin<Project> {
         if (!testDir.exists()) {
             return;
         }
-
-//        JavaPluginExtension java = project.getExtensions().findByType(JavaPluginExtension.class);
-//        if (java == null) {
-//            return;
-//        }
-//
-//        File testDir = java.getSourceSets().getByName("test").getOutput().getClassesDirs().getSingleFile();
-//
-//        SourceSet mainSource = java.getSourceSets().getByName("test");
-//        File testDir = mainSource.getAllSource().getSrcDirs().stream()
-//            .filter(x -> x.getName().contains("test")).findFirst().orElse(null);
 
         if (testDir != null) {
             project.getTasks().register("extractRecipeExamples", RecipeExamplesTask.class, task -> {
