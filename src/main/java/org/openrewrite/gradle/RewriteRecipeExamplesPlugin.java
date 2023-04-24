@@ -33,7 +33,16 @@ public class RewriteRecipeExamplesPlugin implements Plugin<Project> {
             return;
         }
 
-        project.getTasks().register("extractRecipeExamples", RecipeExamplesTask.class,
+        TaskProvider<Copy> copyExamples = project.getTasks().register("copyExamples", Copy.class);
+        project.getTasks().named("classes").configure(task -> task.dependsOn(copyExamples));
+
+        TaskProvider<RecipeExamplesTask> extractExamples = project.getTasks().register("extractRecipeExamples", RecipeExamplesTask.class,
             task -> task.setSources(testDir));
+
+        copyExamples.configure(task -> {
+            task.dependsOn(extractExamples);
+            task.from(extractExamples.get().getOutputDirectory());
+            task.into(new File(project.getBuildDir(), "resources/main/META-INF/rewrite/examples"));
+        });
     }
 }

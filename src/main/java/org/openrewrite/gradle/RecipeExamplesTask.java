@@ -37,7 +37,7 @@ public class RecipeExamplesTask extends DefaultTask {
     }
 
     @TaskAction
-    void processTests() {
+    void execute() {
         extractFilesRecursive(sources.get().getAsFile());
     }
 
@@ -84,7 +84,6 @@ public class RecipeExamplesTask extends DefaultTask {
 
             String yamlContent = examplesExtractor.printRecipeExampleYaml();
             if (StringUtils.isNotEmpty(yamlContent)) {
-                // write to resources/main/META-INF/rewrite/attribution
                 writeYamlFile(file.getName(), getOutputDirectory(), yamlContent);
 
                 // todo, to be removed
