@@ -133,25 +133,15 @@ tasks.named<JavaCompile>("compileJava") {
     options.release.set(8)
 }
 
-
 val rewriteVersion = "7.41.0-SNAPSHOT"
+// val rewriteVersion = "latest.release"
 
 dependencies {
-    implementation("org.openrewrite:rewrite-core:${rewriteVersion}")
-    implementation("org.openrewrite:rewrite-java:${rewriteVersion}")
-    implementation("org.openrewrite:rewrite-xml:${rewriteVersion}")
-    implementation("org.openrewrite:rewrite-properties:${rewriteVersion}")
-    implementation("org.openrewrite:rewrite-yaml:${rewriteVersion}")
-    implementation("org.openrewrite:rewrite-gradle:${rewriteVersion}")
-    implementation("org.openrewrite:rewrite-maven:${rewriteVersion}")
-    implementation("org.openrewrite:rewrite-test:${rewriteVersion}")
-    implementation("org.openrewrite:rewrite-java-8:${rewriteVersion}")
-    implementation("org.openrewrite:rewrite-java-11:${rewriteVersion}")
-    implementation("org.openrewrite:rewrite-java-17:${rewriteVersion}")
+    compileOnly("org.openrewrite:rewrite-java:${rewriteVersion}")
+    compileOnly("org.openrewrite:rewrite-test:${rewriteVersion}")
+    compileOnly("org.openrewrite.gradle.tooling:model:latest.release")
 
-    implementation("org.openrewrite.gradle.tooling:model:latest.release")
-
-    runtimeOnly("org.openrewrite:rewrite-core:$rewriteVersion")
+    runtimeOnly("org.openrewrite:rewrite-test:${rewriteVersion}")
     runtimeOnly("org.openrewrite:rewrite-java-8:${rewriteVersion}")
     runtimeOnly("org.openrewrite:rewrite-java-11:${rewriteVersion}")
     runtimeOnly("org.openrewrite:rewrite-java-17:${rewriteVersion}")

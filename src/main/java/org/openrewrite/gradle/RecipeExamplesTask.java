@@ -5,9 +5,9 @@ import org.gradle.api.tasks.InputDirectory;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 import org.openrewrite.*;
+import org.openrewrite.internal.StringUtils;
 import org.openrewrite.java.ExamplesExtractor;
 import org.openrewrite.java.JavaParser;
-import org.openrewrite.java.TreeVisitingPrinter;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -49,17 +49,6 @@ public class RecipeExamplesTask extends DefaultTask {
                     extractFilesRecursive(file);
                 } else {
                     if (file.getName().endsWith(".java")) {
-
-                        // print file, to be removed
-                        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-                            String line;
-                            while ((line = reader.readLine()) != null) {
-                                System.out.println(line);
-                            }
-                        } catch (IOException e) {
-                            throw new RuntimeException("Error reading file: " + file.getAbsolutePath(), e);
-                        }
-
                         extractExamples(file, new InMemoryExecutionContext());
                     }
                 }
@@ -68,8 +57,12 @@ public class RecipeExamplesTask extends DefaultTask {
     }
 
     private void extractExamples(File file, ExecutionContext ctx) {
-        Parser.Builder javaParserBuilder = JavaParser.fromJavaVersion();
-        Parser<?> parser = javaParserBuilder.build();
+        JavaParser.Builder<? extends JavaParser, ?> builder = JavaParser.fromJavaVersion();
+        Parser<?> parser = builder
+            .classpath(JavaParser.runtimeClasspath())
+            .classpath("rewrite", "rewrite-java", "rewrite-core", "rewrite-test")
+            .build();
+
         List<Parser.Input> inputs = new ArrayList<>();
         List<SourceFile> sourceFiles;
 
@@ -85,14 +78,16 @@ public class RecipeExamplesTask extends DefaultTask {
         sourceFiles = (List<SourceFile>) parser.parseInputs(inputs, null, ctx);
 
         for (SourceFile s : sourceFiles) {
-            System.out.println(TreeVisitingPrinter.printTree(s));
-
             ExamplesExtractor examplesExtractor = new ExamplesExtractor();
             examplesExtractor.visit(s, ctx);
 
-            System.out.println(examplesExtractor.printRecipeExampleYaml());
+            String yamlContent = examplesExtractor.printRecipeExampleYaml();
+            if (StringUtils.isNotEmpty(yamlContent)) {
+                getLogger().lifecycle("Generated recipe examples for file {}", file.getName());
+
+                // todo, to be removed
+                getLogger().lifecycle(examplesExtractor.printRecipeExampleYaml());
+            }
         }
-
-
     }
 }
