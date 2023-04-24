@@ -75,7 +75,6 @@ public class RecipeExamplesTask extends DefaultTask {
             });
         inputs.add(input);
 
-        System.out.println("Paring file " + file.getName());
         sourceFiles = (List<SourceFile>) parser.parseInputs(inputs, null, ctx);
 
         for (SourceFile s : sourceFiles) {
@@ -85,9 +84,6 @@ public class RecipeExamplesTask extends DefaultTask {
             String yamlContent = examplesExtractor.printRecipeExampleYaml();
             if (StringUtils.isNotEmpty(yamlContent)) {
                 writeYamlFile(file.getName(), getOutputDirectory(), yamlContent);
-
-                // todo, to be removed
-                getLogger().lifecycle(examplesExtractor.printRecipeExampleYaml());
             }
         }
     }
