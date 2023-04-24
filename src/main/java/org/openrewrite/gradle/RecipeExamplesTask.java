@@ -59,8 +59,7 @@ public class RecipeExamplesTask extends DefaultTask {
     private void extractExamples(File file, ExecutionContext ctx) {
         JavaParser.Builder<? extends JavaParser, ?> builder = JavaParser.fromJavaVersion();
         Parser<?> parser = builder
-            .classpath(JavaParser.runtimeClasspath())
-            .classpath("rewrite", "rewrite-java", "rewrite-core", "rewrite-test")
+            .classpath("rewrite")
             .build();
 
         List<Parser.Input> inputs = new ArrayList<>();
