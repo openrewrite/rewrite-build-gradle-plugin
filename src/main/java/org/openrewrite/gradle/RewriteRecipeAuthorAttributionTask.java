@@ -16,7 +16,10 @@
 package org.openrewrite.gradle;
 
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-import io.github.classgraph.*;
+import io.github.classgraph.ClassGraph;
+import io.github.classgraph.ClassInfo;
+import io.github.classgraph.ClassInfoList;
+import io.github.classgraph.ScanResult;
 import lombok.Value;
 import lombok.With;
 import org.eclipse.jgit.api.Git;
@@ -78,8 +81,30 @@ public class RewriteRecipeAuthorAttributionTask extends DefaultTask {
         String email;
 
         @With
-
         int lineCount;
+
+        public static List<Contributor> distinct(List<Contributor> contribs) {
+            List<Contributor> deduped = new ArrayList<>(contribs.size());
+            for (Contributor contrib : contribs) {
+                if (deduped.stream().noneMatch(c -> c.getEmail().equals(contrib.getEmail()))) {
+                    deduped.add(contrib);
+                }
+            }
+
+            Map<String, Contributor> byName = new LinkedHashMap<>(deduped.size());
+            for (Contributor contributor : deduped) {
+                String name = contributor.getName();
+                if (byName.containsKey(name)) {
+                    if (byName.get(name).getEmail().endsWith("@users.noreply.github.com")) {
+                        byName.put(name, contributor);
+                    }
+                } else {
+                    byName.put(name, contributor);
+                }
+            }
+
+            return new ArrayList<>(byName.values());
+        }
     }
 
     @Value
@@ -97,20 +122,20 @@ public class RewriteRecipeAuthorAttributionTask extends DefaultTask {
                     .overrideClasspath(classpath)
                     .scan()) {
                 ClassInfoList recipeClasses = scanResult.getSubclasses("org.openrewrite.Recipe");
-                for(ClassInfo recipeClass : recipeClasses) {
-                    recipeFileNameToFqn.put(recipeClass.getSourceFile(), recipeClass.getPackageName() + "." + recipeClass.getName());
+                for (ClassInfo recipeClass : recipeClasses) {
+                    recipeFileNameToFqn.put(recipeClass.getSourceFile(), recipeClass.getName());
                 }
             }
             YAMLMapper mapper = new YAMLMapper();
             Path outputDir = getOutputDirectory();
-            for(FileChange change : inputChanges.getFileChanges(sources)) {
+            for (FileChange change : inputChanges.getFileChanges(sources)) {
                 File recipeFile = change.getFile();
                 String recipeFqn = recipeFileNameToFqn.get(recipeFile.getName());
-                if(recipeFqn == null) {
+                if (recipeFqn == null) {
                     continue;
                 }
                 Path targetPath = outputDir.resolve(recipeFqn + ".yml");
-                if(change.getChangeType() == ChangeType.REMOVED) {
+                if (change.getChangeType() == ChangeType.REMOVED) {
                     Files.delete(targetPath);
                     continue;
                 }
@@ -138,14 +163,14 @@ public class RewriteRecipeAuthorAttributionTask extends DefaultTask {
 
         BlameResult blame = g.blame().setFilePath(relativeUnixStylePath).call();
 
-        for(int i = 0; i < blame.getResultContents().size(); i++) {
+        for (int i = 0; i < blame.getResultContents().size(); i++) {
             PersonIdent author = blame.getSourceAuthor(i);
             contributors.compute(new Contributor(author.getName(), author.getEmailAddress(), 0), (k, v) -> v == null ? 1 : v + 1);
         }
 
-        return contributors.entrySet().stream()
+        return Contributor.distinct(contributors.entrySet().stream()
                 .map(entry -> entry.getKey().withLineCount(entry.getValue()))
                 .sorted(Comparator.comparing(Contributor::getLineCount).reversed())
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()));
     }
 }

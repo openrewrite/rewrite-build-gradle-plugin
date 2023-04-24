@@ -27,11 +27,11 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
 
         if (!project.hasProperty("releasing")) {
             repos.add(repos.mavenLocal(repo -> repo.content(content ->
-                    content.excludeVersionByRegex(".+", ".+", ".+-rc[0-9]*"))));
+                    content.excludeVersionByRegex(".+", ".+", ".+-rc[-]?[0-9]*"))));
             repos.add(repos.maven(repo -> repo.setUrl("https://oss.sonatype.org/content/repositories/snapshots/")));
         }
 
         repos.add(repos.mavenCentral(repo -> repo.content(content ->
-                content.excludeVersionByRegex(".+", ".+", ".+-rc[0-9]*"))));
+                content.excludeVersionByRegex(".+", ".+", ".+-rc[-]?[0-9]*"))));
     }
 }

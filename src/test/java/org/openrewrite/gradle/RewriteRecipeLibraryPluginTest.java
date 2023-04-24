@@ -77,8 +77,17 @@ public class RewriteRecipeLibraryPluginTest {
         String[] list = cp.list();
         assertThat(list).isNotNull();
         assertThat(list.length).isEqualTo(2);
-        assertThat(list[0]).startsWith("spring-boot-actuator");
-        assertThat(list[1]).startsWith("spring-web");
+        boolean foundSpringBootActuator = false;
+        boolean foundSpringWeb = false;
+        for (String s : list) {
+            if (s.startsWith("spring-boot-actuator")) {
+                foundSpringBootActuator = true;
+            } else if (s.startsWith("spring-web")) {
+                foundSpringWeb = true;
+            }
+        }
+        assertThat(foundSpringBootActuator).isTrue();
+        assertThat(foundSpringWeb).isTrue();
     }
 
     @Test

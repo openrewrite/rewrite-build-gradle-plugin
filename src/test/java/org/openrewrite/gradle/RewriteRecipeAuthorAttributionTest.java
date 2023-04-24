@@ -28,6 +28,8 @@ import java.io.UncheckedIOException;
 import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -37,10 +39,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class RewriteRecipeAuthorAttributionTest {
 
     static BuildResult runGradle(Path buildRoot, String... args) {
+        String[] argsWithStacktrace = Stream.concat(
+                        Arrays.stream(args),
+                        Stream.of("--stacktrace"))
+                .toArray(String[]::new);
         return GradleRunner.create()
                 .withProjectDir(buildRoot.toFile())
                 .withDebug(ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0)
-                .withArguments(args)
+                .withArguments(argsWithStacktrace)
                 .forwardOutput()
                 .withPluginClasspath()
                 .build();
@@ -49,16 +55,16 @@ public class RewriteRecipeAuthorAttributionTest {
     @Test
     void javaAttribution(@TempDir Path repositoryRoot) throws IOException {
         writeSampleProject(repositoryRoot);
-        BuildResult result = runGradle(repositoryRoot, "assemble", "-Dorg.gradle.caching=true");
+        BuildResult result = runGradle(repositoryRoot, "jar", "-Dorg.gradle.caching=true", "--rerun-tasks");
         assertThat(requireNonNull(result.task(":rewriteRecipeAuthorAttributionJava")).getOutcome())
                 .isEqualTo(TaskOutcome.SUCCESS);
-        File expectedOutput = new File(repositoryRoot.toFile(), "build/resources/main/META-INF/rewrite/attribution/org.openrewrite.org.openrewrite.ExampleRecipe.yml");
+        File expectedOutput = new File(repositoryRoot.toFile(), "build/resources/main/META-INF/rewrite/attribution/org.openrewrite.ExampleRecipe.yml");
         assertThat(expectedOutput.exists()).isTrue();
         String contents = Files.readString(expectedOutput.toPath());
         assertThat(contents).contains("email: \"sam@moderne.io\"");
-        assertThat(contents).contains("recipeName: \"org.openrewrite.org.openrewrite.ExampleRecipe\"");
+        assertThat(contents).contains("recipeName: \"org.openrewrite.ExampleRecipe\"");
 
-        BuildResult rerunResult = runGradle(repositoryRoot, "clean", "assemble", "-Dorg.gradle.caching=true");
+        BuildResult rerunResult = runGradle(repositoryRoot, "clean", "jar", "-Dorg.gradle.caching=true");
         assertThat(requireNonNull(rerunResult.task(":rewriteRecipeAuthorAttributionJava")).getOutcome())
                 .as("Task should have been cached on the first execution and retrieved from the cache after cleaning")
                 .isEqualTo(TaskOutcome.FROM_CACHE);
