@@ -1,44 +1,44 @@
 package org.openrewrite.gradle;
 
 import org.gradle.api.DefaultTask;
-import org.gradle.api.tasks.InputDirectory;
-import org.gradle.api.tasks.OutputDirectory;
-import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.file.DirectoryProperty;
+import org.gradle.api.tasks.*;
 import org.openrewrite.*;
 import org.openrewrite.internal.StringUtils;
 import org.openrewrite.java.ExamplesExtractor;
 import org.openrewrite.java.JavaParser;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
 public class RecipeExamplesTask extends DefaultTask {
+    private final DirectoryProperty sources = getProject().getObjects().directoryProperty();
 
-    private File sourceDir;
-    private File destinationDir;
-
+    @SkipWhenEmpty
     @InputDirectory
-    public File getSourceDir() {
-        return sourceDir;
+    @PathSensitive(PathSensitivity.NAME_ONLY)
+    @IgnoreEmptyDirectories
+    public DirectoryProperty getSources() {
+        return sources;
     }
 
-    public void setSourceDir(File sourceDir) {
-        this.sourceDir = sourceDir;
+    public void setSources(File sourceDirectory) {
+        sources.set(sourceDirectory);
     }
 
     @OutputDirectory
-    public File getDestinationDir() {
-        return destinationDir;
-    }
-
-    public void setDestinationDir(File destinationDir) {
-        this.destinationDir = destinationDir;
+    public Path getOutputDirectory() {
+        return getProject().getBuildDir().toPath().resolve("rewrite/examples")
+            .resolve(sources.get().getAsFile().getName());
     }
 
     @TaskAction
     void processTests() {
-        extractFilesRecursive(sourceDir);
+        extractFilesRecursive(sources.get().getAsFile());
     }
 
     private void extractFilesRecursive(File directory) {
@@ -74,6 +74,8 @@ public class RecipeExamplesTask extends DefaultTask {
                 }
             });
         inputs.add(input);
+
+        System.out.println("Paring file " + file.getName());
         sourceFiles = (List<SourceFile>) parser.parseInputs(inputs, null, ctx);
 
         for (SourceFile s : sourceFiles) {
@@ -82,11 +84,36 @@ public class RecipeExamplesTask extends DefaultTask {
 
             String yamlContent = examplesExtractor.printRecipeExampleYaml();
             if (StringUtils.isNotEmpty(yamlContent)) {
-                getLogger().lifecycle("Generated recipe examples for file {}", file.getName());
+                // write to resources/main/META-INF/rewrite/attribution
+                writeYamlFile(file.getName(), getOutputDirectory(), yamlContent);
 
                 // todo, to be removed
                 getLogger().lifecycle(examplesExtractor.printRecipeExampleYaml());
             }
+        }
+    }
+
+    void writeYamlFile(String originalTestFileName, Path outputPath, String data) {
+        int index = originalTestFileName.lastIndexOf('.');
+        String nameWithoutExtension = (index == -1) ? originalTestFileName : originalTestFileName.substring(0, index);
+        String fileName = nameWithoutExtension + ".yml";
+
+        Path path = Paths.get(outputPath.toString(), fileName);
+        try {
+            if (!Files.exists(path.getParent())) {
+                Files.createDirectories(path.getParent());
+            }
+
+            if (Files.exists(path)) {
+                return;
+            }
+
+            FileWriter writer = new FileWriter(path.toFile());
+            writer.write(data);
+            writer.close();
+            getLogger().lifecycle("Generated recipe examples file {} for the test file {}",  fileName, originalTestFileName);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }
