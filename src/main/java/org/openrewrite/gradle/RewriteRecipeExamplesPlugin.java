@@ -25,19 +25,17 @@ public class RewriteRecipeExamplesPlugin implements Plugin<Project> {
     public void apply(Project project) {
         SourceSetContainer sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
         SourceSet testSourceSet = sourceSets.getByName("test");
-        testSourceSet.getAllSource().getSrcDirs();
 
         File testDir = testSourceSet.getJava().getSourceDirectories().getSingleFile();
-
         if (!testDir.exists()) {
             return;
         }
 
-        TaskProvider<Copy> copyExamples = project.getTasks().register("copyExamples", Copy.class);
-        project.getTasks().named("classes").configure(task -> task.dependsOn(copyExamples));
-
         TaskProvider<RecipeExamplesTask> extractExamples = project.getTasks().register("extractRecipeExamples", RecipeExamplesTask.class,
             task -> task.setSources(testDir));
+
+        TaskProvider<Copy> copyExamples = project.getTasks().register("copyExamples", Copy.class);
+        project.getTasks().named("classes").configure(task -> task.dependsOn(copyExamples));
 
         copyExamples.configure(task -> {
             task.dependsOn(extractExamples);

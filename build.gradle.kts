@@ -105,7 +105,6 @@ gradlePlugin {
 
 repositories {
     gradlePluginPortal()
-    mavenLocal()
     mavenCentral()
 }
 
