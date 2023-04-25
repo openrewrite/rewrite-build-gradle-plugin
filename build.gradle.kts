@@ -93,6 +93,13 @@ gradlePlugin {
             description = "Produces a `/META-INF/rewrite/recipe-authors.yml` file containing recipe author attribution"
             implementationClass = "org.openrewrite.gradle.RewriteRecipeAuthorAttributionPlugin"
         }
+
+        create("build-recipe-examples") {
+            id = "org.openrewrite.build.recipe-examples"
+            displayName = "Rewrite recipe examples"
+            description = "Produces a `/META-INF/rewrite/recipe-example.yml` file containing recipe examples"
+            implementationClass = "org.openrewrite.gradle.RewriteRecipeExamplesPlugin"
+        }
     }
 }
 
@@ -125,7 +132,18 @@ tasks.named<JavaCompile>("compileJava") {
     options.release.set(8)
 }
 
+val rewriteVersion = "7.40.1"
+
 dependencies {
+    compileOnly("org.openrewrite:rewrite-java:${rewriteVersion}")
+    compileOnly("org.openrewrite:rewrite-test:${rewriteVersion}")
+    compileOnly("org.openrewrite.gradle.tooling:model:latest.release")
+
+    runtimeOnly("org.openrewrite:rewrite-test:${rewriteVersion}")
+    runtimeOnly("org.openrewrite:rewrite-java-8:${rewriteVersion}")
+    runtimeOnly("org.openrewrite:rewrite-java-11:${rewriteVersion}")
+    runtimeOnly("org.openrewrite:rewrite-java-17:${rewriteVersion}")
+
     compileOnly("org.projectlombok:lombok:latest.release")
     annotationProcessor("org.projectlombok:lombok:latest.release")
 
