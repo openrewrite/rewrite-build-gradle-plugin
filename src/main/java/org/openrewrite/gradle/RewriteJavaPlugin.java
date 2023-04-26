@@ -53,10 +53,6 @@ public class RewriteJavaPlugin implements Plugin<Project> {
                 .set(JavaLanguageVersion.of(17))));
 
         project.getConfigurations().all(config -> {
-            config.exclude(new HashMap<String, String>() {{
-                put("group", "com.google.errorprone");
-                put("module", "*");
-            }});
             config.resolutionStrategy(strategy ->
                     strategy.cacheDynamicVersionsFor(0, "seconds"));
         });
