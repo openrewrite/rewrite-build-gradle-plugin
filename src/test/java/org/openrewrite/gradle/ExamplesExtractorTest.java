@@ -29,6 +29,7 @@ class ExamplesExtractorTest implements RewriteTest {
     @Test
     void extractJavaExampleWithDefault() {
         ExamplesExtractor examplesExtractor = new ExamplesExtractor();
+        // language=java
         rewriteRun(
             spec -> spec.recipe(toRecipe(() -> examplesExtractor))
                 .parser(JavaParser.fromJavaVersion()
@@ -86,6 +87,7 @@ class ExamplesExtractorTest implements RewriteTest {
         );
 
         String yaml = examplesExtractor.printRecipeExampleYaml();
+        // language=yaml
         assertThat(yaml).isEqualTo(
             """
               type: specs.openrewrite.org/v1beta/example
@@ -118,6 +120,7 @@ class ExamplesExtractorTest implements RewriteTest {
     @Test
     void extractJavaExampleRecipeInSpec() {
         ExamplesExtractor examplesExtractor = new ExamplesExtractor();
+        // language=java
         rewriteRun(
             spec -> spec.recipe(toRecipe(() -> examplesExtractor))
                 .parser(JavaParser.fromJavaVersion()
@@ -169,6 +172,7 @@ class ExamplesExtractorTest implements RewriteTest {
             )
         );
         String yaml = examplesExtractor.printRecipeExampleYaml();
+        // language=yaml
         assertThat(yaml).isEqualTo(
             """
               type: specs.openrewrite.org/v1beta/example
@@ -201,6 +205,7 @@ class ExamplesExtractorTest implements RewriteTest {
     @Test
     void extractJavaExampleWithNoDescription() {
         ExamplesExtractor examplesExtractor = new ExamplesExtractor();
+        // language=java
         rewriteRun(
             spec -> spec.recipe(toRecipe(() -> examplesExtractor))
                 .parser(JavaParser.fromJavaVersion()
@@ -252,6 +257,7 @@ class ExamplesExtractorTest implements RewriteTest {
             )
         );
         String yaml = examplesExtractor.printRecipeExampleYaml();
+        // language=yaml
         assertThat(yaml).isEqualTo(
             """
               type: specs.openrewrite.org/v1beta/example

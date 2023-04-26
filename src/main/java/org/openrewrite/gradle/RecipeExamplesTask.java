@@ -74,6 +74,7 @@ public class RecipeExamplesTask extends DefaultTask {
         JavaParser.Builder<? extends JavaParser, ?> builder = JavaParser.fromJavaVersion();
         Parser<?> parser = builder
             .classpath("rewrite")
+            .classpath(JavaParser.runtimeClasspath())
             .build();
 
         List<Parser.Input> inputs = new ArrayList<>();
@@ -120,7 +121,7 @@ public class RecipeExamplesTask extends DefaultTask {
             FileWriter writer = new FileWriter(path.toFile());
             writer.write(data);
             writer.close();
-            getLogger().lifecycle("Generated recipe examples file {} for the test file {}",  fileName, originalTestFileName);
+            getLogger().lifecycle("Generated recipe examples yaml '{}' for the test file '{}'",  fileName, originalTestFileName);
         } catch (IOException e) {
             e.printStackTrace();
         }
