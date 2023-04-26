@@ -61,7 +61,7 @@ import java.util.List;
 public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
 
     private static final AnnotationMatcher TEST_ANNOTATION_MATCHER = new AnnotationMatcher("@org.junit.jupiter.api.Test");
-    private static final AnnotationMatcher DOCUMENT_EXAMPLE_ANNOTATION_MATCHER = new AnnotationMatcher("@org.openrewrite.internal.DocumentExample");
+    private static final AnnotationMatcher DOCUMENT_EXAMPLE_ANNOTATION_MATCHER = new AnnotationMatcher("@org.openrewrite.DocumentExample");
 
     private static final MethodMatcher REWRITE_RUN_METHOD_MATCHER_WITH_SPEC =
         new MethodMatcher("org.openrewrite.test.RewriteTest rewriteRun(java.util.function.Consumer, org.openrewrite.test.SourceSpecs[])");

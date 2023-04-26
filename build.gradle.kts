@@ -132,7 +132,7 @@ tasks.named<JavaCompile>("compileJava") {
     options.release.set(8)
 }
 
-val rewriteVersion = "7.40.2"
+val rewriteVersion = "7.40.3"
 
 dependencies {
     compileOnly("org.openrewrite:rewrite-java:${rewriteVersion}")
