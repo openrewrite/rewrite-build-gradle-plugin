@@ -20,7 +20,6 @@ import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.tasks.*;
 import org.openrewrite.*;
 import org.openrewrite.internal.StringUtils;
-import org.openrewrite.java.ExamplesExtractor;
 import org.openrewrite.java.JavaParser;
 
 import java.io.*;

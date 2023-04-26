@@ -132,7 +132,7 @@ tasks.named<JavaCompile>("compileJava") {
     options.release.set(8)
 }
 
-val rewriteVersion = "7.40.1"
+val rewriteVersion = "7.40.2"
 
 dependencies {
     compileOnly("org.openrewrite:rewrite-java:${rewriteVersion}")
@@ -175,6 +175,10 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-params")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
     testImplementation("org.assertj:assertj-core:latest.release")
+
+    testImplementation("org.openrewrite:rewrite-java:${rewriteVersion}")
+    testImplementation("org.openrewrite:rewrite-test:${rewriteVersion}")
+
     testImplementation(gradleTestKit())
 }
 
