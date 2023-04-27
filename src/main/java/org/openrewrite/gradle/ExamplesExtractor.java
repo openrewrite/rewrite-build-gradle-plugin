@@ -251,7 +251,7 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
                         }
                     }.visit(defaultsMethod, strings);
                 }
-                return method;
+                return super.visitMethodInvocation(method, strings);
             }
         }.reduce(defaultsMethod, new ArrayList<>()).stream().findFirst().orElse(null);
     }
@@ -291,10 +291,7 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
             }
         }.visit(sourceSpecArg, recipeExample);
 
-        if (recipeExample.getLanguage() != null && !recipeExample.getLanguage().isEmpty()) {
-            return recipeExample;
-        }
-        return null;
+        return recipeExample;
     }
 }
 

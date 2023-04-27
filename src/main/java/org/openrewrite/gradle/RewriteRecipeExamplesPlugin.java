@@ -23,16 +23,13 @@ import java.io.File;
 public class RewriteRecipeExamplesPlugin implements Plugin<Project> {
     @Override
     public void apply(Project project) {
-        SourceSetContainer sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
-        SourceSet testSourceSet = sourceSets.getByName("test");
-
-        File testDir = testSourceSet.getJava().getSourceDirectories().getSingleFile();
-        if (!testDir.exists()) {
+        File srcDir = new File(project.getProjectDir(), "src");
+        if (!srcDir.exists()) {
             return;
         }
 
         TaskProvider<RecipeExamplesTask> extractExamples = project.getTasks().register("extractRecipeExamples", RecipeExamplesTask.class,
-            task -> task.setSources(testDir));
+            task -> task.setSources(srcDir));
 
         TaskProvider<Copy> copyExamples = project.getTasks().register("copyExamples", Copy.class);
         project.getTasks().named("classes").configure(task -> task.dependsOn(copyExamples));

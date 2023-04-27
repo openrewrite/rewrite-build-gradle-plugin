@@ -52,53 +52,57 @@ public class RecipeExamplesTask extends DefaultTask {
 
     @TaskAction
     void execute() {
-        extractFilesRecursive(sources.get().getAsFile());
+        List<File> allJavaFiles = new ArrayList<>();
+        collectFiles(sources.get().getAsFile(), allJavaFiles);
+        extractExamples(allJavaFiles, new InMemoryExecutionContext());
     }
 
-    private void extractFilesRecursive(File directory) {
+    private void collectFiles(File directory, List<File> allJavaFiles) {
         File[] files = directory.listFiles();
         if (files != null) {
             for (File file : files) {
                 if (file.isDirectory()) {
-                    extractFilesRecursive(file);
+                    collectFiles(file, allJavaFiles);
                 } else {
                     if (file.getName().endsWith(".java")) {
-                        extractExamples(file, new InMemoryExecutionContext());
+                        allJavaFiles.add(file);
                     }
                 }
             }
         }
     }
 
-    private void extractExamples(File file, ExecutionContext ctx) {
+    private void extractExamples(List<File> allJavaFiles, ExecutionContext ctx) {
         JavaParser.Builder<? extends JavaParser, ?> builder = JavaParser.fromJavaVersion();
         Parser<?> parser = builder
-            .classpath("rewrite")
             .classpath(JavaParser.runtimeClasspath())
             .build();
 
         List<Parser.Input> inputs = new ArrayList<>();
         List<SourceFile> sourceFiles;
 
-        Parser.Input input = new Parser.Input(file.toPath(),
-            () -> {
-                try {
-                    return new FileInputStream(file);
-                } catch (FileNotFoundException e) {
-                    throw new RuntimeException(e);
-                }
-            });
-        inputs.add(input);
+        for (File file : allJavaFiles) {
+            Parser.Input input = new Parser.Input(file.toPath(),
+                () -> {
+                    try {
+                        return new FileInputStream(file);
+                    } catch (FileNotFoundException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+            inputs.add(input);
+        }
 
+        getLogger().lifecycle("Parsing " + allJavaFiles.size() + " java files...");
         sourceFiles = (List<SourceFile>) parser.parseInputs(inputs, null, ctx);
-
+        getLogger().lifecycle("Parsing java files finished.");
         for (SourceFile s : sourceFiles) {
             ExamplesExtractor examplesExtractor = new ExamplesExtractor();
             examplesExtractor.visit(s, ctx);
 
             String yamlContent = examplesExtractor.printRecipeExampleYaml();
             if (StringUtils.isNotEmpty(yamlContent)) {
-                writeYamlFile(file.getName(), getOutputDirectory(), yamlContent);
+                writeYamlFile(s.getSourcePath().getFileName().toString(), getOutputDirectory(), yamlContent);
             }
         }
     }

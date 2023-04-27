@@ -33,7 +33,8 @@ class ExamplesExtractorTest implements RewriteTest {
         rewriteRun(
             spec -> spec.recipe(toRecipe(() -> examplesExtractor))
                 .parser(JavaParser.fromJavaVersion()
-                    .classpath(JavaParser.runtimeClasspath())),
+                    .classpath(JavaParser.runtimeClasspath())
+                ),
             java(
                 """
                 package org.openrewrite.java.cleanup;
