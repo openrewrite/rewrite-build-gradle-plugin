@@ -98,7 +98,13 @@ public class RecipeExamplesTask extends DefaultTask {
         getLogger().lifecycle("Parsing java files finished.");
         for (SourceFile s : sourceFiles) {
             ExamplesExtractor examplesExtractor = new ExamplesExtractor();
-            examplesExtractor.visit(s, ctx);
+
+            try {
+                examplesExtractor.visit(s, ctx);
+            } catch (Exception e) {
+                getLogger().error("ExamplesExtractor running into an error when visiting file {}", s.getSourcePath().getFileName().toString(), e);
+                continue;
+            }
 
             String yamlContent = examplesExtractor.printRecipeExampleYaml();
             if (StringUtils.isNotEmpty(yamlContent)) {
