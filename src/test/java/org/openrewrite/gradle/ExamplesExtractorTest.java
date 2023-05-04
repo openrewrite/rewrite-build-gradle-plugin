@@ -60,25 +60,25 @@ class ExamplesExtractorTest implements RewriteTest {
                         rewriteRun(
                           java(
                             \"""
-                                                          class A {
-                                                              void method1() {
-                                                                  StringBuilder sb = new StringBuilder();
-                                                                  String op = "+";
-                                                                  sb.append("A" + op + "B");
-                                                                  sb.append(1 + op + 2);
-                                                              }
-                                                          }
-                                                          \""",
+                              class A {
+                                  void method1() {
+                                      StringBuilder sb = new StringBuilder();
+                                      String op = "+";
+                                      sb.append("A" + op + "B");
+                                      sb.append(1 + op + 2);
+                                  }
+                              }
+                              \""",
                             \"""
-                                                          class A {
-                                                              void method1() {
-                                                                  StringBuilder sb = new StringBuilder();
-                                                                  String op = "+";
-                                                                  sb.append("A").append(op).append("B");
-                                                                  sb.append(1).append(op).append(2);
-                                                              }
-                                                          }
-                                                          \"""
+                              class A {
+                                  void method1() {
+                                      StringBuilder sb = new StringBuilder();
+                                      String op = "+";
+                                      sb.append("A").append(op).append("B");
+                                      sb.append(1).append(op).append(2);
+                                  }
+                              }
+                              \"""
                           )
                         );
                     }
@@ -95,25 +95,26 @@ class ExamplesExtractorTest implements RewriteTest {
               recipeName: org.openrewrite.java.cleanup.ChainStringBuilderAppendCalls
               examples:
                 - description: "Objects concatenation."
-                  before: |
-                    class A {
-                        void method1() {
-                            StringBuilder sb = new StringBuilder();
-                            String op = "+";
-                            sb.append("A" + op + "B");
-                            sb.append(1 + op + 2);
+                  sources:
+                    - before: |
+                        class A {
+                            void method1() {
+                                StringBuilder sb = new StringBuilder();
+                                String op = "+";
+                                sb.append("A" + op + "B");
+                                sb.append(1 + op + 2);
+                            }
                         }
-                    }
-                  after: |
-                    class A {
-                        void method1() {
-                            StringBuilder sb = new StringBuilder();
-                            String op = "+";
-                            sb.append("A").append(op).append("B");
-                            sb.append(1).append(op).append(2);
+                      after: |
+                        class A {
+                            void method1() {
+                                StringBuilder sb = new StringBuilder();
+                                String op = "+";
+                                sb.append("A").append(op).append("B");
+                                sb.append(1).append(op).append(2);
+                            }
                         }
-                    }
-                  language: "java"
+                      language: java
               """
         );
     }
@@ -146,25 +147,25 @@ class ExamplesExtractorTest implements RewriteTest {
                           spec -> spec.recipe(new ChainStringBuilderAppendCalls()),
                           java(
                             \"""
-                                                          class A {
-                                                              void method1() {
-                                                                  StringBuilder sb = new StringBuilder();
-                                                                  String op = "+";
-                                                                  sb.append("A" + op + "B");
-                                                                  sb.append(1 + op + 2);
-                                                              }
-                                                          }
-                                                          \""",
+                              class A {
+                                  void method1() {
+                                      StringBuilder sb = new StringBuilder();
+                                      String op = "+";
+                                      sb.append("A" + op + "B");
+                                      sb.append(1 + op + 2);
+                                  }
+                              }
+                              \""",
                             \"""
-                                                          class A {
-                                                              void method1() {
-                                                                  StringBuilder sb = new StringBuilder();
-                                                                  String op = "+";
-                                                                  sb.append("A").append(op).append("B");
-                                                                  sb.append(1).append(op).append(2);
-                                                              }
-                                                          }
-                                                          \"""
+                              class A {
+                                  void method1() {
+                                      StringBuilder sb = new StringBuilder();
+                                      String op = "+";
+                                      sb.append("A").append(op).append("B");
+                                      sb.append(1).append(op).append(2);
+                                  }
+                              }
+                              \"""
                           )
                         );
                     }
@@ -180,25 +181,26 @@ class ExamplesExtractorTest implements RewriteTest {
               recipeName: org.openrewrite.java.cleanup.ChainStringBuilderAppendCalls
               examples:
                 - description: "Objects concatenation."
-                  before: |
-                    class A {
-                        void method1() {
-                            StringBuilder sb = new StringBuilder();
-                            String op = "+";
-                            sb.append("A" + op + "B");
-                            sb.append(1 + op + 2);
+                  sources:
+                    - before: |
+                        class A {
+                            void method1() {
+                                StringBuilder sb = new StringBuilder();
+                                String op = "+";
+                                sb.append("A" + op + "B");
+                                sb.append(1 + op + 2);
+                            }
                         }
-                    }
-                  after: |
-                    class A {
-                        void method1() {
-                            StringBuilder sb = new StringBuilder();
-                            String op = "+";
-                            sb.append("A").append(op).append("B");
-                            sb.append(1).append(op).append(2);
+                      after: |
+                        class A {
+                            void method1() {
+                                StringBuilder sb = new StringBuilder();
+                                String op = "+";
+                                sb.append("A").append(op).append("B");
+                                sb.append(1).append(op).append(2);
+                            }
                         }
-                    }
-                  language: "java"
+                      language: java
               """
         );
     }
@@ -231,25 +233,25 @@ class ExamplesExtractorTest implements RewriteTest {
                           spec -> spec.recipe(new ChainStringBuilderAppendCalls()),
                           java(
                             \"""
-                                                          class A {
-                                                              void method1() {
-                                                                  StringBuilder sb = new StringBuilder();
-                                                                  String op = "+";
-                                                                  sb.append("A" + op + "B");
-                                                                  sb.append(1 + op + 2);
-                                                              }
-                                                          }
-                                                          \""",
+                              class A {
+                                  void method1() {
+                                      StringBuilder sb = new StringBuilder();
+                                      String op = "+";
+                                      sb.append("A" + op + "B");
+                                      sb.append(1 + op + 2);
+                                  }
+                              }
+                              \""",
                             \"""
-                                                          class A {
-                                                              void method1() {
-                                                                  StringBuilder sb = new StringBuilder();
-                                                                  String op = "+";
-                                                                  sb.append("A").append(op).append("B");
-                                                                  sb.append(1).append(op).append(2);
-                                                              }
-                                                          }
-                                                          \"""
+                              class A {
+                                  void method1() {
+                                      StringBuilder sb = new StringBuilder();
+                                      String op = "+";
+                                      sb.append("A").append(op).append("B");
+                                      sb.append(1).append(op).append(2);
+                                  }
+                              }
+                              \"""
                           )
                         );
                     }
@@ -265,26 +267,185 @@ class ExamplesExtractorTest implements RewriteTest {
               recipeName: org.openrewrite.java.cleanup.ChainStringBuilderAppendCalls
               examples:
                 - description: ""
-                  before: |
-                    class A {
-                        void method1() {
-                            StringBuilder sb = new StringBuilder();
-                            String op = "+";
-                            sb.append("A" + op + "B");
-                            sb.append(1 + op + 2);
+                  sources:
+                    - before: |
+                        class A {
+                            void method1() {
+                                StringBuilder sb = new StringBuilder();
+                                String op = "+";
+                                sb.append("A" + op + "B");
+                                sb.append(1 + op + 2);
+                            }
                         }
-                    }
-                  after: |
-                    class A {
-                        void method1() {
-                            StringBuilder sb = new StringBuilder();
-                            String op = "+";
-                            sb.append("A").append(op).append("B");
-                            sb.append(1).append(op).append(2);
+                      after: |
+                        class A {
+                            void method1() {
+                                StringBuilder sb = new StringBuilder();
+                                String op = "+";
+                                sb.append("A").append(op).append("B");
+                                sb.append(1).append(op).append(2);
+                            }
                         }
-                    }
-                  language: "java"
+                      language: java
               """
+        );
+    }
+
+    @Test
+    void extractParameters() {
+        ExamplesExtractor examplesExtractor = new ExamplesExtractor();
+        // language=java
+        rewriteRun(
+            spec -> spec.recipe(toRecipe(() -> examplesExtractor))
+                .parser(JavaParser.fromJavaVersion()
+                    .classpath(JavaParser.runtimeClasspath())),
+            java(
+                """
+                    package org.openrewrite.java.cleanup;
+
+                    import org.junit.jupiter.api.Test;
+                    import org.openrewrite.DocumentExample;
+                    import org.openrewrite.config.Environment;
+                    import org.openrewrite.test.RecipeSpec;
+                    import org.openrewrite.test.RewriteTest;
+                    import org.openrewrite.test.SourceSpec;
+
+                    import java.util.List;
+
+                    import static org.assertj.core.api.Assertions.assertThat;
+                    import static org.openrewrite.java.Assertions.java;
+
+                            class DeclarationSiteTypeVarianceTest implements RewriteTest {
+
+                                @Override
+                                public void defaults(RecipeSpec spec) {
+                                    spec.recipe(new DeclarationSiteTypeVariance(
+                                        List.of("java.util.function.Function<IN, OUT>"),
+                                        List.of("java.lang.*"),
+                                        true
+                                    ));
+                                }
+
+                                @DocumentExample
+                                @Test
+                                void inOutVariance() {
+                                    rewriteRun(
+                                        java(
+                                            \"""
+                                              interface In {}
+                                              interface Out {}
+                                              \"""
+                                        ),
+                                        java(
+                                            \"""
+                                              import java.util.function.Function;
+                                              class Test {
+                                                  void test(Function<In, Out> f) {
+                                                  }
+                                              }
+                                              \""",
+                                            \"""
+                                              import java.util.function.Function;
+                                              class Test {
+                                                  void test(Function<? super In, ? extends Out> f) {
+                                                  }
+                                              }
+                                              \"""
+                                        )
+                                    );
+                                }
+
+                                @DocumentExample
+                                @Test
+                                void invariance() {
+                                    rewriteRun(
+                                        spec -> spec.recipe(new DeclarationSiteTypeVariance(
+                                            List.of("java.util.function.Function<INVARIANT, OUT>"),
+                                            List.of("java.lang.*"),
+                                            null
+                                        )),
+                                        java(
+                                            \"""
+                                              interface In {}
+                                              interface Out {}
+                                              \"""
+                                        ),
+                                        java(
+                                            \"""
+                                              import java.util.function.Function;
+                                              class Test {
+                                                  void test(Function<In, Out> f) {
+                                                  }
+                                              }
+                                              \""",
+                                            \"""
+                                              import java.util.function.Function;
+                                              class Test {
+                                                  void test(Function<In, ? extends Out> f) {
+                                                  }
+                                              }
+                                              \"""
+                                        )
+                                    );
+                                }
+                            }
+                    """
+            )
+        );
+        String yaml = examplesExtractor.printRecipeExampleYaml();
+        // language=yaml
+        assertThat(yaml).isEqualTo(
+            """
+                type: specs.openrewrite.org/v1beta/example
+                recipeName: org.openrewrite.java.cleanup.DeclarationSiteTypeVariance
+                examples:
+                  - description: ""
+                    parameters:
+                      - List.of("java.util.function.Function<IN, OUT>")
+                      - List.of("java.lang.*")
+                      - true
+                    sources:
+                      - before: |
+                          interface In {}
+                          interface Out {}
+                        language: java
+                      - before: |
+                          import java.util.function.Function;
+                          class Test {
+                              void test(Function<In, Out> f) {
+                              }
+                          }
+                        after: |
+                          import java.util.function.Function;
+                          class Test {
+                              void test(Function<? super In, ? extends Out> f) {
+                              }
+                          }
+                        language: java
+                  - description: ""
+                    parameters:
+                      - List.of("java.util.function.Function<INVARIANT, OUT>")
+                      - List.of("java.lang.*")
+                      - null
+                    sources:
+                      - before: |
+                          interface In {}
+                          interface Out {}
+                        language: java
+                      - before: |
+                          import java.util.function.Function;
+                          class Test {
+                              void test(Function<In, Out> f) {
+                              }
+                          }
+                        after: |
+                          import java.util.function.Function;
+                          class Test {
+                              void test(Function<In, ? extends Out> f) {
+                              }
+                          }
+                        language: java
+                """
         );
     }
 }

@@ -15,7 +15,9 @@
  */
 package org.openrewrite.gradle;
 
+import lombok.Data;
 import org.openrewrite.ExecutionContext;
+import org.openrewrite.InMemoryExecutionContext;
 import org.openrewrite.config.RecipeExample;
 import org.openrewrite.internal.StringUtils;
 import org.openrewrite.internal.lang.Nullable;
@@ -29,6 +31,9 @@ import org.openrewrite.java.tree.TypeUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 /**
  * Extract recipe examples from a test file which are annotated with @DocumentExample
@@ -39,23 +44,33 @@ import java.util.List;
  *               recipeName: test.ChangeTextToHello
  *               examples:
  *                 - description: "Change World to Hello in a text file"
- *                   before: "World"
- *                   after: "Hello!"
- *                   language: "text"
+ *                   sources:
+ *                     - before: "World"
+ *                       after: "Hello!"
+ *                       path: "1.txt"
+ *                       language: "text"
+ *                     - before: "World 2"
+ *                       after: "Hello 2!"
+ *                       path: "2.txt"
+ *                       language: "text"
  *                 - description: "Change World to Hello in a java file"
- *                   before: |
- *                     public class A {
- *                         void method() {
- *                             System.out.println("World");
+ *                   parameters:
+ *                     - arg0
+ *                     - arg1
+ *                   sources:
+ *                     - before: |
+ *                         public class A {
+ *                             void method() {
+ *                                 System.out.println("World");
+ *                             }
  *                         }
- *                     }
- *                   after: |
- *                     public class A {
- *                         void method() {
- *                             System.out.println("Hello!");
+ *                       after: |
+ *                         public class A {
+ *                             void method() {
+ *                                 System.out.println("Hello!");
+ *                             }
  *                         }
- *                     }
- *                   language: "java"
+ *                       language: "java"
  * </pre>
  */
 public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
@@ -67,32 +82,42 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
         new MethodMatcher("org.openrewrite.test.RewriteTest rewriteRun(java.util.function.Consumer, org.openrewrite.test.SourceSpecs[])");
     private static final MethodMatcher REWRITE_RUN_METHOD_MATCHER =
         new MethodMatcher("org.openrewrite.test.RewriteTest rewriteRun(org.openrewrite.test.SourceSpecs[])");
-    private static final MethodMatcher RECIPE_METHOD_MATCHER = new MethodMatcher("org.openrewrite.test.RecipeSpec recipe(org.openrewrite.Recipe)");
 
     private static final MethodMatcher JAVA_METHOD_MATCHER = new MethodMatcher("org.openrewrite.java.Assertions java(..)");
     private static final MethodMatcher BUILD_GRADLE_METHOD_MATCHER = new MethodMatcher("org.openrewrite.gradle.Assertions buildGradle(..)");
     private static final MethodMatcher POM_XML_METHOD_MATCHER = new MethodMatcher("org.openrewrite.maven.Assertions pomXml(..)");
-
-    private static final MethodMatcher DEFAULT_METHOD_MATCHER = new MethodMatcher("org.openrewrite.test.RewriteTest defaults(org.openrewrite.test.RecipeSpec)");
+    private static final MethodMatcher XML_METHOD_MATCHER = new MethodMatcher("org.openrewrite.xml.Assertions Xml(..)");
+    private static final MethodMatcher YAML_METHOD_MATCHER = new MethodMatcher("org.openrewrite.yaml.Assertions yaml(..)");
+    private static final MethodMatcher PROTOBUF_METHOD_MATCHER = new MethodMatcher("org.openrewrite.protobuf.proto.Assertions proto(..)");
+    private static final MethodMatcher PROPERTIES_METHOD_MATCHER = new MethodMatcher("org.openrewrite.properties.Assertions properties(..)");
+    private static final MethodMatcher JSON_METHOD_MATCHER = new MethodMatcher("org.openrewrite.json.Assertions json(..)");
+    private static final MethodMatcher HCL_METHOD_MATCHER = new MethodMatcher("org.openrewrite.hcl.Assertions hcl(..)");
+    private static final MethodMatcher GROOVY_METHOD_MATCHER = new MethodMatcher("org.openrewrite.groovy.Assertions groovy(..)");
     private static final MethodMatcher SPEC_RECIPE_METHOD_MATCHER = new MethodMatcher("org.openrewrite.test.RecipeSpec recipe(org.openrewrite.Recipe)");
 
-    private String recipeType;
-    private String defaultRecipeName;
-    private String recipeName;
+    private final String recipeType;
+    private RecipeNameAndParameters defaultRecipe;
+    private RecipeNameAndParameters specifiedRecipe;
     private List<RecipeExample> recipeExamples;
     private String exampleDescription;
 
     public ExamplesExtractor() {
         recipeType = "specs.openrewrite.org/v1beta/example";
+        defaultRecipe = new RecipeNameAndParameters();
+        specifiedRecipe = new RecipeNameAndParameters();
         recipeExamples = new ArrayList<>();
+        exampleDescription = "";
     }
 
     /**
      * print the recipe example yaml.
      */
     public String printRecipeExampleYaml() {
-        String name = (recipeName != null && !recipeName.isEmpty()) ? recipeName : defaultRecipeName;
-        return new ExamplesExtractor.YamlPrinter().print(recipeType, name, recipeExamples);
+        boolean usingDefaultRecipe = !specifiedRecipe.isValid();
+        return new ExamplesExtractor.YamlPrinter().print(recipeType,
+            usingDefaultRecipe ? defaultRecipe : specifiedRecipe,
+            usingDefaultRecipe,
+            recipeExamples);
     }
 
     @Override
@@ -103,7 +128,7 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
             !method.getMethodType().getDeclaringType().getInterfaces().isEmpty() &&
             method.getMethodType().getDeclaringType().getInterfaces().get(0).getFullyQualifiedName().equals("org.openrewrite.test.RewriteTest")
         ) {
-            defaultRecipeName = findDefaultRecipeName(method);
+            defaultRecipe = findRecipe(method);
             return method;
         }
 
@@ -140,22 +165,39 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
     @Override
     public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, ExecutionContext ctx) {
         List<Expression> args = method.getArguments();
-        RecipeExample example = null;
+        RecipeExample example = new RecipeExample();
+        RecipeNameAndParameters recipe = null;
+
+        int sourceStartIndex;
+
         if (REWRITE_RUN_METHOD_MATCHER_WITH_SPEC.matches(method)) {
-            String maybeName = findRecipeNameFromSpecParam(args.get(0));
-            if (maybeName != null) {
-                recipeName = maybeName;
+            recipe = findRecipe(args.get(0));
+            if (recipe != null) {
+                specifiedRecipe = recipe;
             }
-            example = extractRecipeExample(args.get(1));
-
+            sourceStartIndex = 1;
         } else if (REWRITE_RUN_METHOD_MATCHER.matches(method)) {
-            example = extractRecipeExample(args.get(0));
+            sourceStartIndex = 0;
+        } else {
+            return method;
         }
 
-        if (example != null) {
-            example.setDescription(exampleDescription);
-            this.recipeExamples.add(example);
+        for (int i = sourceStartIndex; i < args.size(); i++) {
+            RecipeExample.Source source = extractRecipeExampleSource(args.get(i));
+            if (source != null) {
+                example.getSources().add(source);
+            }
         }
+
+        if (!example.getSources().isEmpty()) {
+            example.setDescription(exampleDescription);
+            example.setParameters(recipe != null ? recipe.getParameters() :
+                defaultRecipe != null ? defaultRecipe.getParameters() : new ArrayList<>());
+            this.recipeExamples.add(example);
+        } else {
+            System.out.println("Failed to extract an example for method : " + method);
+        }
+
         return method;
     }
 
@@ -165,10 +207,10 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
 
     public static class YamlPrinter {
         String print(String recipeType,
-                     String recipeName,
+                     RecipeNameAndParameters recipe,
+                     boolean usingDefaultRecipe,
                      List<RecipeExample> examples) {
-            if (recipeName == null ||
-                recipeName.isEmpty() ||
+            if (StringUtils.isNullOrEmpty(recipe.getName()) ||
                 examples.isEmpty()
             ) {
                 return "";
@@ -176,27 +218,44 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
 
             StringBuilder output = new StringBuilder();
             output.append("type: ").append(recipeType).append("\n");
-            output.append("recipeName: ").append(recipeName).append("\n");
+            output.append("recipeName: ").append(recipe.getName()).append("\n");
             output.append("examples:\n");
+
             for (RecipeExample example : examples) {
                 output.append("  - description: \"").append(example.getDescription() == null ? "" : example.getDescription()).append("\"\n");
-                output.append("    before: |\n");
-                output.append(indentTextBlock(example.getBefore()));
-
-                if (StringUtils.isNotEmpty(example.getAfter())) {
-                    output.append("    after: |\n");
-                    output.append(indentTextBlock(example.getAfter()));
+                List<String> params = usingDefaultRecipe ? recipe.getParameters() : example.getParameters();
+                if (!params.isEmpty()) {
+                    output.append("    parameters:\n");
+                    for (String param : params) {
+                        output.append("      - ").append(param).append("\n");
+                    }
                 }
 
-                if (StringUtils.isNotEmpty(example.getLanguage())) {
-                    output.append("    language: \"").append(example.getLanguage()).append("\"\n");
+                output.append("    sources:\n");
+
+                for (RecipeExample.Source source : example.getSources()) {
+                    output.append("      - before: |\n");
+                    output.append(indentTextBlock(source.getBefore()));
+
+                    if (StringUtils.isNotEmpty(source.getAfter())) {
+                        output.append("        after: |\n");
+                        output.append(indentTextBlock(source.getAfter()));
+                    }
+
+                    if (StringUtils.isNotEmpty(source.getPath())) {
+                        output.append("        path: ").append(source.getPath()).append("\n");
+                    }
+
+                    if (StringUtils.isNotEmpty(source.getLanguage())) {
+                        output.append("        language: ").append(source.getLanguage()).append("\n");
+                    }
                 }
             }
             return output.toString();
         }
 
         private String indentTextBlock(String text) {
-            String str = "      " + text.replace("\n", "\n      ").trim();
+            String str = "          " + text.replace("\n", "\n          ").trim();
             if (!str.endsWith("\n")) {
                 str = str + "\n";
             }
@@ -204,75 +263,79 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
         }
     }
 
-    @Nullable
-    private String findRecipeNameFromSpecParam(Expression arg) {
-        return new JavaIsoVisitor<List<String>>() {
+    private RecipeNameAndParameters findRecipe(J tree) {
+        return new JavaIsoVisitor<AtomicReference<RecipeNameAndParameters>>() {
             @Override
-            public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method,
-                                                            List<String> recipeNames) {
-                if (RECIPE_METHOD_MATCHER.matches(method)) {
-                    new JavaIsoVisitor<List<String>>() {
+            public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, AtomicReference<RecipeNameAndParameters> recipe) {
+                if (SPEC_RECIPE_METHOD_MATCHER.matches(method)) {
+                    new JavaIsoVisitor<AtomicReference<RecipeNameAndParameters>>() {
                         @Override
-                        public J.NewClass visitNewClass(J.NewClass newClass, List<String> recipeNames) {
+                        public J.NewClass visitNewClass(J.NewClass newClass, AtomicReference<RecipeNameAndParameters> recipe) {
                             if (TypeUtils.isAssignableTo("org.openrewrite.Recipe", newClass.getType())) {
                                 JavaType type = newClass.getType();
                                 if (type instanceof JavaType.Class) {
                                     JavaType.Class tc = (JavaType.Class) type;
-                                    recipeNames.add(tc.getFullyQualifiedName());
+                                    RecipeNameAndParameters recipeNameAndParameters = new RecipeNameAndParameters();
+                                    recipeNameAndParameters.setName(tc.getFullyQualifiedName());
+                                    recipeNameAndParameters.setParameters(extractParameters(newClass.getArguments()));
+                                    recipe.set(recipeNameAndParameters);
                                 }
                             }
                             return newClass;
                         }
-                    }.visit(method, recipeNames);
+                    }.visit(tree, recipe);
+                }
+                return super.visitMethodInvocation(method, recipe);
+            }
+        }.reduce(tree, new AtomicReference<>()).get();
+    }
+
+    private static List<String> extractParameters(List<Expression> args) {
+        return args.stream().map(arg -> {
+            if (arg instanceof J.Empty) {
+                return null;
+            } else if (arg instanceof J.Literal) {
+                return ((J.Literal) arg).getValueSource();
+            } else {
+                return arg.toString();
+            }
+        }).filter(Objects::nonNull).collect(Collectors.toList());
+    }
+
+    @Nullable
+    private RecipeExample.Source extractRecipeExampleSource(Expression sourceSpecArg) {
+        RecipeExample.Source source = new RecipeExample.Source("", null, null, "");
+
+        new JavaIsoVisitor<RecipeExample.Source>() {
+            @Override
+            public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method,
+                                                            RecipeExample.Source source) {
+                method = super.visitMethodInvocation(method, source);
+                String language;
+                if (JAVA_METHOD_MATCHER.matches(method)) {
+                    language = "java";
+                } else if (BUILD_GRADLE_METHOD_MATCHER.matches(method)) {
+                    language = "groovy";
+                } else if (POM_XML_METHOD_MATCHER.matches(method) ||
+                           XML_METHOD_MATCHER.matches(method)) {
+                    language = "xml";
+                } else if (YAML_METHOD_MATCHER.matches(method)) {
+                    language = "yaml";
+                } else if (PROTOBUF_METHOD_MATCHER.matches(method)) {
+                    language = "protobuf";
+                } else if (PROPERTIES_METHOD_MATCHER.matches(method)) {
+                    language = "properties";
+                } else if (JSON_METHOD_MATCHER.matches(method)) {
+                    language = "json";
+                } else if (HCL_METHOD_MATCHER.matches(method)) {
+                    language = "hcl";
+                } else if (GROOVY_METHOD_MATCHER.matches(method)) {
+                    language = "groovy";
+                } else {
                     return method;
                 }
-                return method;
-            }
-        }.reduce(arg, new ArrayList<>()).stream().findFirst().orElse(null);
-    }
 
-    @Nullable
-    private String findDefaultRecipeName(J.MethodDeclaration defaultsMethod) {
-        return new JavaIsoVisitor<List<String>>() {
-            @Override
-            public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, List<String> strings) {
-                if (SPEC_RECIPE_METHOD_MATCHER.matches(method)) {
-                    new JavaIsoVisitor<List<String>>() {
-                        @Override
-                        public J.NewClass visitNewClass(J.NewClass newClass, List<String> recipeNames) {
-                            if (TypeUtils.isAssignableTo("org.openrewrite.Recipe", newClass.getType())) {
-                                JavaType type = newClass.getType();
-                                if (type instanceof JavaType.Class) {
-                                    JavaType.Class tc = (JavaType.Class) type;
-                                    recipeNames.add(tc.getFullyQualifiedName());
-                                }
-                            }
-                            return newClass;
-                        }
-                    }.visit(defaultsMethod, strings);
-                }
-                return super.visitMethodInvocation(method, strings);
-            }
-        }.reduce(defaultsMethod, new ArrayList<>()).stream().findFirst().orElse(null);
-    }
-
-    @Nullable
-    private RecipeExample extractRecipeExample(Expression sourceSpecArg) {
-        RecipeExample recipeExample = new RecipeExample();
-
-        new JavaIsoVisitor<RecipeExample>() {
-            @Override
-            public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method,
-                                                            RecipeExample recipeExample) {
-                if (JAVA_METHOD_MATCHER.matches(method)) {
-                    recipeExample.setLanguage("java");
-                } else if (BUILD_GRADLE_METHOD_MATCHER.matches(method)) {
-                    recipeExample.setLanguage("groovy");
-                } else if (POM_XML_METHOD_MATCHER.matches(method)) {
-                    recipeExample.setLanguage("xml");
-                } else {
-                    recipeExample.setLanguage("");
-                }
+                source.setLanguage(language);
 
                 List<Expression> args = method.getArguments();
 
@@ -281,17 +344,33 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
                 J.Literal after = args.size() > 1? (args.get(1) instanceof J.Literal ? (J.Literal) args.get(1) : null) : null;
 
                 if (before != null) {
-                    recipeExample.setBefore((String) before.getValue());
+                    source.setBefore((String) before.getValue());
                 }
 
                 if (after != null) {
-                    recipeExample.setAfter((String) after.getValue());
+                    source.setAfter((String) after.getValue());
                 }
                 return method;
             }
-        }.visit(sourceSpecArg, recipeExample);
+        }.visit(sourceSpecArg, source);
 
-        return recipeExample;
+        if (StringUtils.isNotEmpty(source.getBefore())) {
+            return source;
+        } else {
+            // todo, kun, debug purpose only, to be removed
+            System.out.println("Failed to parse arg : " + sourceSpecArg);
+            return null;
+        }
+    }
+
+    @Data
+    private static class RecipeNameAndParameters {
+        String name = "";
+        List<String> parameters = new ArrayList<>();
+
+        boolean isValid() {
+            return StringUtils.isNotEmpty(name);
+        }
     }
 }
 
