@@ -30,7 +30,6 @@ import org.gradle.external.javadoc.CoreJavadocOptions;
 import org.gradle.jvm.tasks.Jar;
 import org.gradle.jvm.toolchain.JavaLanguageVersion;
 
-import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
 public class RewriteJavaPlugin implements Plugin<Project> {
@@ -38,7 +37,7 @@ public class RewriteJavaPlugin implements Plugin<Project> {
     @Override
     public void apply(Project project) {
         RewriteJavaExtension ext = project.getExtensions().create("rewriteJava", RewriteJavaExtension.class);
-        ext.getJacksonVersion().convention("2.14.2");
+        ext.getJacksonVersion().convention("2.15.0");
 
         project.getPlugins().apply(JavaLibraryPlugin.class);
         project.getPlugins().apply(RewriteDependencyRepositoriesPlugin.class);
