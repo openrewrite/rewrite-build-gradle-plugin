@@ -448,4 +448,107 @@ class ExamplesExtractorTest implements RewriteTest {
                 """
         );
     }
+
+    @Test
+    void extractYamlRecipe() {
+        ExamplesExtractor examplesExtractor = new ExamplesExtractor();
+        // language=java
+        rewriteRun(
+            spec -> spec.recipe(toRecipe(() -> examplesExtractor))
+                .parser(JavaParser.fromJavaVersion()
+                    .classpath(JavaParser.runtimeClasspath())),
+            java(
+                """
+                    package org.openrewrite.java.migrate.net;
+
+                    import org.junit.jupiter.api.Test;
+                    import org.openrewrite.DocumentExample;
+                    import org.openrewrite.config.Environment;
+                    import org.openrewrite.test.RecipeSpec;
+                    import org.openrewrite.test.RewriteTest;
+
+                    import static org.openrewrite.java.Assertions.java;
+
+                    class JavaNetAPIsTest implements RewriteTest {
+                        @Override
+                        public void defaults(RecipeSpec spec) {
+                            spec.recipe(
+                              Environment.builder()
+                                .scanRuntimeClasspath("org.openrewrite.java.migrate.net")
+                                .build()
+                                .activateRecipes("org.openrewrite.java.migrate.net.JavaNetAPIs"));
+                        }
+
+                        @DocumentExample
+                        @Test
+                        void multicastSocketGetTTLToGetTimeToLive() {
+                            //language=java
+                            rewriteRun(
+                              java(
+                                ""\"
+                                  package org.openrewrite.example;
+
+                                  import java.net.MulticastSocket;
+
+                                  public class Test {
+                                      public static void method() {
+                                          MulticastSocket s = new MulticastSocket(0);
+                                          s.getTTL();
+                                      }
+                                  }
+                                  ""\",
+                                ""\"
+                                  package org.openrewrite.example;
+
+                                  import java.net.MulticastSocket;
+
+                                  public class Test {
+                                      public static void method() {
+                                          MulticastSocket s = new MulticastSocket(0);
+                                          s.getTimeToLive();
+                                      }
+                                  }
+                                  ""\"
+                              )
+                            );
+                        }
+                    }
+                    """
+            )
+        );
+        String yaml = examplesExtractor.printRecipeExampleYaml();
+        // language=yaml
+        assertThat(yaml).isEqualTo(
+            """
+                type: specs.openrewrite.org/v1beta/example
+                recipeName: org.openrewrite.java.migrate.net.JavaNetAPIs
+                examples:
+                  - description: ""
+                    sources:
+                      - before: |
+                          package org.openrewrite.example;
+                         \s
+                          import java.net.MulticastSocket;
+                         \s
+                          public class Test {
+                              public static void method() {
+                                  MulticastSocket s = new MulticastSocket(0);
+                                  s.getTTL();
+                              }
+                          }
+                        after: |
+                          package org.openrewrite.example;
+                         \s
+                          import java.net.MulticastSocket;
+                         \s
+                          public class Test {
+                              public static void method() {
+                                  MulticastSocket s = new MulticastSocket(0);
+                                  s.getTimeToLive();
+                              }
+                          }
+                        language: java
+                """
+        );
+    }
 }

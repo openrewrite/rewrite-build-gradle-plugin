@@ -94,6 +94,7 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
     private static final MethodMatcher HCL_METHOD_MATCHER = new MethodMatcher("org.openrewrite.hcl.Assertions hcl(..)");
     private static final MethodMatcher GROOVY_METHOD_MATCHER = new MethodMatcher("org.openrewrite.groovy.Assertions groovy(..)");
     private static final MethodMatcher SPEC_RECIPE_METHOD_MATCHER = new MethodMatcher("org.openrewrite.test.RecipeSpec recipe(org.openrewrite.Recipe)");
+    private static final MethodMatcher ACTIVE_RECIPES_METHOD_MATCHER = new MethodMatcher("org.openrewrite.config.Environment activateRecipes(..)");
 
     private final String recipeType;
     private RecipeNameAndParameters defaultRecipe;
@@ -283,7 +284,23 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
                             }
                             return newClass;
                         }
-                    }.visit(tree, recipe);
+
+                        @Override
+                        public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method,
+                                                                        AtomicReference<RecipeNameAndParameters> recipeNameAndParametersAtomicReference) {
+                            if (ACTIVE_RECIPES_METHOD_MATCHER.matches(method)) {
+                                Expression arg = method.getArguments().get(0);
+                                if (arg instanceof J.Literal) {
+                                    RecipeNameAndParameters recipeNameAndParameters = new RecipeNameAndParameters();
+                                    recipeNameAndParameters.setName(((J.Literal) arg).getValue().toString());
+                                    recipe.set(recipeNameAndParameters);
+                                }
+                                return method;
+                            }
+
+                            return super.visitMethodInvocation(method, recipeNameAndParametersAtomicReference);
+                        }
+                    }.visit(method, recipe);
                 }
                 return super.visitMethodInvocation(method, recipe);
             }
