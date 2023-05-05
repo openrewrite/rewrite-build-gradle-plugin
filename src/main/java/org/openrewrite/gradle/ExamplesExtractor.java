@@ -17,7 +17,6 @@ package org.openrewrite.gradle;
 
 import lombok.Data;
 import org.openrewrite.ExecutionContext;
-import org.openrewrite.InMemoryExecutionContext;
 import org.openrewrite.config.RecipeExample;
 import org.openrewrite.internal.StringUtils;
 import org.openrewrite.internal.lang.Nullable;
@@ -93,7 +92,7 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
     private static final MethodMatcher JSON_METHOD_MATCHER = new MethodMatcher("org.openrewrite.json.Assertions json(..)");
     private static final MethodMatcher HCL_METHOD_MATCHER = new MethodMatcher("org.openrewrite.hcl.Assertions hcl(..)");
     private static final MethodMatcher GROOVY_METHOD_MATCHER = new MethodMatcher("org.openrewrite.groovy.Assertions groovy(..)");
-    private static final MethodMatcher SPEC_RECIPE_METHOD_MATCHER = new MethodMatcher("org.openrewrite.test.RecipeSpec recipe(org.openrewrite.Recipe)");
+    private static final MethodMatcher SPEC_RECIPE_METHOD_MATCHER = new MethodMatcher("org.openrewrite.test.RecipeSpec recipe(..)");
     private static final MethodMatcher ACTIVE_RECIPES_METHOD_MATCHER = new MethodMatcher("org.openrewrite.config.Environment activateRecipes(..)");
 
     private final String recipeType;
@@ -272,8 +271,12 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
                     new JavaIsoVisitor<AtomicReference<RecipeNameAndParameters>>() {
                         @Override
                         public J.NewClass visitNewClass(J.NewClass newClass, AtomicReference<RecipeNameAndParameters> recipe) {
-                            if (TypeUtils.isAssignableTo("org.openrewrite.Recipe", newClass.getType())) {
-                                JavaType type = newClass.getType();
+                            JavaType type = newClass.getClazz().getType();
+                            if (type == null) {
+                                type = newClass.getType();
+                            }
+
+                            if (TypeUtils.isAssignableTo("org.openrewrite.Recipe", type)) {
                                 if (type instanceof JavaType.Class) {
                                     JavaType.Class tc = (JavaType.Class) type;
                                     RecipeNameAndParameters recipeNameAndParameters = new RecipeNameAndParameters();
@@ -374,8 +377,6 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
         if (StringUtils.isNotEmpty(source.getBefore())) {
             return source;
         } else {
-            // todo, kun, debug purpose only, to be removed
-            System.out.println("Failed to parse arg : " + sourceSpecArg);
             return null;
         }
     }

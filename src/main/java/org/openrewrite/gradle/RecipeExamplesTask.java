@@ -80,6 +80,7 @@ public class RecipeExamplesTask extends DefaultTask {
 
         List<Parser.Input> inputs = new ArrayList<>();
         List<SourceFile> sourceFiles;
+        int resultCount = 0;
 
         for (File file : allJavaFiles) {
             Parser.Input input = new Parser.Input(file.toPath(),
@@ -102,12 +103,14 @@ public class RecipeExamplesTask extends DefaultTask {
                 examplesExtractor.visit(s, ctx);
                 String yamlContent = examplesExtractor.printRecipeExampleYaml();
                 if (StringUtils.isNotEmpty(yamlContent)) {
+                    resultCount++;
                     writeYamlFile(s.getSourcePath().getFileName().toString(), getOutputDirectory(), yamlContent);
                 }
             } catch (Exception e) {
                 getLogger().error("ExamplesExtractor running into an error when visiting file {}", s.getSourcePath().getFileName().toString(), e);
             }
         }
+        getLogger().lifecycle("Generated " + resultCount + " recipe examples yaml files");
     }
 
     void writeYamlFile(String originalTestFileName, Path outputPath, String data) {
@@ -128,7 +131,7 @@ public class RecipeExamplesTask extends DefaultTask {
             FileWriter writer = new FileWriter(path.toFile());
             writer.write(data);
             writer.close();
-            getLogger().lifecycle("Generated recipe examples yaml '{}' for the test file '{}'",  fileName, originalTestFileName);
+            // getLogger().lifecycle("Generated recipe examples yaml '{}' for the test file '{}'",  fileName, originalTestFileName);
         } catch (IOException e) {
             e.printStackTrace();
         }
