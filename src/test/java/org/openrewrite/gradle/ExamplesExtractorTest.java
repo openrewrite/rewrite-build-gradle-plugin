@@ -551,4 +551,153 @@ class ExamplesExtractorTest implements RewriteTest {
                 """
         );
     }
+
+    @Test
+    void extractPath() {
+        ExamplesExtractor examplesExtractor = new ExamplesExtractor();
+
+        // language=java
+        rewriteRun(
+            spec -> spec.recipe(toRecipe(() -> examplesExtractor))
+                .parser(JavaParser.fromJavaVersion()
+                    .classpath(JavaParser.runtimeClasspath())),
+            java(
+                """
+                    package org.openrewrite.maven;
+
+                    import org.junit.jupiter.api.Test;
+                    import org.openrewrite.DocumentExample;
+                    import org.openrewrite.test.RecipeSpec;
+                    import org.openrewrite.test.RewriteTest;
+                    import org.openrewrite.test.SourceSpecs;
+
+                    import static org.openrewrite.maven.Assertions.pomXml;
+                    import static org.openrewrite.xml.Assertions.xml;
+
+                    class AddGradleEnterpriseMavenExtensionTest implements RewriteTest {
+                        @Override
+                        public void defaults(RecipeSpec spec) {
+                            spec.recipe(new AddGradleEnterpriseMavenExtension("1.17", "https://foo", true));
+                        }
+
+                        private static final SourceSpecs POM_XML_SOURCE_SPEC = pomXml(
+                          ""\"
+                            <project>
+                                <groupId>com.mycompany.app</groupId>
+                                <artifactId>my-app</artifactId>
+                                <version>1</version>
+                            </project>
+                            ""\"
+                        );
+
+                        @DocumentExample
+                        @Test
+                        void addGradleEnterpriseMavenExtensionToExistingExtensionsXmlFile() {
+                            rewriteRun(
+                              pomXml(
+                                ""\"
+                                  <project>
+                                      <groupId>com.mycompany.app</groupId>
+                                      <artifactId>my-app</artifactId>
+                                      <version>1</version>
+                                  </project>
+                                  ""\"
+                              ),
+                              xml(
+                                ""\"
+                                  <?xml version="1.0" encoding="UTF-8"?>
+                                  <extensions>
+                                  </extensions>
+                                  ""\",
+                                ""\"
+                                  <?xml version="1.0" encoding="UTF-8"?>
+                                  <extensions>
+                                    <extension>
+                                      <groupId>com.gradle</groupId>
+                                      <artifactId>gradle-enterprise-maven-extension</artifactId>
+                                      <version>1.17</version>
+                                    </extension>
+                                  </extensions>
+                                  ""\",
+                                spec -> spec.path(".mvn/extensions.xml")
+                              ),
+                              xml(
+                                null,
+                                ""\"
+                                  <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+                                  <gradleEnterprise
+                                      xmlns="https://www.gradle.com/gradle-enterprise-maven" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                                      xsi:schemaLocation="https://www.gradle.com/gradle-enterprise-maven https://www.gradle.com/schema/gradle-enterprise-maven.xsd">
+                                    <server>
+                                      <url>https://foo</url>
+                                      <allowUntrusted>true</allowUntrusted>
+                                    </server>
+                                    <buildScan>
+                                      <backgroundBuildScanUpload>false</backgroundBuildScanUpload>
+                                      <publish>ALWAYS</publish>
+                                    </buildScan>
+                                  </gradleEnterprise>
+                                  ""\",
+                                spec -> spec.path(".mvn/gradle-enterprise.xml")
+                              )
+                            );
+                        }
+                    }
+                    """
+            )
+        );
+        String yaml = examplesExtractor.printRecipeExampleYaml();
+        // language=yaml
+        assertThat(yaml).isEqualTo(
+            """
+                type: specs.openrewrite.org/v1beta/example
+                recipeName: org.openrewrite.maven.AddGradleEnterpriseMavenExtension
+                examples:
+                  - description: ""
+                    parameters:
+                      - "1.17"
+                      - "https://foo"
+                      - true
+                    sources:
+                      - before: |
+                          <project>
+                              <groupId>com.mycompany.app</groupId>
+                              <artifactId>my-app</artifactId>
+                              <version>1</version>
+                          </project>
+                        language: xml
+                      - before: |
+                          <?xml version="1.0" encoding="UTF-8"?>
+                          <extensions>
+                          </extensions>
+                        after: |
+                          <?xml version="1.0" encoding="UTF-8"?>
+                          <extensions>
+                            <extension>
+                              <groupId>com.gradle</groupId>
+                              <artifactId>gradle-enterprise-maven-extension</artifactId>
+                              <version>1.17</version>
+                            </extension>
+                          </extensions>
+                        path: .mvn/extensions.xml
+                        language: xml
+                      - after: |
+                          <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+                          <gradleEnterprise
+                              xmlns="https://www.gradle.com/gradle-enterprise-maven" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                              xsi:schemaLocation="https://www.gradle.com/gradle-enterprise-maven https://www.gradle.com/schema/gradle-enterprise-maven.xsd">
+                            <server>
+                              <url>https://foo</url>
+                              <allowUntrusted>true</allowUntrusted>
+                            </server>
+                            <buildScan>
+                              <backgroundBuildScanUpload>false</backgroundBuildScanUpload>
+                              <publish>ALWAYS</publish>
+                            </buildScan>
+                          </gradleEnterprise>
+                        path: .mvn/gradle-enterprise.xml
+                        language: xml
+                """
+        );
+    }
 }

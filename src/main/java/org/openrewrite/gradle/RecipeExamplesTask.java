@@ -73,8 +73,7 @@ public class RecipeExamplesTask extends DefaultTask {
     }
 
     private void extractExamples(List<File> allJavaFiles, ExecutionContext ctx) {
-        JavaParser.Builder<? extends JavaParser, ?> builder = JavaParser.fromJavaVersion();
-        Parser<?> parser = builder
+        Parser<?> parser = JavaParser.fromJavaVersion()
             .classpath(JavaParser.runtimeClasspath())
             .build();
 
@@ -107,7 +106,7 @@ public class RecipeExamplesTask extends DefaultTask {
                     writeYamlFile(s.getSourcePath().getFileName().toString(), getOutputDirectory(), yamlContent);
                 }
             } catch (Exception e) {
-                getLogger().error("ExamplesExtractor running into an error when visiting file {}", s.getSourcePath().getFileName().toString(), e);
+                getLogger().error("ExamplesExtractor running into an error when visiting file {}", s.getSourcePath().getFileName().toString());
             }
         }
         getLogger().lifecycle("Generated " + resultCount + " recipe examples yaml files");

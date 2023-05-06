@@ -85,7 +85,7 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
     private static final MethodMatcher JAVA_METHOD_MATCHER = new MethodMatcher("org.openrewrite.java.Assertions java(..)");
     private static final MethodMatcher BUILD_GRADLE_METHOD_MATCHER = new MethodMatcher("org.openrewrite.gradle.Assertions buildGradle(..)");
     private static final MethodMatcher POM_XML_METHOD_MATCHER = new MethodMatcher("org.openrewrite.maven.Assertions pomXml(..)");
-    private static final MethodMatcher XML_METHOD_MATCHER = new MethodMatcher("org.openrewrite.xml.Assertions Xml(..)");
+    private static final MethodMatcher XML_METHOD_MATCHER = new MethodMatcher("org.openrewrite.xml.Assertions xml(..)");
     private static final MethodMatcher YAML_METHOD_MATCHER = new MethodMatcher("org.openrewrite.yaml.Assertions yaml(..)");
     private static final MethodMatcher PROTOBUF_METHOD_MATCHER = new MethodMatcher("org.openrewrite.protobuf.proto.Assertions proto(..)");
     private static final MethodMatcher PROPERTIES_METHOD_MATCHER = new MethodMatcher("org.openrewrite.properties.Assertions properties(..)");
@@ -94,6 +94,8 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
     private static final MethodMatcher GROOVY_METHOD_MATCHER = new MethodMatcher("org.openrewrite.groovy.Assertions groovy(..)");
     private static final MethodMatcher SPEC_RECIPE_METHOD_MATCHER = new MethodMatcher("org.openrewrite.test.RecipeSpec recipe(..)");
     private static final MethodMatcher ACTIVE_RECIPES_METHOD_MATCHER = new MethodMatcher("org.openrewrite.config.Environment activateRecipes(..)");
+    private static final MethodMatcher PATH_METHOD_MATCHER = new MethodMatcher("org.openrewrite.test.SourceSpec path(java.lang.String)");
+
 
     private final String recipeType;
     private RecipeNameAndParameters defaultRecipe;
@@ -195,7 +197,7 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
                 defaultRecipe != null ? defaultRecipe.getParameters() : new ArrayList<>());
             this.recipeExamples.add(example);
         } else {
-            System.out.println("Failed to extract an example for method : " + method);
+            // System.out.println("Failed to extract an example for method : " + method);
         }
 
         return method;
@@ -233,22 +235,33 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
 
                 output.append("    sources:\n");
 
+                boolean isFirst = true;
+                String firstPrefix = "      - ";
+                String elsePrefix = "        ";
+
                 for (RecipeExample.Source source : example.getSources()) {
-                    output.append("      - before: |\n");
-                    output.append(indentTextBlock(source.getBefore()));
+                    if (StringUtils.isNotEmpty(source.getBefore())) {
+                        isFirst = false;
+                        output.append(firstPrefix).append("before: |\n");
+                        output.append(indentTextBlock(source.getBefore()));
+                    }
 
                     if (StringUtils.isNotEmpty(source.getAfter())) {
-                        output.append("        after: |\n");
+                        String prefix = isFirst ? firstPrefix : elsePrefix;
+                        isFirst = false;
+                        output.append(prefix).append("after: |\n");
                         output.append(indentTextBlock(source.getAfter()));
                     }
 
                     if (StringUtils.isNotEmpty(source.getPath())) {
-                        output.append("        path: ").append(source.getPath()).append("\n");
+                        output.append(elsePrefix).append("path: ").append(source.getPath()).append("\n");
                     }
 
                     if (StringUtils.isNotEmpty(source.getLanguage())) {
-                        output.append("        language: ").append(source.getLanguage()).append("\n");
+                        output.append(elsePrefix).append("language: ").append(source.getLanguage()).append("\n");
                     }
+
+                    isFirst = true;
                 }
             }
             return output.toString();
@@ -351,6 +364,11 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
                     language = "hcl";
                 } else if (GROOVY_METHOD_MATCHER.matches(method)) {
                     language = "groovy";
+                } else if (PATH_METHOD_MATCHER.matches(method)) {
+                    if (method.getArguments().get(0) instanceof J.Literal) {
+                        source.setPath((String) ((J.Literal) method.getArguments().get(0)).getValue());
+                    }
+                    return method;
                 } else {
                     return method;
                 }
@@ -374,7 +392,7 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
             }
         }.visit(sourceSpecArg, source);
 
-        if (StringUtils.isNotEmpty(source.getBefore())) {
+        if (StringUtils.isNotEmpty(source.getBefore()) || StringUtils.isNotEmpty(source.getAfter())) {
             return source;
         } else {
             return null;
