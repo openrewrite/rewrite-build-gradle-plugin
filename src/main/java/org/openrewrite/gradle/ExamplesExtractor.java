@@ -17,11 +17,14 @@ package org.openrewrite.gradle;
 
 import lombok.Data;
 import org.openrewrite.ExecutionContext;
+import org.openrewrite.InMemoryExecutionContext;
+import org.openrewrite.Parser;
 import org.openrewrite.config.RecipeExample;
 import org.openrewrite.internal.StringUtils;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.AnnotationMatcher;
 import org.openrewrite.java.JavaIsoVisitor;
+import org.openrewrite.java.JavaParser;
 import org.openrewrite.java.MethodMatcher;
 import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
@@ -377,7 +380,6 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
                 }
 
                 source.setLanguage(language);
-
                 List<Expression> args = method.getArguments();
 
                 // arg0 is always `before`. arg1 is optional to be `after`, to adjust if code changed
@@ -390,6 +392,10 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
 
                 if (after != null) {
                     source.setAfter((String) after.getValue());
+                }
+
+                if (StringUtils.isNullOrEmpty(source.getPath())) {
+                    source.setPath(getPath(source.getBefore() != null ? source.getBefore() : source.getAfter(), language));
                 }
                 return method;
             }
@@ -410,6 +416,24 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
         boolean isValid() {
             return StringUtils.isNotEmpty(name);
         }
+    }
+
+    String getPath(String content, String language) {
+        if (content == null) {
+            return null;
+        }
+
+        if (language.equals("java")) {
+            try {
+                List<J.CompilationUnit> cus = JavaParser.fromJavaVersion()
+                    .build().parse(content);
+                if (cus != null && !cus.isEmpty()) {
+                    return cus.get(0).getSourcePath().toString();
+                }
+            } catch (Exception e) {
+            }
+        }
+        return null;
     }
 }
 

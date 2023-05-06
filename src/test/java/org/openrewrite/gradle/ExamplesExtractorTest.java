@@ -114,6 +114,7 @@ class ExamplesExtractorTest implements RewriteTest {
                                 sb.append(1).append(op).append(2);
                             }
                         }
+                      path: A.java
                       language: java
               """
         );
@@ -200,6 +201,7 @@ class ExamplesExtractorTest implements RewriteTest {
                                 sb.append(1).append(op).append(2);
                             }
                         }
+                      path: A.java
                       language: java
               """
         );
@@ -286,6 +288,7 @@ class ExamplesExtractorTest implements RewriteTest {
                                 sb.append(1).append(op).append(2);
                             }
                         }
+                      path: A.java
                       language: java
               """
         );
@@ -408,6 +411,7 @@ class ExamplesExtractorTest implements RewriteTest {
                       - before: |
                           interface In {}
                           interface Out {}
+                        path: In.java
                         language: java
                       - before: |
                           import java.util.function.Function;
@@ -421,6 +425,7 @@ class ExamplesExtractorTest implements RewriteTest {
                               void test(Function<? super In, ? extends Out> f) {
                               }
                           }
+                        path: Test.java
                         language: java
                   - description: ""
                     parameters:
@@ -431,6 +436,7 @@ class ExamplesExtractorTest implements RewriteTest {
                       - before: |
                           interface In {}
                           interface Out {}
+                        path: In.java
                         language: java
                       - before: |
                           import java.util.function.Function;
@@ -444,6 +450,7 @@ class ExamplesExtractorTest implements RewriteTest {
                               void test(Function<In, ? extends Out> f) {
                               }
                           }
+                        path: Test.java
                         language: java
                 """
         );
@@ -547,6 +554,7 @@ class ExamplesExtractorTest implements RewriteTest {
                                   s.getTimeToLive();
                               }
                           }
+                        path: org/openrewrite/example/Test.java
                         language: java
                 """
         );
