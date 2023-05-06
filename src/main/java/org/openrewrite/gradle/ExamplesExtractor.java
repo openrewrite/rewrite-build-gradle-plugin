@@ -316,7 +316,7 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
 
                             return super.visitMethodInvocation(method, recipeNameAndParametersAtomicReference);
                         }
-                    }.visit(method, recipe);
+                    }.visit(tree, recipe);
                 }
                 return super.visitMethodInvocation(method, recipe);
             }
