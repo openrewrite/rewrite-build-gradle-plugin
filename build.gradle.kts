@@ -132,7 +132,7 @@ tasks.named<JavaCompile>("compileJava") {
     options.release.set(8)
 }
 
-val rewriteVersion = "7.40.3"
+val rewriteVersion = "7.40.6"
 
 dependencies {
     compileOnly("org.openrewrite.gradle.tooling:model:latest.release")
@@ -148,7 +148,6 @@ dependencies {
     implementation("org.openrewrite:rewrite-java-8:${rewriteVersion}")
     implementation("org.openrewrite:rewrite-java-11:${rewriteVersion}")
     implementation("org.openrewrite:rewrite-java-17:${rewriteVersion}")
-
 
     compileOnly("org.projectlombok:lombok:latest.release")
     annotationProcessor("org.projectlombok:lombok:latest.release")

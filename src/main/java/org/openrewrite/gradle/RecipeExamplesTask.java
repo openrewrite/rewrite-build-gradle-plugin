@@ -73,13 +73,13 @@ public class RecipeExamplesTask extends DefaultTask {
     }
 
     private void extractExamples(List<File> allJavaFiles, ExecutionContext ctx) {
-        JavaParser.Builder<? extends JavaParser, ?> builder = JavaParser.fromJavaVersion();
-        Parser<?> parser = builder
+        Parser<?> parser = JavaParser.fromJavaVersion()
             .classpath(JavaParser.runtimeClasspath())
             .build();
 
         List<Parser.Input> inputs = new ArrayList<>();
         List<SourceFile> sourceFiles;
+        int resultCount = 0;
 
         for (File file : allJavaFiles) {
             Parser.Input input = new Parser.Input(file.toPath(),
@@ -98,19 +98,18 @@ public class RecipeExamplesTask extends DefaultTask {
         getLogger().lifecycle("Parsing java files finished.");
         for (SourceFile s : sourceFiles) {
             ExamplesExtractor examplesExtractor = new ExamplesExtractor();
-
             try {
                 examplesExtractor.visit(s, ctx);
+                String yamlContent = examplesExtractor.printRecipeExampleYaml();
+                if (StringUtils.isNotEmpty(yamlContent)) {
+                    resultCount++;
+                    writeYamlFile(s.getSourcePath().getFileName().toString(), getOutputDirectory(), yamlContent);
+                }
             } catch (Exception e) {
-                getLogger().error("ExamplesExtractor running into an error when visiting file {}", s.getSourcePath().getFileName().toString(), e);
-                continue;
-            }
-
-            String yamlContent = examplesExtractor.printRecipeExampleYaml();
-            if (StringUtils.isNotEmpty(yamlContent)) {
-                writeYamlFile(s.getSourcePath().getFileName().toString(), getOutputDirectory(), yamlContent);
+                getLogger().error("ExamplesExtractor running into an error when visiting file {}", s.getSourcePath().getFileName().toString());
             }
         }
+        getLogger().lifecycle("Generated " + resultCount + " recipe examples yaml files");
     }
 
     void writeYamlFile(String originalTestFileName, Path outputPath, String data) {
@@ -131,7 +130,7 @@ public class RecipeExamplesTask extends DefaultTask {
             FileWriter writer = new FileWriter(path.toFile());
             writer.write(data);
             writer.close();
-            getLogger().lifecycle("Generated recipe examples yaml '{}' for the test file '{}'",  fileName, originalTestFileName);
+            // getLogger().lifecycle("Generated recipe examples yaml '{}' for the test file '{}'",  fileName, originalTestFileName);
         } catch (IOException e) {
             e.printStackTrace();
         }

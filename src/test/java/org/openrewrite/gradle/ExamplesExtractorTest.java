@@ -60,25 +60,25 @@ class ExamplesExtractorTest implements RewriteTest {
                         rewriteRun(
                           java(
                             \"""
-                                                          class A {
-                                                              void method1() {
-                                                                  StringBuilder sb = new StringBuilder();
-                                                                  String op = "+";
-                                                                  sb.append("A" + op + "B");
-                                                                  sb.append(1 + op + 2);
-                                                              }
-                                                          }
-                                                          \""",
+                              class A {
+                                  void method1() {
+                                      StringBuilder sb = new StringBuilder();
+                                      String op = "+";
+                                      sb.append("A" + op + "B");
+                                      sb.append(1 + op + 2);
+                                  }
+                              }
+                              \""",
                             \"""
-                                                          class A {
-                                                              void method1() {
-                                                                  StringBuilder sb = new StringBuilder();
-                                                                  String op = "+";
-                                                                  sb.append("A").append(op).append("B");
-                                                                  sb.append(1).append(op).append(2);
-                                                              }
-                                                          }
-                                                          \"""
+                              class A {
+                                  void method1() {
+                                      StringBuilder sb = new StringBuilder();
+                                      String op = "+";
+                                      sb.append("A").append(op).append("B");
+                                      sb.append(1).append(op).append(2);
+                                  }
+                              }
+                              \"""
                           )
                         );
                     }
@@ -95,25 +95,26 @@ class ExamplesExtractorTest implements RewriteTest {
               recipeName: org.openrewrite.java.cleanup.ChainStringBuilderAppendCalls
               examples:
                 - description: "Objects concatenation."
-                  before: |
-                    class A {
-                        void method1() {
-                            StringBuilder sb = new StringBuilder();
-                            String op = "+";
-                            sb.append("A" + op + "B");
-                            sb.append(1 + op + 2);
+                  sources:
+                    - before: |
+                        class A {
+                            void method1() {
+                                StringBuilder sb = new StringBuilder();
+                                String op = "+";
+                                sb.append("A" + op + "B");
+                                sb.append(1 + op + 2);
+                            }
                         }
-                    }
-                  after: |
-                    class A {
-                        void method1() {
-                            StringBuilder sb = new StringBuilder();
-                            String op = "+";
-                            sb.append("A").append(op).append("B");
-                            sb.append(1).append(op).append(2);
+                      after: |
+                        class A {
+                            void method1() {
+                                StringBuilder sb = new StringBuilder();
+                                String op = "+";
+                                sb.append("A").append(op).append("B");
+                                sb.append(1).append(op).append(2);
+                            }
                         }
-                    }
-                  language: "java"
+                      language: java
               """
         );
     }
@@ -146,25 +147,25 @@ class ExamplesExtractorTest implements RewriteTest {
                           spec -> spec.recipe(new ChainStringBuilderAppendCalls()),
                           java(
                             \"""
-                                                          class A {
-                                                              void method1() {
-                                                                  StringBuilder sb = new StringBuilder();
-                                                                  String op = "+";
-                                                                  sb.append("A" + op + "B");
-                                                                  sb.append(1 + op + 2);
-                                                              }
-                                                          }
-                                                          \""",
+                              class A {
+                                  void method1() {
+                                      StringBuilder sb = new StringBuilder();
+                                      String op = "+";
+                                      sb.append("A" + op + "B");
+                                      sb.append(1 + op + 2);
+                                  }
+                              }
+                              \""",
                             \"""
-                                                          class A {
-                                                              void method1() {
-                                                                  StringBuilder sb = new StringBuilder();
-                                                                  String op = "+";
-                                                                  sb.append("A").append(op).append("B");
-                                                                  sb.append(1).append(op).append(2);
-                                                              }
-                                                          }
-                                                          \"""
+                              class A {
+                                  void method1() {
+                                      StringBuilder sb = new StringBuilder();
+                                      String op = "+";
+                                      sb.append("A").append(op).append("B");
+                                      sb.append(1).append(op).append(2);
+                                  }
+                              }
+                              \"""
                           )
                         );
                     }
@@ -180,25 +181,26 @@ class ExamplesExtractorTest implements RewriteTest {
               recipeName: org.openrewrite.java.cleanup.ChainStringBuilderAppendCalls
               examples:
                 - description: "Objects concatenation."
-                  before: |
-                    class A {
-                        void method1() {
-                            StringBuilder sb = new StringBuilder();
-                            String op = "+";
-                            sb.append("A" + op + "B");
-                            sb.append(1 + op + 2);
+                  sources:
+                    - before: |
+                        class A {
+                            void method1() {
+                                StringBuilder sb = new StringBuilder();
+                                String op = "+";
+                                sb.append("A" + op + "B");
+                                sb.append(1 + op + 2);
+                            }
                         }
-                    }
-                  after: |
-                    class A {
-                        void method1() {
-                            StringBuilder sb = new StringBuilder();
-                            String op = "+";
-                            sb.append("A").append(op).append("B");
-                            sb.append(1).append(op).append(2);
+                      after: |
+                        class A {
+                            void method1() {
+                                StringBuilder sb = new StringBuilder();
+                                String op = "+";
+                                sb.append("A").append(op).append("B");
+                                sb.append(1).append(op).append(2);
+                            }
                         }
-                    }
-                  language: "java"
+                      language: java
               """
         );
     }
@@ -231,25 +233,25 @@ class ExamplesExtractorTest implements RewriteTest {
                           spec -> spec.recipe(new ChainStringBuilderAppendCalls()),
                           java(
                             \"""
-                                                          class A {
-                                                              void method1() {
-                                                                  StringBuilder sb = new StringBuilder();
-                                                                  String op = "+";
-                                                                  sb.append("A" + op + "B");
-                                                                  sb.append(1 + op + 2);
-                                                              }
-                                                          }
-                                                          \""",
+                              class A {
+                                  void method1() {
+                                      StringBuilder sb = new StringBuilder();
+                                      String op = "+";
+                                      sb.append("A" + op + "B");
+                                      sb.append(1 + op + 2);
+                                  }
+                              }
+                              \""",
                             \"""
-                                                          class A {
-                                                              void method1() {
-                                                                  StringBuilder sb = new StringBuilder();
-                                                                  String op = "+";
-                                                                  sb.append("A").append(op).append("B");
-                                                                  sb.append(1).append(op).append(2);
-                                                              }
-                                                          }
-                                                          \"""
+                              class A {
+                                  void method1() {
+                                      StringBuilder sb = new StringBuilder();
+                                      String op = "+";
+                                      sb.append("A").append(op).append("B");
+                                      sb.append(1).append(op).append(2);
+                                  }
+                              }
+                              \"""
                           )
                         );
                     }
@@ -265,26 +267,438 @@ class ExamplesExtractorTest implements RewriteTest {
               recipeName: org.openrewrite.java.cleanup.ChainStringBuilderAppendCalls
               examples:
                 - description: ""
-                  before: |
-                    class A {
-                        void method1() {
-                            StringBuilder sb = new StringBuilder();
-                            String op = "+";
-                            sb.append("A" + op + "B");
-                            sb.append(1 + op + 2);
+                  sources:
+                    - before: |
+                        class A {
+                            void method1() {
+                                StringBuilder sb = new StringBuilder();
+                                String op = "+";
+                                sb.append("A" + op + "B");
+                                sb.append(1 + op + 2);
+                            }
                         }
-                    }
-                  after: |
-                    class A {
-                        void method1() {
-                            StringBuilder sb = new StringBuilder();
-                            String op = "+";
-                            sb.append("A").append(op).append("B");
-                            sb.append(1).append(op).append(2);
+                      after: |
+                        class A {
+                            void method1() {
+                                StringBuilder sb = new StringBuilder();
+                                String op = "+";
+                                sb.append("A").append(op).append("B");
+                                sb.append(1).append(op).append(2);
+                            }
                         }
-                    }
-                  language: "java"
+                      language: java
               """
+        );
+    }
+
+    @Test
+    void extractParameters() {
+        ExamplesExtractor examplesExtractor = new ExamplesExtractor();
+        // language=java
+        rewriteRun(
+            spec -> spec.recipe(toRecipe(() -> examplesExtractor))
+                .parser(JavaParser.fromJavaVersion()
+                    .classpath(JavaParser.runtimeClasspath())),
+            java(
+                """
+                    package org.openrewrite.java.cleanup;
+
+                    import org.junit.jupiter.api.Test;
+                    import org.openrewrite.DocumentExample;
+                    import org.openrewrite.config.Environment;
+                    import org.openrewrite.test.RecipeSpec;
+                    import org.openrewrite.test.RewriteTest;
+                    import org.openrewrite.test.SourceSpec;
+
+                    import java.util.List;
+
+                    import static org.assertj.core.api.Assertions.assertThat;
+                    import static org.openrewrite.java.Assertions.java;
+
+                            class DeclarationSiteTypeVarianceTest implements RewriteTest {
+
+                                @Override
+                                public void defaults(RecipeSpec spec) {
+                                    spec.recipe(new DeclarationSiteTypeVariance(
+                                        List.of("java.util.function.Function<IN, OUT>"),
+                                        List.of("java.lang.*"),
+                                        true
+                                    ));
+                                }
+
+                                @DocumentExample
+                                @Test
+                                void inOutVariance() {
+                                    rewriteRun(
+                                        java(
+                                            \"""
+                                              interface In {}
+                                              interface Out {}
+                                              \"""
+                                        ),
+                                        java(
+                                            \"""
+                                              import java.util.function.Function;
+                                              class Test {
+                                                  void test(Function<In, Out> f) {
+                                                  }
+                                              }
+                                              \""",
+                                            \"""
+                                              import java.util.function.Function;
+                                              class Test {
+                                                  void test(Function<? super In, ? extends Out> f) {
+                                                  }
+                                              }
+                                              \"""
+                                        )
+                                    );
+                                }
+
+                                @DocumentExample
+                                @Test
+                                void invariance() {
+                                    rewriteRun(
+                                        spec -> spec.recipe(new DeclarationSiteTypeVariance(
+                                            List.of("java.util.function.Function<INVARIANT, OUT>"),
+                                            List.of("java.lang.*"),
+                                            null
+                                        )),
+                                        java(
+                                            \"""
+                                              interface In {}
+                                              interface Out {}
+                                              \"""
+                                        ),
+                                        java(
+                                            \"""
+                                              import java.util.function.Function;
+                                              class Test {
+                                                  void test(Function<In, Out> f) {
+                                                  }
+                                              }
+                                              \""",
+                                            \"""
+                                              import java.util.function.Function;
+                                              class Test {
+                                                  void test(Function<In, ? extends Out> f) {
+                                                  }
+                                              }
+                                              \"""
+                                        )
+                                    );
+                                }
+                            }
+                    """
+            )
+        );
+        String yaml = examplesExtractor.printRecipeExampleYaml();
+        // language=yaml
+        assertThat(yaml).isEqualTo(
+            """
+                type: specs.openrewrite.org/v1beta/example
+                recipeName: org.openrewrite.java.cleanup.DeclarationSiteTypeVariance
+                examples:
+                  - description: ""
+                    parameters:
+                      - List.of("java.util.function.Function<IN, OUT>")
+                      - List.of("java.lang.*")
+                      - true
+                    sources:
+                      - before: |
+                          interface In {}
+                          interface Out {}
+                        language: java
+                      - before: |
+                          import java.util.function.Function;
+                          class Test {
+                              void test(Function<In, Out> f) {
+                              }
+                          }
+                        after: |
+                          import java.util.function.Function;
+                          class Test {
+                              void test(Function<? super In, ? extends Out> f) {
+                              }
+                          }
+                        language: java
+                  - description: ""
+                    parameters:
+                      - List.of("java.util.function.Function<INVARIANT, OUT>")
+                      - List.of("java.lang.*")
+                      - null
+                    sources:
+                      - before: |
+                          interface In {}
+                          interface Out {}
+                        language: java
+                      - before: |
+                          import java.util.function.Function;
+                          class Test {
+                              void test(Function<In, Out> f) {
+                              }
+                          }
+                        after: |
+                          import java.util.function.Function;
+                          class Test {
+                              void test(Function<In, ? extends Out> f) {
+                              }
+                          }
+                        language: java
+                """
+        );
+    }
+
+    @Test
+    void extractYamlRecipe() {
+        ExamplesExtractor examplesExtractor = new ExamplesExtractor();
+        // language=java
+        rewriteRun(
+            spec -> spec.recipe(toRecipe(() -> examplesExtractor))
+                .parser(JavaParser.fromJavaVersion()
+                    .classpath(JavaParser.runtimeClasspath())),
+            java(
+                """
+                    package org.openrewrite.java.migrate.net;
+
+                    import org.junit.jupiter.api.Test;
+                    import org.openrewrite.DocumentExample;
+                    import org.openrewrite.config.Environment;
+                    import org.openrewrite.test.RecipeSpec;
+                    import org.openrewrite.test.RewriteTest;
+
+                    import static org.openrewrite.java.Assertions.java;
+
+                    class JavaNetAPIsTest implements RewriteTest {
+                        @Override
+                        public void defaults(RecipeSpec spec) {
+                            spec.recipe(
+                              Environment.builder()
+                                .scanRuntimeClasspath("org.openrewrite.java.migrate.net")
+                                .build()
+                                .activateRecipes("org.openrewrite.java.migrate.net.JavaNetAPIs"));
+                        }
+
+                        @DocumentExample
+                        @Test
+                        void multicastSocketGetTTLToGetTimeToLive() {
+                            //language=java
+                            rewriteRun(
+                              java(
+                                ""\"
+                                  package org.openrewrite.example;
+
+                                  import java.net.MulticastSocket;
+
+                                  public class Test {
+                                      public static void method() {
+                                          MulticastSocket s = new MulticastSocket(0);
+                                          s.getTTL();
+                                      }
+                                  }
+                                  ""\",
+                                ""\"
+                                  package org.openrewrite.example;
+
+                                  import java.net.MulticastSocket;
+
+                                  public class Test {
+                                      public static void method() {
+                                          MulticastSocket s = new MulticastSocket(0);
+                                          s.getTimeToLive();
+                                      }
+                                  }
+                                  ""\"
+                              )
+                            );
+                        }
+                    }
+                    """
+            )
+        );
+        String yaml = examplesExtractor.printRecipeExampleYaml();
+        // language=yaml
+        assertThat(yaml).isEqualTo(
+            """
+                type: specs.openrewrite.org/v1beta/example
+                recipeName: org.openrewrite.java.migrate.net.JavaNetAPIs
+                examples:
+                  - description: ""
+                    sources:
+                      - before: |
+                          package org.openrewrite.example;
+                         \s
+                          import java.net.MulticastSocket;
+                         \s
+                          public class Test {
+                              public static void method() {
+                                  MulticastSocket s = new MulticastSocket(0);
+                                  s.getTTL();
+                              }
+                          }
+                        after: |
+                          package org.openrewrite.example;
+                         \s
+                          import java.net.MulticastSocket;
+                         \s
+                          public class Test {
+                              public static void method() {
+                                  MulticastSocket s = new MulticastSocket(0);
+                                  s.getTimeToLive();
+                              }
+                          }
+                        language: java
+                """
+        );
+    }
+
+    @Test
+    void extractPath() {
+        ExamplesExtractor examplesExtractor = new ExamplesExtractor();
+
+        // language=java
+        rewriteRun(
+            spec -> spec.recipe(toRecipe(() -> examplesExtractor))
+                .parser(JavaParser.fromJavaVersion()
+                    .classpath(JavaParser.runtimeClasspath())),
+            java(
+                """
+                    package org.openrewrite.maven;
+
+                    import org.junit.jupiter.api.Test;
+                    import org.openrewrite.DocumentExample;
+                    import org.openrewrite.test.RecipeSpec;
+                    import org.openrewrite.test.RewriteTest;
+                    import org.openrewrite.test.SourceSpecs;
+
+                    import static org.openrewrite.maven.Assertions.pomXml;
+                    import static org.openrewrite.xml.Assertions.xml;
+
+                    class AddGradleEnterpriseMavenExtensionTest implements RewriteTest {
+                        @Override
+                        public void defaults(RecipeSpec spec) {
+                            spec.recipe(new AddGradleEnterpriseMavenExtension("1.17", "https://foo", true));
+                        }
+
+                        private static final SourceSpecs POM_XML_SOURCE_SPEC = pomXml(
+                          ""\"
+                            <project>
+                                <groupId>com.mycompany.app</groupId>
+                                <artifactId>my-app</artifactId>
+                                <version>1</version>
+                            </project>
+                            ""\"
+                        );
+
+                        @DocumentExample
+                        @Test
+                        void addGradleEnterpriseMavenExtensionToExistingExtensionsXmlFile() {
+                            rewriteRun(
+                              pomXml(
+                                ""\"
+                                  <project>
+                                      <groupId>com.mycompany.app</groupId>
+                                      <artifactId>my-app</artifactId>
+                                      <version>1</version>
+                                  </project>
+                                  ""\"
+                              ),
+                              xml(
+                                ""\"
+                                  <?xml version="1.0" encoding="UTF-8"?>
+                                  <extensions>
+                                  </extensions>
+                                  ""\",
+                                ""\"
+                                  <?xml version="1.0" encoding="UTF-8"?>
+                                  <extensions>
+                                    <extension>
+                                      <groupId>com.gradle</groupId>
+                                      <artifactId>gradle-enterprise-maven-extension</artifactId>
+                                      <version>1.17</version>
+                                    </extension>
+                                  </extensions>
+                                  ""\",
+                                spec -> spec.path(".mvn/extensions.xml")
+                              ),
+                              xml(
+                                null,
+                                ""\"
+                                  <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+                                  <gradleEnterprise
+                                      xmlns="https://www.gradle.com/gradle-enterprise-maven" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                                      xsi:schemaLocation="https://www.gradle.com/gradle-enterprise-maven https://www.gradle.com/schema/gradle-enterprise-maven.xsd">
+                                    <server>
+                                      <url>https://foo</url>
+                                      <allowUntrusted>true</allowUntrusted>
+                                    </server>
+                                    <buildScan>
+                                      <backgroundBuildScanUpload>false</backgroundBuildScanUpload>
+                                      <publish>ALWAYS</publish>
+                                    </buildScan>
+                                  </gradleEnterprise>
+                                  ""\",
+                                spec -> spec.path(".mvn/gradle-enterprise.xml")
+                              )
+                            );
+                        }
+                    }
+                    """
+            )
+        );
+        String yaml = examplesExtractor.printRecipeExampleYaml();
+        // language=yaml
+        assertThat(yaml).isEqualTo(
+            """
+                type: specs.openrewrite.org/v1beta/example
+                recipeName: org.openrewrite.maven.AddGradleEnterpriseMavenExtension
+                examples:
+                  - description: ""
+                    parameters:
+                      - "1.17"
+                      - "https://foo"
+                      - true
+                    sources:
+                      - before: |
+                          <project>
+                              <groupId>com.mycompany.app</groupId>
+                              <artifactId>my-app</artifactId>
+                              <version>1</version>
+                          </project>
+                        path: pom.xml
+                        language: xml
+                      - before: |
+                          <?xml version="1.0" encoding="UTF-8"?>
+                          <extensions>
+                          </extensions>
+                        after: |
+                          <?xml version="1.0" encoding="UTF-8"?>
+                          <extensions>
+                            <extension>
+                              <groupId>com.gradle</groupId>
+                              <artifactId>gradle-enterprise-maven-extension</artifactId>
+                              <version>1.17</version>
+                            </extension>
+                          </extensions>
+                        path: .mvn/extensions.xml
+                        language: xml
+                      - after: |
+                          <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+                          <gradleEnterprise
+                              xmlns="https://www.gradle.com/gradle-enterprise-maven" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                              xsi:schemaLocation="https://www.gradle.com/gradle-enterprise-maven https://www.gradle.com/schema/gradle-enterprise-maven.xsd">
+                            <server>
+                              <url>https://foo</url>
+                              <allowUntrusted>true</allowUntrusted>
+                            </server>
+                            <buildScan>
+                              <backgroundBuildScanUpload>false</backgroundBuildScanUpload>
+                              <publish>ALWAYS</publish>
+                            </buildScan>
+                          </gradleEnterprise>
+                        path: .mvn/gradle-enterprise.xml
+                        language: xml
+                """
         );
     }
 }
