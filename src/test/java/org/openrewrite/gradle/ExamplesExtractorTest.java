@@ -665,6 +665,7 @@ class ExamplesExtractorTest implements RewriteTest {
                               <artifactId>my-app</artifactId>
                               <version>1</version>
                           </project>
+                        path: pom.xml
                         language: xml
                       - before: |
                           <?xml version="1.0" encoding="UTF-8"?>

@@ -348,9 +348,12 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
                 if (JAVA_METHOD_MATCHER.matches(method)) {
                     language = "java";
                 } else if (BUILD_GRADLE_METHOD_MATCHER.matches(method)) {
+                    source.setPath("build.gradle");
                     language = "groovy";
-                } else if (POM_XML_METHOD_MATCHER.matches(method) ||
-                           XML_METHOD_MATCHER.matches(method)) {
+                } else if (POM_XML_METHOD_MATCHER.matches(method)) {
+                    source.setPath("pom.xml");
+                    language = "xml";
+                } else if (XML_METHOD_MATCHER.matches(method)) {
                     language = "xml";
                 } else if (YAML_METHOD_MATCHER.matches(method)) {
                     language = "yaml";
