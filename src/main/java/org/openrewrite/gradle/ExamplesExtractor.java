@@ -232,7 +232,12 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
                 if (!params.isEmpty()) {
                     output.append("    parameters:\n");
                     for (String param : params) {
-                        output.append("      - ").append(param).append("\n");
+                        if (param.contains("\n")) {
+                            output.append("      - |\n");
+                            output.append(indentTextBlock(param));
+                        } else {
+                            output.append("      - ").append(param).append("\n");
+                        }
                     }
                 }
 
@@ -331,7 +336,12 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
             if (arg instanceof J.Empty) {
                 return null;
             } else if (arg instanceof J.Literal) {
-                return ((J.Literal) arg).getValueSource();
+                J.Literal literal = (J.Literal) arg;
+                if (literal.getValue() != null) {
+                    return literal.getValue().toString();
+                } else {
+                    return ((J.Literal) arg).getValueSource();
+                }
             } else {
                 return arg.toString();
             }

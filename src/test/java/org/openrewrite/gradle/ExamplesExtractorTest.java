@@ -663,8 +663,8 @@ class ExamplesExtractorTest implements RewriteTest {
                 examples:
                   - description: ""
                     parameters:
-                      - "1.17"
-                      - "https://foo"
+                      - 1.17
+                      - https://foo
                       - true
                     sources:
                       - before: |
@@ -709,4 +709,111 @@ class ExamplesExtractorTest implements RewriteTest {
                 """
         );
     }
+
+    @Test
+    void textBlockAsParameter() {
+        ExamplesExtractor examplesExtractor = new ExamplesExtractor();
+
+        // language=java
+        rewriteRun(
+            spec -> spec.recipe(toRecipe(() -> examplesExtractor))
+                .parser(JavaParser.fromJavaVersion()
+                    .classpath(JavaParser.runtimeClasspath())),
+            java(
+                """
+                    package org.openrewrite.yaml;
+
+                    import org.junit.jupiter.api.Disabled;
+                    import org.junit.jupiter.api.Test;
+                    import org.openrewrite.Issue;
+                    import org.openrewrite.DocumentExample;
+                    import org.openrewrite.test.RewriteTest;
+
+                    import static org.openrewrite.yaml.Assertions.yaml;
+
+                    class MergeYamlTest implements RewriteTest {
+
+                        @DocumentExample
+                        @Test
+                        void nonExistentBlock() {
+                            rewriteRun(
+                              spec -> spec.recipe(new MergeYaml(
+                                "$.spec",
+                                //language=yaml
+                                ""\"
+                                                      lifecycleRule:
+                                                          - action:
+                                                                type: Delete
+                                                            condition:
+                                                                age: 7
+                                                      ""\",
+                                false,
+                                null,
+                                null
+                              )),
+                              yaml(
+                                ""\"
+                                                      apiVersion: storage.cnrm.cloud.google.com/v1beta1
+                                                      kind: StorageBucket
+                                                      spec:
+                                                          bucketPolicyOnly: true
+                                                      ""\",
+                                ""\"
+                                                      apiVersion: storage.cnrm.cloud.google.com/v1beta1
+                                                      kind: StorageBucket
+                                                      spec:
+                                                          bucketPolicyOnly: true
+                                                          lifecycleRule:
+                                                              - action:
+                                                                    type: Delete
+                                                                condition:
+                                                                    age: 7
+                                                      ""\"
+                              )
+                            );
+                        }
+                    }
+                                        """
+            )
+        );
+        String yaml = examplesExtractor.printRecipeExampleYaml();
+        // language=yaml
+        assertThat(yaml).isEqualTo(
+            """
+                type: specs.openrewrite.org/v1beta/example
+                recipeName: org.openrewrite.yaml.MergeYaml
+                examples:
+                  - description: ""
+                    parameters:
+                      - $.spec
+                      - |
+                          lifecycleRule:
+                              - action:
+                                    type: Delete
+                                condition:
+                                    age: 7
+                      - false
+                      - null
+                      - null
+                    sources:
+                      - before: |
+                          apiVersion: storage.cnrm.cloud.google.com/v1beta1
+                          kind: StorageBucket
+                          spec:
+                              bucketPolicyOnly: true
+                        after: |
+                          apiVersion: storage.cnrm.cloud.google.com/v1beta1
+                          kind: StorageBucket
+                          spec:
+                              bucketPolicyOnly: true
+                              lifecycleRule:
+                                  - action:
+                                        type: Delete
+                                    condition:
+                                        age: 7
+                        language: yaml
+                """
+        );
+    }
+
 }
