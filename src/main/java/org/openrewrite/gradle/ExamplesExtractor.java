@@ -232,12 +232,11 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
                 if (!params.isEmpty()) {
                     output.append("    parameters:\n");
                     for (String param : params) {
-                        param = escapeAsterisk(param);
                         if (param.contains("\n")) {
                             output.append("      - |\n");
                             output.append(indentTextBlock(param));
                         } else {
-                            output.append("      - ").append(param).append("\n");
+                            output.append("      - ").append(quota(param)).append("\n");
                         }
                     }
                 }
@@ -284,11 +283,13 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
             return str;
         }
 
-        public static String escapeAsterisk(String input) {
-            if (input.startsWith("*")) {
-                input = "\"" + input + "\"";
+        // it needs to quota since yaml has many specific characters like  :, {, [, }, ], ,, &, *, #, ?, |, -, <, >, =, !, %
+        public static String quota(String param) {
+            param = param.replace("\"" , "\\\"");
+            if (!param.startsWith("\"")) {
+                param = "\"" + param + "\"";
             }
-            return input;
+            return param;
         }
     }
 

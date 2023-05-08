@@ -404,9 +404,9 @@ class ExamplesExtractorTest implements RewriteTest {
                 examples:
                   - description: ""
                     parameters:
-                      - List.of("java.util.function.Function<IN, OUT>")
-                      - List.of("java.lang.*")
-                      - true
+                      - "List.of("java.util.function.Function<IN, OUT>")"
+                      - "List.of("java.lang.*")"
+                      - "true"
                     sources:
                       - before: |
                           interface In {}
@@ -429,9 +429,9 @@ class ExamplesExtractorTest implements RewriteTest {
                         language: java
                   - description: ""
                     parameters:
-                      - List.of("java.util.function.Function<INVARIANT, OUT>")
-                      - List.of("java.lang.*")
-                      - null
+                      - "List.of("java.util.function.Function<INVARIANT, OUT>")"
+                      - "List.of("java.lang.*")"
+                      - "null"
                     sources:
                       - before: |
                           interface In {}
@@ -663,9 +663,9 @@ class ExamplesExtractorTest implements RewriteTest {
                 examples:
                   - description: ""
                     parameters:
-                      - 1.17
-                      - https://foo
-                      - true
+                      - "1.17"
+                      - "https://foo"
+                      - "true"
                     sources:
                       - before: |
                           <project>
@@ -773,7 +773,7 @@ class ExamplesExtractorTest implements RewriteTest {
                             );
                         }
                     }
-                                        """
+                    """
             )
         );
         String yaml = examplesExtractor.printRecipeExampleYaml();
@@ -785,16 +785,16 @@ class ExamplesExtractorTest implements RewriteTest {
                 examples:
                   - description: ""
                     parameters:
-                      - $.spec
+                      - "$.spec"
                       - |
                           lifecycleRule:
                               - action:
                                     type: Delete
                                 condition:
                                     age: 7
-                      - false
-                      - null
-                      - null
+                      - "false"
+                      - "null"
+                      - "null"
                     sources:
                       - before: |
                           apiVersion: storage.cnrm.cloud.google.com/v1beta1
@@ -842,7 +842,7 @@ class ExamplesExtractorTest implements RewriteTest {
                         @Test
                         void worksWithEmptyStringConfig() {
                             rewriteRun(
-                              spec -> spec.recipe(new ChangeDependencyExtension("org.openrewrite", "*", "war", "")),
+                              spec -> spec.recipe(new ChangeDependencyExtension("org.openrewrite", "*", "war", Collections.singletonList("com.jcraft:jsch"))),
                               buildGradle(
                                 ""\"
                                       plugins {
@@ -886,10 +886,10 @@ class ExamplesExtractorTest implements RewriteTest {
                 examples:
                   - description: ""
                     parameters:
-                      - org.openrewrite
+                      - "org.openrewrite"
                       - "*"
-                      - war
-                      -\s
+                      - "war"
+                      - "Collections.singletonList(\\"com.jcraft:jsch\\")"
                     sources:
                       - before: |
                           plugins {
