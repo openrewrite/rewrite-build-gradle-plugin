@@ -404,8 +404,8 @@ class ExamplesExtractorTest implements RewriteTest {
                 examples:
                   - description: ""
                     parameters:
-                      - "List.of("java.util.function.Function<IN, OUT>")"
-                      - "List.of("java.lang.*")"
+                      - "List.of(\\"java.util.function.Function<IN, OUT>\\")"
+                      - "List.of(\\"java.lang.*\\")"
                       - "true"
                     sources:
                       - before: |
@@ -429,8 +429,8 @@ class ExamplesExtractorTest implements RewriteTest {
                         language: java
                   - description: ""
                     parameters:
-                      - "List.of("java.util.function.Function<INVARIANT, OUT>")"
-                      - "List.of("java.lang.*")"
+                      - "List.of(\\"java.util.function.Function<INVARIANT, OUT>\\")"
+                      - "List.of(\\"java.lang.*\\")"
                       - "null"
                     sources:
                       - before: |
