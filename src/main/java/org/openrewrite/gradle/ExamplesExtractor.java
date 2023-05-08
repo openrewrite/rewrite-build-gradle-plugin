@@ -232,6 +232,7 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
                 if (!params.isEmpty()) {
                     output.append("    parameters:\n");
                     for (String param : params) {
+                        param = escapeAsterisk(param);
                         if (param.contains("\n")) {
                             output.append("      - |\n");
                             output.append(indentTextBlock(param));
@@ -281,6 +282,13 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
                 str = str + "\n";
             }
             return str;
+        }
+
+        public static String escapeAsterisk(String input) {
+            if (input.startsWith("*")) {
+                input = "\"" + input + "\"";
+            }
+            return input;
         }
     }
 

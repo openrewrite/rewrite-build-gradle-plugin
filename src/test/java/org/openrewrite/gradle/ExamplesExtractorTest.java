@@ -816,4 +816,108 @@ class ExamplesExtractorTest implements RewriteTest {
         );
     }
 
+    @Test
+    void starAsParameter() {
+        ExamplesExtractor examplesExtractor = new ExamplesExtractor();
+
+        // language=java
+        rewriteRun(
+            spec -> spec.recipe(toRecipe(() -> examplesExtractor))
+                .parser(JavaParser.fromJavaVersion()
+                    .classpath(JavaParser.runtimeClasspath())),
+            java(
+                """
+                    package org.openrewrite.gradle;
+
+                    import org.junit.jupiter.api.Test;
+                    import org.junit.jupiter.params.ParameterizedTest;
+                    import org.junit.jupiter.params.provider.CsvSource;
+                    import org.openrewrite.DocumentExample;
+                    import org.openrewrite.test.RewriteTest;
+
+                    import static org.openrewrite.gradle.Assertions.buildGradle;
+
+                    class ChangeDependencyExtensionTest implements RewriteTest {
+                        @DocumentExample
+                        @Test
+                        void worksWithEmptyStringConfig() {
+                            rewriteRun(
+                              spec -> spec.recipe(new ChangeDependencyExtension("org.openrewrite", "*", "war", "")),
+                              buildGradle(
+                                ""\"
+                                      plugins {
+                                          id 'java-library'
+                                      }
+                                       \s
+                                      repositories {
+                                          mavenCentral()
+                                      }
+                                     \s
+                                      dependencies {
+                                          api 'org.openrewrite:rewrite-gradle:latest.integration@jar'
+                                      }
+                                      ""\",
+                                ""\"
+                                      plugins {
+                                          id 'java-library'
+                                      }
+                                       \s
+                                      repositories {
+                                          mavenCentral()
+                                      }
+                                     \s
+                                      dependencies {
+                                          api 'org.openrewrite:rewrite-gradle:latest.integration@war'
+                                      }
+                                      ""\"
+                              )
+                            );
+                        }
+                    }
+                    """
+            )
+        );
+        String yaml = examplesExtractor.printRecipeExampleYaml();
+        // language=yaml
+        assertThat(yaml).isEqualTo(
+            """
+                type: specs.openrewrite.org/v1beta/example
+                recipeName: org.openrewrite.gradle.ChangeDependencyExtension
+                examples:
+                  - description: ""
+                    parameters:
+                      - org.openrewrite
+                      - "*"
+                      - war
+                      -\s
+                    sources:
+                      - before: |
+                          plugins {
+                              id 'java-library'
+                          }
+                         \s
+                          repositories {
+                              mavenCentral()
+                          }
+                         \s
+                          dependencies {
+                              api 'org.openrewrite:rewrite-gradle:latest.integration@jar'
+                          }
+                        after: |
+                          plugins {
+                              id 'java-library'
+                          }
+                         \s
+                          repositories {
+                              mavenCentral()
+                          }
+                         \s
+                          dependencies {
+                              api 'org.openrewrite:rewrite-gradle:latest.integration@war'
+                          }
+                        path: build.gradle
+                        language: groovy
+                """
+        );
+    }
 }
