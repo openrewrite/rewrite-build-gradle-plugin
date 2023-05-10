@@ -112,8 +112,7 @@ public class RewriteJavaPlugin implements Plugin<Project> {
 //        );
 
         project.getTasks().named("test", Test.class, task -> {
-            task.getExtensions().getExtraProperties().set(
-                    "maxParallelForks",
+            task.setMaxParallelForks(
                     Runtime.getRuntime().availableProcessors() / 2 > 0 ?
                             Runtime.getRuntime().availableProcessors() : 1
             );
