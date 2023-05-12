@@ -54,6 +54,7 @@ public class RewriteLicensePlugin implements Plugin<Project> {
             ext.mapping(new HashMap<String, String>() {{
                 put("kt", "SLASHSTAR_STYLE");
                 put("java", "SLASHSTAR_STYLE");
+                put("ts", "SLASHSTAR_STYLE");
             }});
             ext.setStrictCheck(true);
         });
