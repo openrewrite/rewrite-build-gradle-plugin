@@ -9,6 +9,7 @@ plugins {
     id("nebula.maven-apache-license") version "18.4.0"
     id("com.gradle.plugin-publish") version "1.1.0"
     id("com.github.hierynomus.license") version "0.16.1"
+    // id("com.github.jk1.license-report") version "latest.release"
 }
 
 group = "org.openrewrite"
@@ -129,7 +130,7 @@ java {
 }
 
 tasks.named<JavaCompile>("compileJava") {
-    options.release.set(8)
+    options.release.set(11)
 }
 
 val rewriteVersion = "7.40.6"
@@ -155,6 +156,7 @@ dependencies {
     implementation("org.apache.ivy:ivy:2.5.1")
     implementation("gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:latest.release")
     implementation("com.github.jk1:gradle-license-report:latest.release")
+
     implementation("org.owasp:dependency-check-gradle:latest.release")
     implementation("com.netflix.nebula:gradle-contacts-plugin:latest.release")
     implementation("com.netflix.nebula:gradle-info-plugin:latest.release")
