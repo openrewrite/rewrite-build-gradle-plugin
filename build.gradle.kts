@@ -155,7 +155,6 @@ dependencies {
     implementation("org.apache.ivy:ivy:2.5.1")
     implementation("gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:latest.release")
     implementation("com.github.jk1:gradle-license-report:1.16")
-
     implementation("org.owasp:dependency-check-gradle:latest.release")
     implementation("com.netflix.nebula:gradle-contacts-plugin:latest.release")
     implementation("com.netflix.nebula:gradle-info-plugin:latest.release")
