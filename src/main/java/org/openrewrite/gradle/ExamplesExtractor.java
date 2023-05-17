@@ -30,10 +30,10 @@ import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
 import org.openrewrite.java.tree.TypeUtils;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.Yaml;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -221,75 +221,54 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
                 return "";
             }
 
-            StringBuilder output = new StringBuilder();
-            output.append("type: ").append(recipeType).append("\n");
-            output.append("recipeName: ").append(recipe.getName()).append("\n");
-            output.append("examples:\n");
+            Map<String, Object> data = new LinkedHashMap<>();
+            DumperOptions options = new DumperOptions();
+            options.setDefaultFlowStyle(DumperOptions.FlowStyle.FLOW);
+
+            data.put("type", recipeType);
+            data.put("recipeName", recipe.getName());
+            List<Map<String, Object>> examplesData = new ArrayList<>();
+
 
             for (RecipeExample example : examples) {
-                output.append("  - description: \"").append(example.getDescription() == null ? "" : example.getDescription()).append("\"\n");
+                Map<String, Object> exampleData = new LinkedHashMap<>();
+                exampleData.put("description", example.getDescription() == null ? "" : example.getDescription());
+
                 List<String> params = usingDefaultRecipe ? recipe.getParameters() : example.getParameters();
-                if (!params.isEmpty()) {
-                    output.append("    parameters:\n");
-                    for (String param : params) {
-                        if (param.contains("\n")) {
-                            output.append("      - |\n");
-                            output.append(indentTextBlock(param));
-                        } else {
-                            output.append("      - ").append(quota(param)).append("\n");
-                        }
-                    }
+                if (params != null && !params.isEmpty()) {
+                    exampleData.put("parameters", params);
                 }
 
-                output.append("    sources:\n");
-
-                boolean isFirst = true;
-                String firstPrefix = "      - ";
-                String elsePrefix = "        ";
-
+                List<Map<String, String>> sourcesData = new ArrayList<>();
                 for (RecipeExample.Source source : example.getSources()) {
+
+                    Map<String, String> sourceData = new LinkedHashMap<>();
                     if (StringUtils.isNotEmpty(source.getBefore())) {
-                        isFirst = false;
-                        output.append(firstPrefix).append("before: |\n");
-                        output.append(indentTextBlock(source.getBefore()));
+                        sourceData.put("before", source.getBefore());
                     }
 
                     if (StringUtils.isNotEmpty(source.getAfter())) {
-                        String prefix = isFirst ? firstPrefix : elsePrefix;
-                        isFirst = false;
-                        output.append(prefix).append("after: |\n");
-                        output.append(indentTextBlock(source.getAfter()));
+                        sourceData.put("after", source.getAfter());
                     }
 
                     if (StringUtils.isNotEmpty(source.getPath())) {
-                        output.append(elsePrefix).append("path: ").append(source.getPath()).append("\n");
+                        sourceData.put("path", source.getPath());
                     }
 
                     if (StringUtils.isNotEmpty(source.getLanguage())) {
-                        output.append(elsePrefix).append("language: ").append(source.getLanguage()).append("\n");
+                        sourceData.put("language", source.getLanguage());
                     }
 
-                    isFirst = true;
+                    sourcesData.add(sourceData);
                 }
-            }
-            return output.toString();
-        }
 
-        private String indentTextBlock(String text) {
-            String str = "          " + text.replace("\n", "\n          ").trim();
-            if (!str.endsWith("\n")) {
-                str = str + "\n";
+                exampleData.put("sources", sourcesData);
+                examplesData.add(exampleData);
             }
-            return str;
-        }
 
-        // it needs to quota since yaml has many specific characters like  :, {, [, }, ], ,, &, *, #, ?, |, -, <, >, =, !, %
-        public static String quota(String param) {
-            param = param.replace("\"" , "\\\"");
-            if (!param.startsWith("\"")) {
-                param = "\"" + param + "\"";
-            }
-            return param;
+            data.put("examples", examplesData);
+            Yaml yaml = new Yaml();
+            return yaml.dumpAsMap(data);
         }
     }
 
