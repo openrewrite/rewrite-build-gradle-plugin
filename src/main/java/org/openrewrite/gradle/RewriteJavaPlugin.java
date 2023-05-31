@@ -111,11 +111,17 @@ public class RewriteJavaPlugin implements Plugin<Project> {
 //                        ext.getMaxFailures().set(4))
 //        );
 
-        project.getTasks().named("test", Test.class, task -> {
-            task.setMaxParallelForks(
-                    Runtime.getRuntime().availableProcessors() / 2 > 0 ?
-                            Runtime.getRuntime().availableProcessors() : 1
-            );
+        project.getTasks().withType(Test.class).configureEach(task -> {
+            if(System.getenv("CI") == null) {
+                // Developer machines typically use CPUs with hyper-threading, so the logical core count is double
+                // what is useful to enable
+                task.setMaxParallelForks(
+                        Runtime.getRuntime().availableProcessors() / 2 > 0 ?
+                                Runtime.getRuntime().availableProcessors() / 2 : 1
+                );
+            } else {
+                task.setMaxParallelForks(Runtime.getRuntime().availableProcessors());
+            }
             task.useJUnitPlatform(junit -> junit.excludeTags("debug"));
             task.jvmArgs(
                     "-XX:+UnlockDiagnosticVMOptions",
