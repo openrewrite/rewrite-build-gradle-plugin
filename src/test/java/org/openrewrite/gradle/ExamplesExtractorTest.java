@@ -26,6 +26,32 @@ import static org.openrewrite.test.RewriteTest.toRecipe;
 
 class ExamplesExtractorTest implements RewriteTest {
 
+    private static final String RECIPE_JAVA_FILE = """
+        package org.openrewrite.staticanalysis;
+
+        import org.openrewrite.ExecutionContext;
+        import org.openrewrite.Recipe;
+        import org.openrewrite.TreeVisitor;
+        import org.openrewrite.java.JavaIsoVisitor;
+        public class ChainStringBuilderAppendCalls extends Recipe {
+            @Override
+            public String getDisplayName() {
+                return "Chain `StringBuilder.append()` calls";
+            }
+
+            @Override
+            public String getDescription() {
+                return "String concatenation within calls to `StringBuilder.append()` causes unnecessary memory allocation. Except for concatenations of String literals, which are joined together at compile time. Replaces inefficient concatenations with chained calls to `StringBuilder.append()`.";
+            }
+
+            @Override
+            public TreeVisitor<?, ExecutionContext> getVisitor() {
+                return new JavaIsoVisitor<ExecutionContext>(){
+                };
+            }
+        }
+        """;
+
     @Test
     void extractJavaExampleWithDefault() {
         ExamplesExtractor examplesExtractor = new ExamplesExtractor();
@@ -35,55 +61,56 @@ class ExamplesExtractorTest implements RewriteTest {
                 .parser(JavaParser.fromJavaVersion()
                     .classpath(JavaParser.runtimeClasspath())
                 ),
+            java(RECIPE_JAVA_FILE),
             java(
                 """
-                package org.openrewrite.java.cleanup;
-                
-                import org.junit.jupiter.api.Test;
-                import org.openrewrite.Recipe;
-                import org.openrewrite.DocumentExample;
-                import org.openrewrite.test.RecipeSpec;
-                import org.openrewrite.test.RewriteTest;
-                
-                import static org.openrewrite.java.Assertions.java;
-                
-                class ChainStringBuilderAppendCallsTest implements RewriteTest {
-                    @Override
-                    public void defaults(RecipeSpec spec) {
-                        Recipe recipe = new ChainStringBuilderAppendCalls();
-                        spec.recipe(recipe);
-                    }
-    
-                    @DocumentExample(value = "Objects concatenation.")
-                    @Test
-                    void objectsConcatenation() {
-                        rewriteRun(
-                          java(
-                            \"""
-                              class A {
-                                  void method1() {
-                                      StringBuilder sb = new StringBuilder();
-                                      String op = "+";
-                                      sb.append("A" + op + "B");
-                                      sb.append(1 + op + 2);
+                    package org.openrewrite.staticanalysis;
+                                    
+                    import org.junit.jupiter.api.Test;
+                    import org.openrewrite.Recipe;
+                    import org.openrewrite.DocumentExample;
+                    import org.openrewrite.test.RecipeSpec;
+                    import org.openrewrite.test.RewriteTest;
+                                    
+                    import static org.openrewrite.java.Assertions.java;
+                                    
+                    class ChainStringBuilderAppendCallsTest implements RewriteTest {
+                        @Override
+                        public void defaults(RecipeSpec spec) {
+                            Recipe recipe = new ChainStringBuilderAppendCalls();
+                            spec.recipe(recipe);
+                        }
+                        
+                        @DocumentExample(value = "Objects concatenation.")
+                        @Test
+                        void objectsConcatenation() {
+                            rewriteRun(
+                              java(
+                                \"""
+                                  class A {
+                                      void method1() {
+                                          StringBuilder sb = new StringBuilder();
+                                          String op = "+";
+                                          sb.append("A" + op + "B");
+                                          sb.append(1 + op + 2);
+                                      }
                                   }
-                              }
-                              \""",
-                            \"""
-                              class A {
-                                  void method1() {
-                                      StringBuilder sb = new StringBuilder();
-                                      String op = "+";
-                                      sb.append("A").append(op).append("B");
-                                      sb.append(1).append(op).append(2);
+                                  \""",
+                                \"""
+                                  class A {
+                                      void method1() {
+                                          StringBuilder sb = new StringBuilder();
+                                          String op = "+";
+                                          sb.append("A").append(op).append("B");
+                                          sb.append(1).append(op).append(2);
+                                      }
                                   }
-                              }
-                              \"""
-                          )
-                        );
+                                  \"""
+                              )
+                            );
+                        }
                     }
-                }
-                """
+                    """
             )
         );
 
@@ -91,32 +118,32 @@ class ExamplesExtractorTest implements RewriteTest {
         // language=yaml
         assertThat(yaml).isEqualTo(
             """
-              type: specs.openrewrite.org/v1beta/example
-              recipeName: org.openrewrite.java.cleanup.ChainStringBuilderAppendCalls
-              examples:
-              - description: Objects concatenation.
-                sources:
-                - before: |
-                    class A {
-                        void method1() {
-                            StringBuilder sb = new StringBuilder();
-                            String op = "+";
-                            sb.append("A" + op + "B");
-                            sb.append(1 + op + 2);
-                        }
-                    }
-                  after: |
-                    class A {
-                        void method1() {
-                            StringBuilder sb = new StringBuilder();
-                            String op = "+";
-                            sb.append("A").append(op).append("B");
-                            sb.append(1).append(op).append(2);
-                        }
-                    }
-                  path: A.java
-                  language: java
-              """
+                type: specs.openrewrite.org/v1beta/example
+                recipeName: org.openrewrite.staticanalysis.ChainStringBuilderAppendCalls
+                examples:
+                - description: Objects concatenation.
+                  sources:
+                  - before: |
+                      class A {
+                          void method1() {
+                              StringBuilder sb = new StringBuilder();
+                              String op = "+";
+                              sb.append("A" + op + "B");
+                              sb.append(1 + op + 2);
+                          }
+                      }
+                    after: |
+                      class A {
+                          void method1() {
+                              StringBuilder sb = new StringBuilder();
+                              String op = "+";
+                              sb.append("A").append(op).append("B");
+                              sb.append(1).append(op).append(2);
+                          }
+                      }
+                    path: A.java
+                    language: java
+                """
         );
     }
 
@@ -128,9 +155,10 @@ class ExamplesExtractorTest implements RewriteTest {
             spec -> spec.recipe(toRecipe(() -> examplesExtractor))
                 .parser(JavaParser.fromJavaVersion()
                     .classpath(JavaParser.runtimeClasspath())),
+            java(RECIPE_JAVA_FILE),
             java(
                 """
-                package org.openrewrite.java.cleanup;
+                package org.openrewrite.staticanalysis;
                 
                 import org.junit.jupiter.api.Test;
                 import org.openrewrite.DocumentExample;
@@ -179,7 +207,7 @@ class ExamplesExtractorTest implements RewriteTest {
         assertThat(yaml).isEqualTo(
             """
               type: specs.openrewrite.org/v1beta/example
-              recipeName: org.openrewrite.java.cleanup.ChainStringBuilderAppendCalls
+              recipeName: org.openrewrite.staticanalysis.ChainStringBuilderAppendCalls
               examples:
               - description: Objects concatenation.
                 sources:
@@ -215,9 +243,10 @@ class ExamplesExtractorTest implements RewriteTest {
             spec -> spec.recipe(toRecipe(() -> examplesExtractor))
                 .parser(JavaParser.fromJavaVersion()
                     .classpath(JavaParser.runtimeClasspath())),
+            java(RECIPE_JAVA_FILE),
             java(
                 """
-                package org.openrewrite.java.cleanup;
+                package org.openrewrite.staticanalysis;
                 
                 import org.junit.jupiter.api.Test;
                 import org.openrewrite.DocumentExample;
@@ -266,7 +295,7 @@ class ExamplesExtractorTest implements RewriteTest {
         assertThat(yaml).isEqualTo(
             """
               type: specs.openrewrite.org/v1beta/example
-              recipeName: org.openrewrite.java.cleanup.ChainStringBuilderAppendCalls
+              recipeName: org.openrewrite.staticanalysis.ChainStringBuilderAppendCalls
               examples:
               - description: ''
                 sources:
@@ -304,7 +333,51 @@ class ExamplesExtractorTest implements RewriteTest {
                     .classpath(JavaParser.runtimeClasspath())),
             java(
                 """
-                    package org.openrewrite.java.cleanup;
+package org.openrewrite.staticanalysis;
+
+import lombok.EqualsAndHashCode;
+import lombok.Value;
+import org.openrewrite.*;
+import org.openrewrite.internal.lang.Nullable;
+import org.openrewrite.java.JavaIsoVisitor;
+
+import java.util.List;
+
+@Value
+@EqualsAndHashCode(callSuper = true)
+public class DeclarationSiteTypeVariance extends Recipe {
+
+    @Option(displayName = "Variant types",
+            description = "A list of well-known classes that have in/out type variance.",
+            example = "java.util.function.Function<IN, OUT>")
+    List<String> variantTypes;
+
+    @Option(displayName = "Excluded bounds",
+            description = "A list of bounds that should not receive explicit variance. Globs supported.",
+            example = "java.lang.*",
+            required = false)
+    @Nullable
+    List<String> excludedBounds;
+
+    @Option(displayName = "Exclude final classes",
+            description = "If true, do not add `? extends` variance to final classes. " +
+                          "`? super` variance will be added regardless of finality.",
+            required = false)
+    @Nullable
+    Boolean excludeFinalClasses;
+
+
+    @Override
+    public TreeVisitor<?, ExecutionContext> getVisitor() {
+        return new JavaIsoVisitor<ExecutionContext>() {
+        };
+    }
+}
+"""
+            ),
+            java(
+                """
+                    package org.openrewrite.staticanalysis;
 
                     import org.junit.jupiter.api.Test;
                     import org.openrewrite.DocumentExample;
@@ -400,7 +473,7 @@ class ExamplesExtractorTest implements RewriteTest {
         assertThat(yaml).isEqualTo(
             """
                 type: specs.openrewrite.org/v1beta/example
-                recipeName: org.openrewrite.java.cleanup.DeclarationSiteTypeVariance
+                recipeName: org.openrewrite.staticanalysis.DeclarationSiteTypeVariance
                 examples:
                 - description: ''
                   parameters:

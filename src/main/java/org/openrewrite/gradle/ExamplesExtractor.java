@@ -16,9 +16,8 @@
 package org.openrewrite.gradle;
 
 import lombok.Data;
+import org.intellij.lang.annotations.Language;
 import org.openrewrite.ExecutionContext;
-import org.openrewrite.InMemoryExecutionContext;
-import org.openrewrite.Parser;
 import org.openrewrite.config.RecipeExample;
 import org.openrewrite.internal.StringUtils;
 import org.openrewrite.internal.lang.Nullable;
@@ -36,6 +35,7 @@ import org.yaml.snakeyaml.Yaml;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Extract recipe examples from a test file which are annotated with @DocumentExample
@@ -103,7 +103,7 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
     private final String recipeType;
     private RecipeNameAndParameters defaultRecipe;
     private RecipeNameAndParameters specifiedRecipe;
-    private List<RecipeExample> recipeExamples;
+    private final List<RecipeExample> recipeExamples;
     private String exampleDescription;
 
     public ExamplesExtractor() {
@@ -138,8 +138,8 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
         }
 
         List<J.Annotation> annotations = method.getLeadingAnnotations();
-        if (!hasAnnotation(annotations, TEST_ANNOTATION_MATCHER) ||
-            !hasAnnotation(annotations, DOCUMENT_EXAMPLE_ANNOTATION_MATCHER)) {
+        if (hasNotAnnotation(annotations, TEST_ANNOTATION_MATCHER) ||
+            hasNotAnnotation(annotations, DOCUMENT_EXAMPLE_ANNOTATION_MATCHER)) {
             return method;
         }
 
@@ -199,15 +199,13 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
             example.setParameters(recipe != null ? recipe.getParameters() :
                 defaultRecipe != null ? defaultRecipe.getParameters() : new ArrayList<>());
             this.recipeExamples.add(example);
-        } else {
-            // System.out.println("Failed to extract an example for method : " + method);
         }
 
         return method;
     }
 
-    private static boolean hasAnnotation( List<J.Annotation> annotations, AnnotationMatcher matcher) {
-        return annotations.stream().anyMatch(matcher::matches);
+    private static boolean hasNotAnnotation(List<J.Annotation> annotations, AnnotationMatcher matcher) {
+        return annotations.stream().noneMatch(matcher::matches);
     }
 
     public static class YamlPrinter {
@@ -215,7 +213,8 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
                      RecipeNameAndParameters recipe,
                      boolean usingDefaultRecipe,
                      List<RecipeExample> examples) {
-            if (StringUtils.isNullOrEmpty(recipe.getName()) ||
+            if (recipe == null ||
+                StringUtils.isNullOrEmpty(recipe.getName()) ||
                 examples.isEmpty()
             ) {
                 return "";
@@ -272,15 +271,16 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
         }
     }
 
+    @Nullable
     private RecipeNameAndParameters findRecipe(J tree) {
         return new JavaIsoVisitor<AtomicReference<RecipeNameAndParameters>>() {
             @Override
             public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, AtomicReference<RecipeNameAndParameters> recipe) {
-                if (SPEC_RECIPE_METHOD_MATCHER.matches(method)) {
+                if (isRecipeSpecRecipeMethod(method)) {
                     new JavaIsoVisitor<AtomicReference<RecipeNameAndParameters>>() {
                         @Override
                         public J.NewClass visitNewClass(J.NewClass newClass, AtomicReference<RecipeNameAndParameters> recipe) {
-                            JavaType type = newClass.getClazz().getType();
+                            JavaType type = newClass.getClazz() != null ? newClass.getClazz().getType() : null;
                             if (type == null) {
                                 type = newClass.getType();
                             }
@@ -302,7 +302,7 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
                                                                         AtomicReference<RecipeNameAndParameters> recipeNameAndParametersAtomicReference) {
                             if (ACTIVE_RECIPES_METHOD_MATCHER.matches(method)) {
                                 Expression arg = method.getArguments().get(0);
-                                if (arg instanceof J.Literal) {
+                                if (arg instanceof J.Literal && ((J.Literal) arg).getValue() != null) {
                                     RecipeNameAndParameters recipeNameAndParameters = new RecipeNameAndParameters();
                                     recipeNameAndParameters.setName(((J.Literal) arg).getValue().toString());
                                     recipe.set(recipeNameAndParameters);
@@ -416,22 +416,32 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
         }
     }
 
-    String getPath(String content, String language) {
+    @Nullable
+    String getPath(@Language("java") @Nullable String content, String language) {
         if (content == null) {
             return null;
         }
 
         if (language.equals("java")) {
             try {
-                List<J.CompilationUnit> cus = JavaParser.fromJavaVersion()
+                Stream<J.CompilationUnit> cusStream = JavaParser.fromJavaVersion()
                     .build().parse(content);
-                if (cus != null && !cus.isEmpty()) {
-                    return cus.get(0).getSourcePath().toString();
+                Optional<J.CompilationUnit> firstElement = cusStream.findFirst();
+
+                if (firstElement.isPresent()) {
+                    return  firstElement.get().getSourcePath().toString();
                 }
             } catch (Exception e) {
+                // do nothing
             }
         }
         return null;
+    }
+
+    private static boolean isRecipeSpecRecipeMethod(J.MethodInvocation method) {
+        return "recipe".equals(method.getName().getSimpleName()) &&
+               method.getSelect() != null &&
+               TypeUtils.isOfClassType(method.getSelect().getType(), "org.openrewrite.test.RecipeSpec");
     }
 }
 
