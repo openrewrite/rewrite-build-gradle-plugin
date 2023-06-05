@@ -28,6 +28,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class RecipeExamplesTask extends DefaultTask {
     private final DirectoryProperty sources = getProject().getObjects().directoryProperty();
@@ -54,7 +56,12 @@ public class RecipeExamplesTask extends DefaultTask {
     void execute() {
         List<File> allJavaFiles = new ArrayList<>();
         collectFiles(sources.get().getAsFile(), allJavaFiles);
-        extractExamples(allJavaFiles, new InMemoryExecutionContext());
+        try {
+            extractExamples(allJavaFiles, new InMemoryExecutionContext());
+        } catch (Exception e) {
+            e.printStackTrace();
+            getLogger().lifecycle("Extract examples fail");
+        }
     }
 
     private void collectFiles(File directory, List<File> allJavaFiles) {
@@ -78,9 +85,6 @@ public class RecipeExamplesTask extends DefaultTask {
             .build();
 
         List<Parser.Input> inputs = new ArrayList<>();
-        List<SourceFile> sourceFiles;
-        int resultCount = 0;
-
         for (File file : allJavaFiles) {
             Parser.Input input = new Parser.Input(file.toPath(),
                 () -> {
@@ -94,7 +98,11 @@ public class RecipeExamplesTask extends DefaultTask {
         }
 
         getLogger().lifecycle("Parsing " + allJavaFiles.size() + " java files...");
-        sourceFiles = (List<SourceFile>) parser.parseInputs(inputs, null, ctx);
+
+        List<SourceFile> sourceFiles = parser.parseInputs(inputs, null, ctx)
+            .collect(Collectors.toList());
+        int resultCount = 0;
+
         getLogger().lifecycle("Parsing java files finished.");
         for (SourceFile s : sourceFiles) {
             ExamplesExtractor examplesExtractor = new ExamplesExtractor();
