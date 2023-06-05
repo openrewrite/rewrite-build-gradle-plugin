@@ -95,6 +95,7 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
     private static final MethodMatcher JSON_METHOD_MATCHER = new MethodMatcher("org.openrewrite.json.Assertions json(..)");
     private static final MethodMatcher HCL_METHOD_MATCHER = new MethodMatcher("org.openrewrite.hcl.Assertions hcl(..)");
     private static final MethodMatcher GROOVY_METHOD_MATCHER = new MethodMatcher("org.openrewrite.groovy.Assertions groovy(..)");
+    private static final MethodMatcher KOTLIN_METHOD_MATCHER = new MethodMatcher("org.openrewrite.kotlin.Assertions kotlin(..)");
     private static final MethodMatcher SPEC_RECIPE_METHOD_MATCHER = new MethodMatcher("org.openrewrite.test.RecipeSpec recipe(..)");
     private static final MethodMatcher ACTIVE_RECIPES_METHOD_MATCHER = new MethodMatcher("org.openrewrite.config.Environment activateRecipes(..)");
     private static final MethodMatcher PATH_METHOD_MATCHER = new MethodMatcher("org.openrewrite.test.SourceSpec path(java.lang.String)");
@@ -368,6 +369,8 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
                     language = "hcl";
                 } else if (GROOVY_METHOD_MATCHER.matches(method)) {
                     language = "groovy";
+                } else if (KOTLIN_METHOD_MATCHER.matches(method)) {
+                    language = "kotlin";
                 } else if (PATH_METHOD_MATCHER.matches(method)) {
                     if (method.getArguments().get(0) instanceof J.Literal) {
                         source.setPath((String) ((J.Literal) method.getArguments().get(0)).getValue());
