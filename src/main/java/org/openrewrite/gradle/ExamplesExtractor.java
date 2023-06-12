@@ -18,6 +18,7 @@ package org.openrewrite.gradle;
 import lombok.Data;
 import org.intellij.lang.annotations.Language;
 import org.openrewrite.ExecutionContext;
+import org.openrewrite.SourceFile;
 import org.openrewrite.config.RecipeExample;
 import org.openrewrite.internal.StringUtils;
 import org.openrewrite.internal.lang.Nullable;
@@ -427,9 +428,9 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
 
         if (language.equals("java")) {
             try {
-                Stream<J.CompilationUnit> cusStream = JavaParser.fromJavaVersion()
+                Stream<SourceFile> cusStream = JavaParser.fromJavaVersion()
                     .build().parse(content);
-                Optional<J.CompilationUnit> firstElement = cusStream.findFirst();
+                Optional<SourceFile> firstElement = cusStream.findFirst();
 
                 if (firstElement.isPresent()) {
                     return  firstElement.get().getSourcePath().toString();

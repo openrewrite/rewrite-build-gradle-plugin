@@ -18,7 +18,6 @@ package org.openrewrite.gradle;
 import com.github.jk1.license.LicenseReportExtension;
 import com.github.jk1.license.LicenseReportPlugin;
 import com.github.jk1.license.render.ReportRenderer;
-import com.hierynomus.gradle.license.LicenseBasePlugin;
 import com.hierynomus.gradle.license.tasks.LicenseFormat;
 import nl.javadude.gradle.plugins.license.LicenseExtension;
 import nl.javadude.gradle.plugins.license.LicensePlugin;

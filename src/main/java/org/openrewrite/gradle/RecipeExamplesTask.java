@@ -29,7 +29,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class RecipeExamplesTask extends DefaultTask {
     private final DirectoryProperty sources = getProject().getObjects().directoryProperty();
@@ -80,7 +79,7 @@ public class RecipeExamplesTask extends DefaultTask {
     }
 
     private void extractExamples(List<File> allJavaFiles, ExecutionContext ctx) {
-        Parser<?> parser = JavaParser.fromJavaVersion()
+        Parser parser = JavaParser.fromJavaVersion()
             .classpath(JavaParser.runtimeClasspath())
             .build();
 
