@@ -82,9 +82,9 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
     private static final AnnotationMatcher DOCUMENT_EXAMPLE_ANNOTATION_MATCHER = new AnnotationMatcher("@org.openrewrite.DocumentExample");
 
     private static final MethodMatcher REWRITE_RUN_METHOD_MATCHER_WITH_SPEC =
-        new MethodMatcher("org.openrewrite.test.RewriteTest rewriteRun(java.util.function.Consumer, org.openrewrite.test.SourceSpecs[])");
+            new MethodMatcher("org.openrewrite.test.RewriteTest rewriteRun(java.util.function.Consumer, org.openrewrite.test.SourceSpecs[])");
     private static final MethodMatcher REWRITE_RUN_METHOD_MATCHER =
-        new MethodMatcher("org.openrewrite.test.RewriteTest rewriteRun(org.openrewrite.test.SourceSpecs[])");
+            new MethodMatcher("org.openrewrite.test.RewriteTest rewriteRun(org.openrewrite.test.SourceSpecs[])");
 
     private static final MethodMatcher JAVA_METHOD_MATCHER = new MethodMatcher("org.openrewrite.java.Assertions java(..)");
     private static final MethodMatcher BUILD_GRADLE_METHOD_MATCHER = new MethodMatcher("org.openrewrite.gradle.Assertions buildGradle(..)");
@@ -97,10 +97,8 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
     private static final MethodMatcher HCL_METHOD_MATCHER = new MethodMatcher("org.openrewrite.hcl.Assertions hcl(..)");
     private static final MethodMatcher GROOVY_METHOD_MATCHER = new MethodMatcher("org.openrewrite.groovy.Assertions groovy(..)");
     private static final MethodMatcher KOTLIN_METHOD_MATCHER = new MethodMatcher("org.openrewrite.kotlin.Assertions kotlin(..)");
-    private static final MethodMatcher SPEC_RECIPE_METHOD_MATCHER = new MethodMatcher("org.openrewrite.test.RecipeSpec recipe(..)");
     private static final MethodMatcher ACTIVE_RECIPES_METHOD_MATCHER = new MethodMatcher("org.openrewrite.config.Environment activateRecipes(..)");
     private static final MethodMatcher PATH_METHOD_MATCHER = new MethodMatcher("org.openrewrite.test.SourceSpec path(java.lang.String)");
-
 
     private final String recipeType;
     private RecipeNameAndParameters defaultRecipe;
@@ -122,19 +120,17 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
     public String printRecipeExampleYaml() {
         boolean usingDefaultRecipe = !specifiedRecipe.isValid();
         return new ExamplesExtractor.YamlPrinter().print(recipeType,
-            usingDefaultRecipe ? defaultRecipe : specifiedRecipe,
-            usingDefaultRecipe,
-            recipeExamples);
+                usingDefaultRecipe ? defaultRecipe : specifiedRecipe,
+                usingDefaultRecipe,
+                recipeExamples);
     }
 
     @Override
     public J.MethodDeclaration visitMethodDeclaration(J.MethodDeclaration method, ExecutionContext ctx) {
         if (method.getName().getSimpleName().equals("defaults") &&
             method.getMethodType() != null &&
-            method.getMethodType().getDeclaringType() != null &&
             !method.getMethodType().getDeclaringType().getInterfaces().isEmpty() &&
-            method.getMethodType().getDeclaringType().getInterfaces().get(0).getFullyQualifiedName().equals("org.openrewrite.test.RewriteTest")
-        ) {
+            method.getMethodType().getDeclaringType().getInterfaces().get(0).getFullyQualifiedName().equals("org.openrewrite.test.RewriteTest")) {
             defaultRecipe = findRecipe(method);
             return method;
         }
@@ -199,7 +195,7 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
         if (!example.getSources().isEmpty()) {
             example.setDescription(exampleDescription);
             example.setParameters(recipe != null ? recipe.getParameters() :
-                defaultRecipe != null ? defaultRecipe.getParameters() : new ArrayList<>());
+                    defaultRecipe != null ? defaultRecipe.getParameters() : new ArrayList<>());
             this.recipeExamples.add(example);
         }
 
@@ -212,7 +208,7 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
 
     public static class YamlPrinter {
         String print(String recipeType,
-                     RecipeNameAndParameters recipe,
+                     @Nullable RecipeNameAndParameters recipe,
                      boolean usingDefaultRecipe,
                      List<RecipeExample> examples) {
             if (recipe == null ||
@@ -233,7 +229,8 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
 
             for (RecipeExample example : examples) {
                 Map<String, Object> exampleData = new LinkedHashMap<>();
-                exampleData.put("description", example.getDescription() == null ? "" : example.getDescription());
+                example.getDescription();
+                exampleData.put("description", example.getDescription());
 
                 List<String> params = usingDefaultRecipe ? recipe.getParameters() : example.getParameters();
                 if (params != null && !params.isEmpty()) {
@@ -386,9 +383,9 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
 
                 // arg0 is always `before`. arg1 is optional to be `after`, to adjust if code changed
                 J.Literal before = !args.isEmpty() ? (args.get(0) instanceof J.Literal ? (J.Literal) args.get(0) : null) : null;
-                J.Literal after = args.size() > 1? (args.get(1) instanceof J.Literal ? (J.Literal) args.get(1) : null) : null;
+                J.Literal after = args.size() > 1 ? (args.get(1) instanceof J.Literal ? (J.Literal) args.get(1) : null) : null;
 
-                if (before != null) {
+                if (before != null && before.getValue() != null) {
                     source.setBefore((String) before.getValue());
                 }
 
@@ -397,7 +394,8 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
                 }
 
                 if (StringUtils.isNullOrEmpty(source.getPath())) {
-                    source.setPath(getPath(source.getBefore() != null ? source.getBefore() : source.getAfter(), language));
+                    source.getBefore();
+                    source.setPath(getPath(source.getBefore(), language));
                 }
                 return method;
             }
@@ -429,11 +427,11 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
         if (language.equals("java")) {
             try {
                 Stream<SourceFile> cusStream = JavaParser.fromJavaVersion()
-                    .build().parse(content);
+                        .build().parse(content);
                 Optional<SourceFile> firstElement = cusStream.findFirst();
 
                 if (firstElement.isPresent()) {
-                    return  firstElement.get().getSourcePath().toString();
+                    return firstElement.get().getSourcePath().toString();
                 }
             } catch (Exception e) {
                 // do nothing
