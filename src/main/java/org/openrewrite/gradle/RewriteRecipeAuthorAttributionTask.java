@@ -25,6 +25,7 @@ import lombok.With;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.blame.BlameResult;
+import org.eclipse.jgit.diff.RawText;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.DirectoryProperty;
@@ -162,8 +163,12 @@ public class RewriteRecipeAuthorAttributionTask extends DefaultTask {
         Map<Contributor, Integer> contributors = new HashMap<>();
 
         BlameResult blame = g.blame().setFilePath(relativeUnixStylePath).call();
+        RawText resultContents = blame.getResultContents();
+        if (resultContents == null) {
+            return Collections.emptyList();
+        }
 
-        for (int i = 0; i < blame.getResultContents().size(); i++) {
+        for (int i = 0; i < resultContents.size(); i++) {
             PersonIdent author = blame.getSourceAuthor(i);
             contributors.compute(new Contributor(author.getName(), author.getEmailAddress(), 0), (k, v) -> v == null ? 1 : v + 1);
         }
