@@ -69,19 +69,21 @@ public class RewritePublishPlugin implements Plugin<Project> {
                     pub.pom(pom -> {
                         pom.withXml(xml -> {
                             Element dependencies = (Element) xml.asElement().getElementsByTagName("dependencies").item(0);
-                            NodeList dependencyList = dependencies.getElementsByTagName("dependency");
-                            int length = dependencyList.getLength();
-                            for (int i = 0; i < length; i++) {
-                                Node dependency = dependencyList.item(i);
-                                if (dependency.getNodeType() == Node.ELEMENT_NODE) {
-                                    Element dependencyElement = (Element) dependency;
-                                    Node scope = ((Element) dependency).getElementsByTagName("scope").item(0);
-                                    if (scope != null && (scope.getTextContent().equals("provided") ||
-                                                          dependencyElement.getElementsByTagName("groupId").item(0)
-                                                                  .getTextContent().equals("org.projectlombok"))) {
-                                        dependencies.removeChild(dependency);
-                                        i--;
-                                        length--;
+                            if(dependencies != null) {
+                                NodeList dependencyList = dependencies.getElementsByTagName("dependency");
+                                int length = dependencyList.getLength();
+                                for (int i = 0; i < length; i++) {
+                                    Node dependency = dependencyList.item(i);
+                                    if (dependency.getNodeType() == Node.ELEMENT_NODE) {
+                                        Element dependencyElement = (Element) dependency;
+                                        Node scope = ((Element) dependency).getElementsByTagName("scope").item(0);
+                                        if (scope != null && (scope.getTextContent().equals("provided") ||
+                                                              dependencyElement.getElementsByTagName("groupId").item(0)
+                                                                      .getTextContent().equals("org.projectlombok"))) {
+                                            dependencies.removeChild(dependency);
+                                            i--;
+                                            length--;
+                                        }
                                     }
                                 }
                             }
