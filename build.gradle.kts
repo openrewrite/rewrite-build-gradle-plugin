@@ -30,37 +30,37 @@ nexusPublishing {
     }
 }
 
-pluginBundle {
+gradlePlugin {
     website = "https://github.com/openrewrite/rewrite-build-gradle-plugin"
     vcsUrl = "https://github.com/openrewrite/rewrite-build-gradle-plugin.git"
-    tags = listOf("rewrite", "refactoring", "java")
-}
-
-gradlePlugin {
     plugins {
         create("build-language-library") {
             id = "org.openrewrite.build.language-library"
             displayName = "Rewrite language library"
             description = "Core language module"
             implementationClass = "org.openrewrite.gradle.RewriteLanguageLibraryPlugin"
+            tags = listOf("rewrite", "refactoring")
         }
         create("build-recipe-library") {
             id = "org.openrewrite.build.recipe-library"
             displayName = "Rewrite recipe library"
             description = "A recipe library"
             implementationClass = "org.openrewrite.gradle.RewriteRecipeLibraryPlugin"
+            tags = listOf("rewrite", "refactoring")
         }
         create("build-java-base") {
             id = "org.openrewrite.build.java-base"
             displayName = "Rewrite Java"
             description = "A module that is built with Java but does not publish artifacts"
             implementationClass = "org.openrewrite.gradle.RewriteJavaPlugin"
+            tags = listOf("rewrite", "refactoring")
         }
         create("build-publish") {
             id = "org.openrewrite.build.publish"
             displayName = "Rewrite Maven publishing"
             description = "Configures publishing to Maven repositories"
             implementationClass = "org.openrewrite.gradle.RewritePublishPlugin"
+            tags = listOf("rewrite", "refactoring")
         }
         create("build-shadow") {
             id = "org.openrewrite.build.shadow"
@@ -68,30 +68,35 @@ gradlePlugin {
             description = "Configures the Gradle Shadow plugin to replace the normal jar task output with " +
                     "the shaded jar without a classifier"
             implementationClass = "org.openrewrite.gradle.RewriteShadowPlugin"
+            tags = listOf("rewrite", "refactoring")
         }
         create("build-metadata") {
             id = "org.openrewrite.build.metadata"
             displayName = "Rewrite metadata configuration"
             description = "Contacts and SCM data"
             implementationClass = "org.openrewrite.gradle.RewriteMetadataPlugin"
+            tags = listOf("rewrite", "refactoring")
         }
         create("build-java8-text-blocks") {
             id = "org.openrewrite.build.java8-text-blocks"
             displayName = "Java 8 text blocks"
             description = "Text blocks compiled to Java 8 bytecode"
             implementationClass = "org.openrewrite.gradle.RewriteJava8TextBlocksPlugin"
+            tags = listOf("rewrite", "refactoring")
         }
         create("build-root") {
             id = "org.openrewrite.build.root"
             displayName = "Rewrite root"
             description = "Configures the root project"
             implementationClass = "org.openrewrite.gradle.RewriteRootProjectPlugin"
+            tags = listOf("rewrite", "refactoring")
         }
         create("build-recipe-author-attribution") {
             id = "org.openrewrite.build.recipe-author-attribution"
             displayName = "Rewrite recipe author attribution"
             description = "Produces a `/META-INF/rewrite/recipe-authors.yml` file containing recipe author attribution"
             implementationClass = "org.openrewrite.gradle.RewriteRecipeAuthorAttributionPlugin"
+            tags = listOf("rewrite", "refactoring")
         }
 
         create("build-recipe-examples") {
@@ -99,6 +104,7 @@ gradlePlugin {
             displayName = "Rewrite recipe examples"
             description = "Produces a `/META-INF/rewrite/recipe-example.yml` file containing recipe examples"
             implementationClass = "org.openrewrite.gradle.RewriteRecipeExamplesPlugin"
+            tags = listOf("rewrite", "refactoring")
         }
     }
 }
@@ -187,6 +193,7 @@ dependencies {
 }
 
 project.rootProject.tasks.getByName("postRelease").dependsOn(project.tasks.getByName("publishPlugins"))
+
 
 tasks.withType<Test>() {
     useJUnitPlatform()

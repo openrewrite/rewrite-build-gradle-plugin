@@ -546,7 +546,7 @@ class ExamplesExtractorTest implements RewriteTest {
           java(
             """
               package org.openrewrite.java.migrate.net;
-
+              
               import org.junit.jupiter.api.Test;
               import org.openrewrite.DocumentExample;
               import org.openrewrite.config.Environment;
@@ -554,7 +554,7 @@ class ExamplesExtractorTest implements RewriteTest {
               import org.openrewrite.test.RewriteTest;
 
               import static org.openrewrite.java.Assertions.java;
-
+              
               class JavaNetAPIsTest implements RewriteTest {
                   @Override
                   public void defaults(RecipeSpec spec) {
@@ -564,7 +564,7 @@ class ExamplesExtractorTest implements RewriteTest {
                           .build()
                           .activateRecipes("org.openrewrite.java.migrate.net.JavaNetAPIs"));
                   }
-
+              
                   @DocumentExample
                   @Test
                   void multicastSocketGetTTLToGetTimeToLive() {
@@ -573,9 +573,9 @@ class ExamplesExtractorTest implements RewriteTest {
                         java(
                           ""\"
                             package org.openrewrite.example;
-
+              
                             import java.net.MulticastSocket;
-
+              
                             public class Test {
                                 public static void method() {
                                     MulticastSocket s = new MulticastSocket(0);
@@ -585,9 +585,9 @@ class ExamplesExtractorTest implements RewriteTest {
                             ""\",
                           ""\"
                             package org.openrewrite.example;
-
+              
                             import java.net.MulticastSocket;
-
+              
                             public class Test {
                                 public static void method() {
                                     MulticastSocket s = new MulticastSocket(0);
@@ -613,9 +613,9 @@ class ExamplesExtractorTest implements RewriteTest {
               sources:
               - before: |
                   package org.openrewrite.example;
-
+              
                   import java.net.MulticastSocket;
-
+              
                   public class Test {
                       public static void method() {
                           MulticastSocket s = new MulticastSocket(0);
@@ -624,9 +624,9 @@ class ExamplesExtractorTest implements RewriteTest {
                   }
                 after: |
                   package org.openrewrite.example;
-
+              
                   import java.net.MulticastSocket;
-
+              
                   public class Test {
                       public static void method() {
                           MulticastSocket s = new MulticastSocket(0);

@@ -18,6 +18,7 @@ package org.openrewrite.gradle;
 import lombok.Data;
 import org.intellij.lang.annotations.Language;
 import org.openrewrite.ExecutionContext;
+import org.openrewrite.PathUtils;
 import org.openrewrite.SourceFile;
 import org.openrewrite.config.RecipeExample;
 import org.openrewrite.internal.StringUtils;
@@ -250,7 +251,7 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
                     }
 
                     if (StringUtils.isNotEmpty(source.getPath())) {
-                        sourceData.put("path", source.getPath());
+                        sourceData.put("path", PathUtils.separatorsToUnix(source.getPath()));
                     }
 
                     if (StringUtils.isNotEmpty(source.getLanguage())) {
