@@ -4,7 +4,7 @@ import java.util.*
 plugins {
     id("nebula.release") version "17.1.0"
     id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
-    id("org.owasp.dependencycheck") version "8.0.1"
+    id("org.owasp.dependencycheck") version "latest.release"
     id("nebula.maven-resolved-dependencies") version "18.4.0"
     id("nebula.maven-apache-license") version "18.4.0"
     id("com.gradle.plugin-publish") version "1.1.0"
