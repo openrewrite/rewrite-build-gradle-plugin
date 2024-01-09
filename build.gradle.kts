@@ -165,7 +165,7 @@ dependencies {
     implementation("org.owasp:dependency-check-gradle:latest.release")
     implementation("com.netflix.nebula:gradle-contacts-plugin:latest.release")
     implementation("com.netflix.nebula:gradle-info-plugin:latest.release")
-    implementation("com.netflix.nebula:nebula-release-plugin:$nebulaVersion") {
+    implementation("com.netflix.nebula:nebula-release-plugin:18.0.+") {
         because("Git user.name is not set.");
     }
     implementation("com.netflix.nebula:nebula-publishing-plugin:latest.release")
