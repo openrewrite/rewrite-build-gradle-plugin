@@ -140,7 +140,6 @@ tasks.named<JavaCompile>("compileJava") {
 }
 
 val rewriteVersion = "8.13.0"
-val nebulaVersion = "18.0.8"
 
 dependencies {
     compileOnly("org.openrewrite.gradle.tooling:model:latest.release")
