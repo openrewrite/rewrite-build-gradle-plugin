@@ -159,7 +159,7 @@ dependencies {
     compileOnly("org.projectlombok:lombok:latest.release")
     annotationProcessor("org.projectlombok:lombok:latest.release")
 
-    implementation("org.apache.ivy:ivy:2.5.1")
+    implementation("org.apache.ivy:ivy:2.5.2")
     implementation("gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:latest.release")
     implementation("com.github.jk1:gradle-license-report:1.16")
     implementation("org.owasp:dependency-check-gradle:latest.release")
@@ -193,6 +193,24 @@ dependencies {
     testImplementation("org.openrewrite:rewrite-test:${rewriteVersion}")
 
     testImplementation(gradleTestKit())
+
+    constraints {
+        implementation("org.apache.maven:maven-settings:3.9.6") {
+            because("CVE-2021-26291")
+        }
+        implementation("com.h2database:h2:2.2.224") {
+            because("CVE-2022-45868")
+        }
+        implementation("org.jdom:jdom2:2.0.6.1") {
+            because("CVE-2021-33813")
+        }
+        implementation("com.mycila:license-maven-plugin:4.3") {
+            because("license-gradle-plugin pulling in older version of this which had outdated spring dependencies")
+        }
+        implementation("org.codehaus.plexus:plexus-xml:4.0.3") {
+            because("CVE-2022-4244, CVE-2022-4245")
+        }
+    }
 }
 
 project.rootProject.tasks.getByName("postRelease").dependsOn(project.tasks.getByName("publishPlugins"))

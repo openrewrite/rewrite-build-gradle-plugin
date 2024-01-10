@@ -1,3 +1,77 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+    <suppress until="2024-02-10">
+        <notes><![CDATA[
+            file name: jsch.agentproxy.usocket-nc-0.0.7.jar
+            sev: HIGH
+            reason: This is a dependency of the release plugin in use and is not used in production where it would be vulnerable to the attack vector.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/com\.jcraft/jsch\.agentproxy\.usocket\-nc@.*$</packageUrl>
+        <cve>CVE-2008-5730</cve>
+    </suppress>
+    <suppress until="2024-02-10Z">
+        <notes><![CDATA[
+            file name: okio-jvm-2.10.0.jar
+            sev: HIGH
+            reason: This is a dependency of the release plugin in use and is not used in production where it would be vulnerable to the attack vector.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/com\.squareup\.okio/okio@.*$</packageUrl>
+        <cve>CVE-2023-3635</cve>
+    </suppress>
+    <suppress until="2024-02-10Z">
+        <notes><![CDATA[
+            sev: HIGH
+            file name: rewrite-core-8.13.0-SNAPSHOT.jar (shaded: org.eclipse.jgit:org.eclipse.jgit:5.13.2.202306221912-r)
+            Reason: False positive. We are using the latest jgit version. The checker is picking up erroneous version from a pom.xml file.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.eclipse\.jgit/org\.eclipse\.jgit@.*$</packageUrl>
+        <vulnerabilityName>CVE-2023-4759</vulnerabilityName>
+    </suppress>
+    <suppress until="2024-02-10">
+        <notes><![CDATA[
+            file name: rewrite-gradle-8.13.0-SNAPSHOT.jar: gradle-testing-base-6.1.1.jar, gradle-testing-jvm-6.1.1.jar, gradle-resources-6.1.1.jar, gradle-messaging-6.1.1.jar, gradle-logging-6.1.1.jar, gradle-native-6.1.1.jar, gradle-core-api-6.1.1.jar
+            sev: HIGH
+            reason: This is a false positive. The vulnerability is in the Gradle 7.6.2 and 8.2 and these are gradle core api's
+        ]]></notes>
+        <filePath regex="true">
+            .*META-INF\/rewrite\/classpath\/gradle.*6\.1\.1\.jar
+        </filePath>
+        <cve>CVE-2023-35946</cve>
+        <cve>CVE-2023-35947</cve>
+        <cve>CVE-2021-29428</cve>
+        <cve>CVE-2020-11979</cve>
+        <cve>CVE-2021-32751</cve>
+        <cve>CVE-2021-29427</cve>
+        <cve>CVE-2021-29429</cve>
+        <cve>CVE-2023-44387</cve>
+        <cve>CVE-2023-42445</cve>
+    </suppress>
+    <suppress until="2024-02-10Z">
+        <notes><![CDATA[
+            sev: CRITICAL
+            file name: rewrite-gradle-8.13.0-SNAPSHOT.jar: gradle-enterprise-gradle-plugin-3.16.1.jar
+            Reason: False positive. We are using the latest gradle-enterprise-gradle-plugin version.
+        ]]></notes>
+        <filePath regex="true">
+            .*META-INF\/rewrite\/classpath\/gradle-enterprise-gradle-plugin-.*.jar
+        </filePath>
+        <cve>CVE-2019-11065</cve>
+        <cve>CVE-2019-11402</cve>
+        <cve>CVE-2019-11403</cve>
+        <cve>CVE-2019-15052</cve>
+        <cve>CVE-2019-16370</cve>
+        <cve>CVE-2020-11979</cve>
+        <cve>CVE-2020-15767</cve>
+        <cve>CVE-2020-15773</cve>
+        <cve>CVE-2021-29428</cve>
+        <cve>CVE-2021-29429</cve>
+        <cve>CVE-2021-32751</cve>
+        <cve>CVE-2021-41589</cve>
+        <cve>CVE-2022-25364</cve>
+        <cve>CVE-2022-30587</cve>
+        <cve>CVE-2023-35946</cve>
+        <cve>CVE-2023-35947</cve>
+        <cve>CVE-2023-42445</cve>
+        <cve>CVE-2023-44387</cve>
+    </suppress>
 </suppressions>
