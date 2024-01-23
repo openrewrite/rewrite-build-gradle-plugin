@@ -204,9 +204,10 @@ dependencies {
         implementation("org.jdom:jdom2:2.0.6.1") {
             because("CVE-2021-33813")
         }
-        implementation("com.mycila:license-maven-plugin:4.3") {
-            because("license-gradle-plugin pulling in older version of this which had outdated spring dependencies")
-        }
+// NoClassDefFoundError: org/apache/maven/plugin/MojoFailureException
+//        implementation("com.mycila:license-maven-plugin:4.3") {
+//            because("license-gradle-plugin pulling in older version of this which had outdated spring dependencies")
+//        }
         implementation("org.codehaus.plexus:plexus-xml:4.0.3") {
             because("CVE-2022-4244, CVE-2022-4245")
         }
