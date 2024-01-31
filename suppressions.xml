@@ -125,4 +125,24 @@
         <cve>CVE-2014-3625</cve>
         <cve>CVE-2014-1904</cve>
     </suppress>
+    <suppress until="2024-02-28Z">
+        <notes><![CDATA[
+           sev: HIGH
+           file name: plexus-interpolation-1.14.jar
+           reason: brought in by license-gradle-plugin which is the latest version. Used only in build time.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.codehaus\.plexus/plexus\-interpolation@.*$</packageUrl>
+        <cve>CVE-2022-4244</cve>
+        <cve>CVE-2022-4245</cve>
+    </suppress>
+    <suppress until="2024-02-28Z">
+        <notes><![CDATA[
+        sev: HIGH
+        file name: plexus-component-annotations-1.5.5.jar
+        reason: brought in by license-gradle-plugin which is the latest version. Used only in build time.
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.codehaus\.plexus/plexus\-component\-annotations@.*$</packageUrl>
+        <cve>CVE-2022-4244</cve>
+        <cve>CVE-2022-4245</cve>
+    </suppress>
 </suppressions>
