@@ -117,11 +117,19 @@ repositories {
 
 configurations.all {
     resolutionStrategy {
+        eachDependency {
+            if (requested.group == "org.apache.commons"
+                && requested.name == "commons-compress"
+                && requested.version.toString().startsWith("1.25")
+            ) {
+                useVersion("1.26.0")
+            }
+        }
         cacheChangingModulesFor(0, TimeUnit.SECONDS)
         cacheDynamicVersionsFor(0, TimeUnit.SECONDS)
-        if(name.startsWith("test")) {
+        if (name.startsWith("test")) {
             eachDependency {
-                if(requested.name == "groovy-xml") {
+                if (requested.name == "groovy-xml") {
                     useVersion("3.0.9")
                 }
             }
