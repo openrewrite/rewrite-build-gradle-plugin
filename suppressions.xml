@@ -145,4 +145,13 @@
         <cve>CVE-2022-4244</cve>
         <cve>CVE-2022-4245</cve>
     </suppress>
+    <suppress until="2024-05-22Z">
+        <notes><![CDATA[
+        sec: HIGH
+        file name: bcprov-jdk18on-1.71.jar
+        reason: Vulnerability is currently waiting analysis and transitive dependencies have not upgraded.
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.bouncycastle/bcprov\-jdk18on@.*$</packageUrl>
+        <cve>CVE-2024-29857</cve>
+    </suppress>
 </suppressions>
