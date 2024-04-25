@@ -47,6 +47,7 @@ public class RewriteJava8TextBlocksTest {
         writeFile(settingsFile, "rootProject.name = 'my-project'");
         String buildFileContent = """
                 plugins {
+                    id 'org.openrewrite.build.recipe-repositories'
                     id 'org.openrewrite.build.java-base'
                     id 'org.openrewrite.build.java8-text-blocks'
                 }
