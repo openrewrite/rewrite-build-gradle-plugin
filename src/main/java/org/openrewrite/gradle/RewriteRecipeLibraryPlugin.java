@@ -19,17 +19,20 @@ import nebula.plugin.publishing.verification.PublishVerificationPlugin;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 
+
+/**
+ * A plugin that applies all the necessary plugins to create a recipe library in an open source environment where
+ * Maven Central and Nexus Snapshots artifact repositories are available.
+ * If your project does not use all the same plugins you can
+ */
 public class RewriteRecipeLibraryPlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
-        RewriteRecipeLibraryExtension ext = project.getExtensions().create("rewriteRecipe", RewriteRecipeLibraryExtension.class);
-        ext.getRewriteVersion().convention(project.hasProperty("releasing") ?
-                "latest.release" : "latest.integration");
-
         // recipe jars are generally single-module projects for which the root project is the only module
+        project.getPlugins().apply(RewriteDependencyRepositoriesPlugin.class);
+        project.getPlugins().apply(RewriteRecipeLibraryBasePlugin.class);
         project.getPlugins().apply(RewriteRootProjectPlugin.class);
-
         project.getPlugins().apply(RewriteJavaPlugin.class);
         project.getPlugins().apply(RewriteLicensePlugin.class);
         project.getPlugins().apply(RewriteMetadataPlugin.class);
@@ -39,11 +42,5 @@ public class RewriteRecipeLibraryPlugin implements Plugin<Project> {
         project.getPlugins().apply(PublishVerificationPlugin.class);
         project.getPlugins().apply(RewriteRecipeAuthorAttributionPlugin.class);
 //        project.getPlugins().apply(RewriteRecipeExamplesPlugin.class);
-
-        project.getDependencies().add("testImplementation",
-                "org.openrewrite:rewrite-test:" + ext.getRewriteVersion().get());
-
-        project.getExtensions().create("recipeDependencies", RecipeDependenciesExtension.class);
-        project.getTasks().register("downloadRecipeDependencies", RecipeDependenciesDownloadTask.class);
     }
 }

@@ -40,8 +40,6 @@ public class RewriteJavaPlugin implements Plugin<Project> {
         ext.getJacksonVersion().convention("2.16.1");
 
         project.getPlugins().apply(JavaLibraryPlugin.class);
-        project.getPlugins().apply(RewriteDependencyRepositoriesPlugin.class);
-//        project.getPlugins().apply(TestRetryPlugin.class);
 
         project.getConfigurations().all(config -> {
             config.getResolutionStrategy().cacheChangingModulesFor(0, TimeUnit.SECONDS);
@@ -51,10 +49,8 @@ public class RewriteJavaPlugin implements Plugin<Project> {
         project.getExtensions().configure(JavaPluginExtension.class, java -> java.toolchain(toolchain -> toolchain.getLanguageVersion()
                 .set(JavaLanguageVersion.of(17))));
 
-        project.getConfigurations().all(config -> {
-            config.resolutionStrategy(strategy ->
-                    strategy.cacheDynamicVersionsFor(0, "seconds"));
-        });
+        project.getConfigurations().all(config -> config.resolutionStrategy(strategy ->
+                strategy.cacheDynamicVersionsFor(0, "seconds")));
 
         addDependencies(project, ext);
         configureJavaCompile(project);
@@ -71,9 +67,7 @@ public class RewriteJavaPlugin implements Plugin<Project> {
 
         // Work around build error relating to an IntelliJ file named classpath.index that is locally being included
         // multiple times within our jars. Unclear why this is happening, but it would not affect CI so working around for now
-        project.getTasks().withType(Jar.class).configureEach(task -> {
-            task.setDuplicatesStrategy(DuplicatesStrategy.EXCLUDE);
-        });
+        project.getTasks().withType(Jar.class).configureEach(task -> task.setDuplicatesStrategy(DuplicatesStrategy.EXCLUDE));
     }
 
     private static void addDependencies(Project project, RewriteJavaExtension ext) {

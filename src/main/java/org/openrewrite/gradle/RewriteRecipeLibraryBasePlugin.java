@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 the original author or authors.
+ * Copyright 2024 the original author or authors.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,22 @@ package org.openrewrite.gradle;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 
-public class RewriteLanguageLibraryPlugin implements Plugin<Project> {
+public class RewriteRecipeLibraryBasePlugin implements Plugin<Project> {
 
+    @Override
     public void apply(Project project) {
-        project.getPlugins().apply(RewriteDependencyRepositoriesPlugin.class);
+        RewriteRecipeLibraryExtension ext = project.getExtensions().create("rewriteRecipe", RewriteRecipeLibraryExtension.class);
+        ext.getRewriteVersion().convention(project.hasProperty("releasing") ?
+                "latest.release" : "latest.integration");
+
         project.getPlugins().apply(RewriteJavaPlugin.class);
-        project.getPlugins().apply(RewriteLicensePlugin.class);
-        project.getPlugins().apply(RewriteMetadataPlugin.class);
-        project.getPlugins().apply(RewriteDependencyCheckPlugin.class);
-        project.getPlugins().apply(RewriteBuildInputLoggingPlugin.class);
-        project.getPlugins().apply(RewritePublishPlugin.class);
         project.getPlugins().apply(RewriteRecipeAuthorAttributionPlugin.class);
 //        project.getPlugins().apply(RewriteRecipeExamplesPlugin.class);
+
+        project.getDependencies().add("testImplementation",
+                "org.openrewrite:rewrite-test:" + ext.getRewriteVersion().get());
+
+        project.getExtensions().create("recipeDependencies", RecipeDependenciesExtension.class);
+        project.getTasks().register("downloadRecipeDependencies", RecipeDependenciesDownloadTask.class);
     }
 }

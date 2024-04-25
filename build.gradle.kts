@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage")
+
 import nl.javadude.gradle.plugins.license.LicenseExtension
 import java.util.*
 
@@ -42,12 +44,31 @@ gradlePlugin {
             implementationClass = "org.openrewrite.gradle.RewriteLanguageLibraryPlugin"
             tags = listOf("rewrite", "refactoring")
         }
+        create("build-recipe-library-base") {
+            id = "org.openrewrite.build.recipe-library-base"
+            displayName = "Rewrite recipe library base"
+            description = "Builds recipe libraries with the minimum of opinions or conventions about any other aspect of the build. " +
+                "Does not configure artifact repositories or publishing. " +
+                "Use org.openrewrite.build.recipe-library if you want to build a recipe library as OSS."
+            implementationClass = "org.openrewrite.gradle.RewriteRecipeLibraryBasePlugin"
+            tags = listOf("rewrite", "refactoring")
+        }
+        create("build-recipe-repositories") {
+            id = "org.openrewrite.build.recipe-repositories"
+            displayName = "Rewrite recipe repositories"
+            description = "Configures the repositories that OpenRewrite modules in open source draw dependencies from, " +
+                "such as Maven Central and Nexus Snapshots. "
+            implementationClass = "org.openrewrite.gradle.RewriteDependencyRepositoriesPlugin"
+            tags = listOf("rewrite", "refactoring", "oss")
+        }
         create("build-recipe-library") {
             id = "org.openrewrite.build.recipe-library"
             displayName = "Rewrite recipe library"
-            description = "A recipe library"
+            description = "Builds recipe libraries with all the conventions and configuration used in OpenRewrite repositories. " +
+                "Includes conventions around which repositories to draw from and publish to. " +
+                "Use org.openrewrite.build.recipe-library-base if you want to build a private recipe library."
             implementationClass = "org.openrewrite.gradle.RewriteRecipeLibraryPlugin"
-            tags = listOf("rewrite", "refactoring")
+            tags = listOf("rewrite", "refactoring", "oss")
         }
         create("build-java-base") {
             id = "org.openrewrite.build.java-base"
@@ -174,7 +195,7 @@ dependencies {
     implementation("com.netflix.nebula:gradle-contacts-plugin:latest.release")
     implementation("com.netflix.nebula:gradle-info-plugin:latest.release")
     implementation("com.netflix.nebula:nebula-release-plugin:18.0.+") {
-        because("Git user.name is not set.");
+        because("Git user.name is not set.")
     }
     implementation("com.netflix.nebula:nebula-publishing-plugin:latest.release")
     implementation("com.netflix.nebula:nebula-project-plugin:latest.release")
@@ -225,7 +246,7 @@ dependencies {
 project.rootProject.tasks.getByName("postRelease").dependsOn(project.tasks.getByName("publishPlugins"))
 
 
-tasks.withType<Test>() {
+tasks.withType<Test> {
     useJUnitPlatform()
 }
 
