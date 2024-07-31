@@ -133,7 +133,7 @@
         <cve>CVE-2022-4244</cve>
         <cve>CVE-2022-4245</cve>
     </suppress>
-    <suppress until="2024-07-22Z">
+    <suppress until="2024-08-23Z">
         <notes><![CDATA[
         sec: HIGH
         file name: bcprov-jdk18on-1.71.jar
