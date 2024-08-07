@@ -203,7 +203,7 @@ dependencies {
     implementation("gradle.plugin.com.github.johnrengelman:shadow:7.1.2") // Pinned till we upgrade everything to Gradle 8.0
     implementation("org.gradle:test-retry-gradle-plugin:latest.release")
 
-    implementation(platform("com.fasterxml.jackson:jackson-bom:2.16.+"))
+    implementation(platform("com.fasterxml.jackson:jackson-bom:2.17.+"))
     implementation("com.fasterxml.jackson.core:jackson-core")
     implementation("com.fasterxml.jackson.core:jackson-databind")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml")
