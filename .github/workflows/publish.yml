@@ -22,28 +22,27 @@ jobs:
           distribution: temurin
           java-version: 11
 
+      - uses: gradle/actions/setup-gradle@v4
       - name: publish-candidate
         if: contains(github.ref, '-rc.')
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          arguments: |
-            -Preleasing
-            -Prelease.disableGitChecks=true
-            -Prelease.useLastTag=true
-            -Dgradle.publish.key=${{ secrets.GRADLE_PUBLISH_KEY }}
-            -Dgradle.publish.secret=${{ secrets.GRADLE_PUBLISH_SECRET }}
-            candidate
-            publishPlugins
+        run: |
+          ./gradlew
+          -Preleasing
+          -Prelease.disableGitChecks=true
+          -Prelease.useLastTag=true
+          -Dgradle.publish.key=${{ secrets.GRADLE_PUBLISH_KEY }}
+          -Dgradle.publish.secret=${{ secrets.GRADLE_PUBLISH_SECRET }}
+          candidate
+          publishPlugins
 
       - name: publish-release
         if: (!contains(github.ref, '-rc.'))
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          arguments: |
-            -Preleasing
-            -Prelease.disableGitChecks=true
-            -Prelease.useLastTag=true
-            -Dgradle.publish.key=${{ secrets.GRADLE_PUBLISH_KEY }}
-            -Dgradle.publish.secret=${{ secrets.GRADLE_PUBLISH_SECRET }}
-            final
-            publishPlugins
+        run: |
+          ./gradlew
+          -Preleasing
+          -Prelease.disableGitChecks=true
+          -Prelease.useLastTag=true
+          -Dgradle.publish.key=${{ secrets.GRADLE_PUBLISH_KEY }}
+          -Dgradle.publish.secret=${{ secrets.GRADLE_PUBLISH_SECRET }}
+          final
+          publishPlugins
