@@ -15,13 +15,10 @@
  */
 package org.openrewrite.gradle;
 
-
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.owasp.dependencycheck.gradle.DependencyCheckPlugin;
 import org.owasp.dependencycheck.gradle.extension.DependencyCheckExtension;
-
-import java.util.Collections;
 
 public class RewriteDependencyCheckPlugin implements Plugin<Project> {
 
@@ -29,11 +26,24 @@ public class RewriteDependencyCheckPlugin implements Plugin<Project> {
     public void apply(Project project) {
         project.getPlugins().apply(DependencyCheckPlugin.class);
 
+        float failBuildOnCVSS = Float
+                .parseFloat(System.getenv("FAIL_BUILD_ON_CVSS") != null ? System.getenv("FAIL_BUILD_ON_CVSS") : "9");
+
+        // check to see if `suppressions.xml` exists in project root
+        if (project.file("suppressions.xml").exists()) {
+            project.getExtensions().configure(DependencyCheckExtension.class, ext -> {
+                ext.setSuppressionFile(project.file("suppressions.xml").getPath());
+            });
+        }
+
         project.getExtensions().configure(DependencyCheckExtension.class, ext -> {
             ext.getAnalyzers().setAssemblyEnabled(false);
-            ext.setFailBuildOnCVSS(9.0f);
-            ext.setScanProjects(Collections.singletonList(project.getName()));
+            ext.getAnalyzers().setNodeAuditEnabled(false);
+            ext.getAnalyzers().setNodeEnabled(false);
+            ext.setFailBuildOnCVSS(failBuildOnCVSS);
             ext.getNvd().setApiKey(System.getenv("NVD_API_KEY"));
+
         });
+
     }
 }

@@ -22,8 +22,10 @@ configure<nebula.plugin.release.git.base.ReleasePluginExtension> {
 
 configure<org.owasp.dependencycheck.gradle.extension.DependencyCheckExtension> {
     analyzers.assemblyEnabled = false
+    analyzers.nodeAuditEnabled = false
+    analyzers.nodeEnabled = false
     failBuildOnCVSS = 9.0F
-    suppressionFile = "suppressions.xml"
+    failBuildOnCVSS = System.getenv("FAIL_BUILD_ON_CVSS")?.toFloatOrNull() ?: 9.0F
     nvd.apiKey = System.getenv("NVD_API_KEY")
 }
 
