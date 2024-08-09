@@ -40,9 +40,9 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: run-validateRewrite
         run: |
-          ./gradlew
-          --info
-          --stacktrace
-          --no-daemon
-          --init-script /home/runner/work/rewrite-gradle-plugin/rewrite-gradle-plugin/rewrite-gradle-plugin/scripts/spring-petclinic-test.init.gradle
+          ./gradlew \
+          --info \
+          --stacktrace \
+          --no-daemon \
+          --init-script /home/runner/work/rewrite-gradle-plugin/rewrite-gradle-plugin/rewrite-gradle-plugin/scripts/spring-petclinic-test.init.gradle \
           validateRewrite
