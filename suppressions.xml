@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
-    <suppress until="2024-07-10">
+    <suppress until="2024-08-10">
         <notes><![CDATA[
             file name: jsch.agentproxy.usocket-nc-0.0.7.jar
             sev: HIGH

@@ -34,7 +34,7 @@ public class RewriteDependencyCheckPlugin implements Plugin<Project> {
 
         float failBuildOnCVSS = Float
                 .parseFloat(System.getenv("FAIL_BUILD_ON_CVSS") != null ? System.getenv("FAIL_BUILD_ON_CVSS") : "9");
-        String format = System.getenv("OWASP_REPORT_FORMAT") != null ? System.getenv("OWASP_REPORT_FORMAT") : "HTML";
+        String format = System.getenv("DEPENDENCY_CHECK_FORMAT") != null ? System.getenv("OWASP_REPORT_FORMAT") : "HTML";
 
         // upsert suppressions file
         generateSuppressionsFile(project);
