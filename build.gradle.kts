@@ -260,4 +260,5 @@ configure<LicenseExtension> {
     strictCheck = true
     exclude("**/versions.properties")
     exclude("**/*.txt")
+    exclude("**/suppressions.xml")
 }
