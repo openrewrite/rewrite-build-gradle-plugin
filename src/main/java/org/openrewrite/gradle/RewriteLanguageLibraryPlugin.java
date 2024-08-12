@@ -25,10 +25,8 @@ public class RewriteLanguageLibraryPlugin implements Plugin<Project> {
         project.getPlugins().apply(RewriteJavaPlugin.class);
         project.getPlugins().apply(RewriteLicensePlugin.class);
         project.getPlugins().apply(RewriteMetadataPlugin.class);
-        project.getPlugins().apply(RewriteDependencyCheckPlugin.class);
         project.getPlugins().apply(RewriteBuildInputLoggingPlugin.class);
         project.getPlugins().apply(RewritePublishPlugin.class);
         project.getPlugins().apply(RewriteRecipeAuthorAttributionPlugin.class);
-//        project.getPlugins().apply(RewriteRecipeExamplesPlugin.class);
     }
 }
