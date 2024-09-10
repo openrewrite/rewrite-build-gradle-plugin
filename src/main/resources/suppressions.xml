@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+    <suppress until="2025-09-10Z">
+        <notes><![CDATA[
+   file name: rewrite-gradle-8.35.0-SNAPSHOT.jar: gradle-core-api-6.1.1.jar
+   We need to support older gradle versions to be able to migrate away from them.
+   ]]></notes>
+        <sha1>4da65dfe7b47b63368629a7a687c17e54c2d4dfc</sha1>
+        <cpe>cpe:/a:gradle:gradle</cpe>
+    </suppress>
     <suppress until="2024-10-16Z">
         <notes><![CDATA[
    file name: rewrite-gradle-8.9.0-SNAPSHOT.jar: gradle-testing-base-6.1.1.jar, gradle-testing-jvm-6.1.1.jar, gradle-resources-6.1.1.jar, gradle-messaging-6.1.1.jar, gradle-logging-6.1.1.jar, gradle-native-6.1.1.jar, gradle-core-api-6.1.1.jar
