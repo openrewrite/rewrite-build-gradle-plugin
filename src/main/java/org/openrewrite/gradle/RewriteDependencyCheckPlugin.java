@@ -43,6 +43,9 @@ public class RewriteDependencyCheckPlugin implements Plugin<Project> {
             ext.getAnalyzers().setAssemblyEnabled(false);
             ext.getAnalyzers().setNodeAuditEnabled(false);
             ext.getAnalyzers().setNodeEnabled(false);
+            ext.getAnalyzers().retirejs(
+                    retireJs -> retireJs.setEnabled(false)
+            );
             ext.setFailBuildOnCVSS(failBuildOnCVSS);
             ext.setFormat(format);
             ext.getNvd().setApiKey(System.getenv("NVD_API_KEY"));
