@@ -150,13 +150,14 @@
    file name: lucene-analyzers-common-8.11.3.jar
    ]]></notes>
         <packageUrl regex="true">^pkg:maven/org\.apache\.lucene/lucene-.*@.*$</packageUrl>
-        <cpe>cpe:/a:apache:lucene</cpe>
+        <vulnerabilityName>CVE-2024-47554</vulnerabilityName>
+        <vulnerabilityName>CVE-2024-45772</vulnerabilityName>
     </suppress>
     <suppress until="2025-01-16Z">
         <notes><![CDATA[
    file name: shadow-8.0.0.jar (shaded: commons-io:commons-io:2.11.0)
    ]]></notes>
         <packageUrl regex="true">^pkg:maven/commons-io/commons-io@.*$</packageUrl>
-        <cpe>cpe:/a:apache:commons_io</cpe>
+        <vulnerabilityName>CVE-2024-47554</vulnerabilityName>
     </suppress>
 </suppressions>
