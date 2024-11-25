@@ -6,7 +6,7 @@ import java.util.*
 plugins {
     id("nebula.release") version "17.1.0"
     id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
-    id("org.owasp.dependencycheck") version "latest.release"
+    id("org.owasp.dependencycheck") version "10.+"
     id("nebula.maven-resolved-dependencies") version "18.4.0"
     id("nebula.maven-apache-license") version "18.4.0"
     id("com.gradle.plugin-publish") version "1.1.0"
@@ -194,7 +194,7 @@ dependencies {
     implementation("org.apache.ivy:ivy:2.5.2")
     implementation("gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:latest.release")
     implementation("com.github.jk1:gradle-license-report:1.16")
-    implementation("org.owasp:dependency-check-gradle:latest.release")
+    implementation("org.owasp:dependency-check-gradle:10.+")
     implementation("com.netflix.nebula:gradle-contacts-plugin:latest.release")
     implementation("com.netflix.nebula:gradle-info-plugin:latest.release")
     implementation("com.netflix.nebula:nebula-release-plugin:18.0.+") {
