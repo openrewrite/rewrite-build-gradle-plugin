@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
-    <suppress until="2024-11-25Z">
+    <suppress until="2025-01-10Z">
         <notes><![CDATA[
             file name: poi-3.16.jar
             sev: HIGH
@@ -11,7 +11,7 @@
         <cve>CVE-2019-12415</cve>
         <cve>CVE-2022-26336</cve>
     </suppress>
-    <suppress until="2024-11-25Z">
+    <suppress until="2025-01-10Z">
         <notes><![CDATA[
    file name: rewrite-gradle-8.35.0-SNAPSHOT.jar: gradle-core-api-6.1.1.jar
    We need to support older gradle versions to be able to migrate away from them.
@@ -19,7 +19,7 @@
         <sha1>4da65dfe7b47b63368629a7a687c17e54c2d4dfc</sha1>
         <cpe>cpe:/a:gradle:gradle</cpe>
     </suppress>
-    <suppress until="2024-11-25Z">
+    <suppress until="2025-01-10Z">
         <notes><![CDATA[
    file name: rewrite-gradle-8.9.0-SNAPSHOT.jar: gradle-testing-base-6.1.1.jar, gradle-testing-jvm-6.1.1.jar, gradle-resources-6.1.1.jar, gradle-messaging-6.1.1.jar, gradle-logging-6.1.1.jar, gradle-native-6.1.1.jar, gradle-core-api-6.1.1.jar
         sev: HIGH
@@ -34,7 +34,7 @@
         <cve>CVE-2021-32751</cve>
         <cve>CVE-2021-29427</cve>
     </suppress>
-    <suppress until="2024-11-25Z">
+    <suppress until="2025-01-25Z">
         <notes><![CDATA[
         file name: rewrite-gradle-8.9.0-SNAPSHOT.jar: gradle-enterprise-gradle-plugin-3.13.4.jar
         sev: HIGH
@@ -60,7 +60,7 @@
         <cve>CVE-2023-44387</cve>
         <cve>CVE-2023-49238</cve>
     </suppress>
-    <suppress until="2024-11-25Z">
+    <suppress until="2024-01-25Z">
         <notes><![CDATA[
        file name: rewrite-gradle-8.34.0-SNAPSHOT.jar: develocity-gradle-plugin-3.17.6.jar: junit-platform-engine-1.10.3.jar
        ]]></notes>
@@ -79,7 +79,7 @@
         <cve>CVE-2023-35946</cve>
         <cve>CVE-2023-42445</cve>
     </suppress>
-    <suppress until="2024-11-25Z">
+    <suppress until="2025-01-10Z">
         <notes><![CDATA[
        file name: rewrite-jenkins-0.11.0-SNAPSHOT.jar
        sev: HIGH
@@ -91,7 +91,7 @@
         <cve>CVE-2023-46650</cve>
         <cve>CVE-2022-36885</cve>
     </suppress>
-    <suppress until="2024-11-25Z">
+    <suppress until="2025-01-10Z">
         <notes><![CDATA[
        file name: rewrite-openapi-0.6.0-SNAPSHOT.jar
            sev: HIGH
@@ -100,7 +100,7 @@
         <packageUrl regex="true">^pkg:maven/org\.openrewrite\.recipe/rewrite-openapi@.*$</packageUrl>
         <cve>CVE-2022-24863</cve>
     </suppress>
-    <suppress until="2024-11-25Z">
+    <suppress until="2025-01-10Z">
         <notes><![CDATA[
        file name: spring-*.jar
        sev: CRITICAL
@@ -121,7 +121,7 @@
         <cve>CVE-2024-22262</cve>
         <cve>CVE-2024-38809</cve>
     </suppress>
-    <suppress until="2024-11-25Z">
+    <suppress until="2025-01-10Z">
         <notes><![CDATA[
          file name: guava-31.1-jre.jar
          sev: HIGH
@@ -131,7 +131,7 @@
         <cve>CVE-2023-2976</cve>
         <cve>CVE-2020-8908</cve>
     </suppress>
-    <suppress until="2024-11-25Z">
+    <suppress until="2025-01-10Z">
         <notes><![CDATA[
             file name: snakeyaml-1.33.jar
             Severity: HIGH
@@ -140,7 +140,7 @@
         <packageUrl regex="true">^pkg:maven/org\.yaml/snakeyaml@.*$</packageUrl>
         <cve>CVE-2022-1471</cve>
     </suppress>
-    <suppress until="2024-11-25Z">
+    <suppress until="2025-01-10Z">
         <notes><![CDATA[
             file name: org.eclipse.jgit-4.4.1.201607150455-r.jar
             sev: High
@@ -149,7 +149,7 @@
         <packageUrl regex="true">^pkg:maven/org\.eclipse\.jgit/org\.eclipse\.jgit@.*$</packageUrl>
         <vulnerabilityName>CVE-2023-4759</vulnerabilityName>
     </suppress>
-    <suppress until="2024-11-25Z">
+    <suppress until="2025-01-10Z">
         <notes><![CDATA[
            file name: protobuf-java-3.19.2.jar
          ]]></notes>
