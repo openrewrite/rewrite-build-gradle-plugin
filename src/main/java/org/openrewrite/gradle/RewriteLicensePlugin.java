@@ -45,7 +45,7 @@ public class RewriteLicensePlugin implements Plugin<Project> {
         });
 
         project.getExtensions().configure(LicenseExtension.class, ext -> {
-            ext.setSkipExistingHeaders(true);
+            ext.setSkipExistingHeaders(false);
             ext.getExcludePatterns().addAll(Arrays.asList("**/*.tokens", "**/*.config", "**/*.interp", "**/*.txt", "**/*.bat",
                     "**/*.zip", "**/*.csv", "**/gradlew", "**/*.dontunpack", "**/*.css",
                     "**/*.editorconfig", "**/*.md", "**/*.jar"));
