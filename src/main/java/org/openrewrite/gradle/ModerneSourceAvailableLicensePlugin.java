@@ -20,6 +20,7 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.maven.MavenPublication;
+import org.gradle.api.publish.maven.internal.publication.DefaultMavenPom;
 
 public class ModerneSourceAvailableLicensePlugin implements Plugin<Project> {
 
@@ -33,6 +34,7 @@ public class ModerneSourceAvailableLicensePlugin implements Plugin<Project> {
     private void configureLicense(MavenPublication publication) {
         publication.pom(pom -> {
             pom.licenses(licenses -> {
+                ((DefaultMavenPom) licenses).getLicenses().clear();
                 licenses.license(license -> {
                     license.getName().set("Moderne Source Available License");
                     license.getUrl().set("https://docs.moderne.io/licensing/moderne-source-available-license");

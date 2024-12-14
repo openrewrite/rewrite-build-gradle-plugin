@@ -20,6 +20,7 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.maven.MavenPublication;
+import org.gradle.api.publish.maven.internal.publication.DefaultMavenPom;
 import org.gradle.jvm.tasks.Jar;
 
 public class ModerneProprietaryLicensePlugin implements Plugin<Project> {
@@ -44,6 +45,7 @@ public class ModerneProprietaryLicensePlugin implements Plugin<Project> {
         publication.pom(pom -> {
             pom.licenses(licenses -> {
                 licenses.license(license -> {
+                    ((DefaultMavenPom) licenses).getLicenses().clear();
                     license.getName().set("Moderne Proprietary License");
                     license.getUrl().set("https://docs.moderne.io/licensing/overview");
                 });
