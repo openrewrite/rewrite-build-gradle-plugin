@@ -50,26 +50,29 @@ gradlePlugin {
         create("build-recipe-library-base") {
             id = "org.openrewrite.build.recipe-library-base"
             displayName = "Rewrite recipe library base"
-            description = "Builds recipe libraries with the minimum of opinions or conventions about any other aspect of the build. " +
-                "Does not configure artifact repositories or publishing. " +
-                "Use org.openrewrite.build.recipe-library if you want to build a recipe library as OSS."
+            description =
+                "Builds recipe libraries with the minimum of opinions or conventions about any other aspect of the build. " +
+                        "Does not configure artifact repositories or publishing. " +
+                        "Use org.openrewrite.build.recipe-library if you want to build a recipe library as OSS."
             implementationClass = "org.openrewrite.gradle.RewriteRecipeLibraryBasePlugin"
             tags = listOf("rewrite", "refactoring")
         }
         create("build-recipe-repositories") {
             id = "org.openrewrite.build.recipe-repositories"
             displayName = "Rewrite recipe repositories"
-            description = "Configures the repositories that OpenRewrite modules in open source draw dependencies from, " +
-                "such as Maven Central and Nexus Snapshots. "
+            description =
+                "Configures the repositories that OpenRewrite modules in open source draw dependencies from, " +
+                        "such as Maven Central and Nexus Snapshots. "
             implementationClass = "org.openrewrite.gradle.RewriteDependencyRepositoriesPlugin"
             tags = listOf("rewrite", "refactoring", "oss")
         }
         create("build-recipe-library") {
             id = "org.openrewrite.build.recipe-library"
             displayName = "Rewrite recipe library"
-            description = "Builds recipe libraries with all the conventions and configuration used in OpenRewrite repositories. " +
-                "Includes conventions around which repositories to draw from and publish to. " +
-                "Use org.openrewrite.build.recipe-library-base if you want to build a private recipe library."
+            description =
+                "Builds recipe libraries with all the conventions and configuration used in OpenRewrite repositories. " +
+                        "Includes conventions around which repositories to draw from and publish to. " +
+                        "Use org.openrewrite.build.recipe-library-base if you want to build a private recipe library."
             implementationClass = "org.openrewrite.gradle.RewriteRecipeLibraryPlugin"
             tags = listOf("rewrite", "refactoring", "oss")
         }
@@ -123,12 +126,25 @@ gradlePlugin {
             implementationClass = "org.openrewrite.gradle.RewriteRecipeAuthorAttributionPlugin"
             tags = listOf("rewrite", "refactoring")
         }
-
         create("build-recipe-examples") {
             id = "org.openrewrite.build.recipe-examples"
             displayName = "Rewrite recipe examples"
             description = "Produces a `/META-INF/rewrite/recipe-example.yml` file containing recipe examples"
             implementationClass = "org.openrewrite.gradle.RewriteRecipeExamplesPlugin"
+            tags = listOf("rewrite", "refactoring")
+        }
+        create("moderne-source-available-license") {
+            id = "org.openrewrite.build.moderne-source-available-license"
+            displayName = "Moderne Source Available License"
+            description = "Applies the MSAL to the project"
+            implementationClass = "org.openrewrite.gradle.ModerneSourceAvailableLicensePlugin"
+            tags = listOf("rewrite", "refactoring")
+        }
+        create("moderne-proprietary-license") {
+            id = "org.openrewrite.build.moderne-proprietary-license"
+            displayName = "Moderne Proprietary License"
+            description = "Applies the Moderne Proprietary License to the project"
+            implementationClass = "org.openrewrite.gradle.ModerneProprietaryLicensePlugin"
             tags = listOf("rewrite", "refactoring")
         }
     }
