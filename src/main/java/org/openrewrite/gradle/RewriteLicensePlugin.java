@@ -37,7 +37,7 @@ public class RewriteLicensePlugin implements Plugin<Project> {
         project.getPlugins().apply(LicenseReportPlugin.class);
 
         project.getExtensions().configure(LicenseReportExtension.class, ext -> {
-            ext.renderers = new ReportRenderer[] { new com.github.jk1.license.render.CsvReportRenderer() };
+            ext.renderers = new ReportRenderer[]{new com.github.jk1.license.render.CsvReportRenderer()};
         });
 
         project.getTasks().withType(LicenseFormat.class, task -> {
@@ -46,8 +46,10 @@ public class RewriteLicensePlugin implements Plugin<Project> {
         });
 
         project.getExtensions().configure(LicenseExtension.class, ext -> {
-            ext.setSkipExistingHeaders(Optional.ofNullable((Boolean) project
-                            .findProperty("licenseSkipExistingHeaders")).orElse(false));
+            ext.setSkipExistingHeaders(Optional
+                    .ofNullable((String) project.findProperty("licenseSkipExistingHeaders"))
+                    .map(Boolean::parseBoolean)
+                    .orElse(true));
             ext.getExcludePatterns().addAll(Arrays.asList("**/*.tokens", "**/*.config", "**/*.interp", "**/*.txt", "**/*.bat",
                     "**/*.zip", "**/*.csv", "**/gradlew", "**/*.dontunpack", "**/*.css",
                     "**/*.editorconfig", "**/*.md", "**/*.jar"));
@@ -57,8 +59,10 @@ public class RewriteLicensePlugin implements Plugin<Project> {
                 put("java", "SLASHSTAR_STYLE");
                 put("ts", "SLASHSTAR_STYLE");
             }});
-            ext.setStrictCheck(Optional.ofNullable((Boolean) project
-                    .findProperty("licenseStrictCheck")).orElse(true));
+            ext.setStrictCheck(Optional
+                    .ofNullable((String) project.findProperty("licenseStrictCheck"))
+                    .map(Boolean::parseBoolean)
+                    .orElse(true));
         });
     }
 }
