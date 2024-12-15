@@ -57,7 +57,6 @@ public class RewriteJavaPlugin implements Plugin<Project> {
         configureTesting(project);
 
         project.getTasks().withType(Javadoc.class).configureEach(task -> {
-            task.setVerbose(false);
             task.options(opt -> {
                 ((CoreJavadocOptions) opt)
                         .addStringOption("Xdoclint:none", "-quiet");
