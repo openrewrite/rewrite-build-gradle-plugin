@@ -27,6 +27,7 @@ import org.gradle.api.Project;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.Optional;
 
 public class RewriteLicensePlugin implements Plugin<Project> {
 
@@ -45,7 +46,8 @@ public class RewriteLicensePlugin implements Plugin<Project> {
         });
 
         project.getExtensions().configure(LicenseExtension.class, ext -> {
-            ext.setSkipExistingHeaders(false);
+            ext.setSkipExistingHeaders(Optional.ofNullable((Boolean) project
+                            .findProperty("licenseSkipExistingHeaders")).orElse(false));
             ext.getExcludePatterns().addAll(Arrays.asList("**/*.tokens", "**/*.config", "**/*.interp", "**/*.txt", "**/*.bat",
                     "**/*.zip", "**/*.csv", "**/gradlew", "**/*.dontunpack", "**/*.css",
                     "**/*.editorconfig", "**/*.md", "**/*.jar"));
@@ -55,7 +57,8 @@ public class RewriteLicensePlugin implements Plugin<Project> {
                 put("java", "SLASHSTAR_STYLE");
                 put("ts", "SLASHSTAR_STYLE");
             }});
-            ext.setStrictCheck(true);
+            ext.setStrictCheck(Optional.ofNullable((Boolean) project
+                    .findProperty("licenseStrictCheck")).orElse(true));
         });
     }
 }
