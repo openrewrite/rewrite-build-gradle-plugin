@@ -27,6 +27,7 @@ import org.gradle.api.Project;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.Optional;
 
 public class RewriteLicensePlugin implements Plugin<Project> {
 
@@ -36,7 +37,7 @@ public class RewriteLicensePlugin implements Plugin<Project> {
         project.getPlugins().apply(LicenseReportPlugin.class);
 
         project.getExtensions().configure(LicenseReportExtension.class, ext -> {
-            ext.renderers = new ReportRenderer[] { new com.github.jk1.license.render.CsvReportRenderer() };
+            ext.renderers = new ReportRenderer[]{new com.github.jk1.license.render.CsvReportRenderer()};
         });
 
         project.getTasks().withType(LicenseFormat.class, task -> {
@@ -45,7 +46,10 @@ public class RewriteLicensePlugin implements Plugin<Project> {
         });
 
         project.getExtensions().configure(LicenseExtension.class, ext -> {
-            ext.setSkipExistingHeaders(true);
+            ext.setSkipExistingHeaders(Optional
+                    .ofNullable((String) project.findProperty("licenseSkipExistingHeaders"))
+                    .map(Boolean::parseBoolean)
+                    .orElse(true));
             ext.getExcludePatterns().addAll(Arrays.asList("**/*.tokens", "**/*.config", "**/*.interp", "**/*.txt", "**/*.bat",
                     "**/*.zip", "**/*.csv", "**/gradlew", "**/*.dontunpack", "**/*.css",
                     "**/*.editorconfig", "**/*.md", "**/*.jar"));
@@ -55,7 +59,10 @@ public class RewriteLicensePlugin implements Plugin<Project> {
                 put("java", "SLASHSTAR_STYLE");
                 put("ts", "SLASHSTAR_STYLE");
             }});
-            ext.setStrictCheck(true);
+            ext.setStrictCheck(Optional
+                    .ofNullable((String) project.findProperty("licenseStrictCheck"))
+                    .map(Boolean::parseBoolean)
+                    .orElse(true));
         });
     }
 }

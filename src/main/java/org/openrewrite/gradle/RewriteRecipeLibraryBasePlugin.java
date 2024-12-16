@@ -30,9 +30,6 @@ public class RewriteRecipeLibraryBasePlugin implements Plugin<Project> {
         project.getPlugins().apply(RewriteRecipeAuthorAttributionPlugin.class);
 //        project.getPlugins().apply(RewriteRecipeExamplesPlugin.class);
 
-        project.getDependencies().add("testImplementation",
-                "org.openrewrite:rewrite-test:" + ext.getRewriteVersion().get());
-
         project.getExtensions().create("recipeDependencies", RecipeDependenciesExtension.class);
         project.getTasks().register("downloadRecipeDependencies", RecipeDependenciesDownloadTask.class);
     }
