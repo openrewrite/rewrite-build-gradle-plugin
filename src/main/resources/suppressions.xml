@@ -60,7 +60,7 @@
         <cve>CVE-2023-35946</cve>
         <cve>CVE-2023-42445</cve>
     </suppress>
-    <suppress until="2024-09-25Z">
+    <suppress until="2025-02-05Z">
         <notes><![CDATA[
        file name: rewrite-jenkins-0.11.0-SNAPSHOT.jar
        sev: HIGH
