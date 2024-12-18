@@ -45,8 +45,8 @@ public class RewritePublishPlugin implements Plugin<Project> {
         project.getPlugins().apply(MavenResolvedDependenciesPlugin.class);
         project.getPlugins().apply(MavenApacheLicensePlugin.class);
 
-        project.getPlugins().withId("com.github.johnrengelman.shadow", plugin ->
-                project.getPlugins().apply(MavenShadowPublishPlugin.class));
+        // This plugin does not do anything if the shadow plugin is not applied, so it is safe to always apply it
+        project.getPlugins().apply(MavenShadowPublishPlugin.class);
 
         project.getTasks().withType(GenerateModuleMetadata.class).configureEach(task ->
                 task.setEnabled(false));

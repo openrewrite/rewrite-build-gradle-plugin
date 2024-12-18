@@ -219,7 +219,7 @@ dependencies {
     implementation("com.netflix.nebula:nebula-publishing-plugin:latest.release")
     implementation("com.netflix.nebula:nebula-project-plugin:latest.release")
     implementation("io.github.gradle-nexus:publish-plugin:latest.release")
-    implementation("gradle.plugin.com.github.johnrengelman:shadow:latest.release")
+    implementation("com.gradleup.shadow:com.gradleup.shadow.gradle.plugin:latest.release")
     implementation("org.gradle:test-retry-gradle-plugin:latest.release")
 
     implementation(platform("com.fasterxml.jackson:jackson-bom:2.17.+"))
