@@ -34,8 +34,7 @@ public class ModerneProprietaryLicensePlugin implements Plugin<Project> {
     @Override
     public void apply(Project project) {
         // Empty JARs are OK: https://central.sonatype.org/publish/requirements/#supply-javadoc-and-sources
-        Jar originalSourceJar = project.getTasks().maybeCreate("sourcesJar", Jar.class);
-        originalSourceJar.setEnabled(false);
+        project.getTasks().named("sourcesJar", Jar.class).get().setEnabled(false);
 
         Jar sourceJar = project.getTasks().create("emptySourceJar", Jar.class, task -> {
             task.from("README.md");
