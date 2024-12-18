@@ -18,20 +18,31 @@ package org.openrewrite.gradle;
 import nebula.plugin.publishing.maven.MavenBasePublishPlugin;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.maven.MavenPublication;
 import org.gradle.api.publish.maven.internal.publication.DefaultMavenPom;
+import org.gradle.api.tasks.TaskProvider;
 import org.gradle.jvm.tasks.Jar;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 public class ModerneProprietaryLicensePlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
         // Empty JARs are OK: https://central.sonatype.org/publish/requirements/#supply-javadoc-and-sources
+        Jar originalSourceJar = project.getTasks().maybeCreate("sourcesJar", Jar.class);
+        originalSourceJar.setEnabled(false);
+
         Jar sourceJar = project.getTasks().create("emptySourceJar", Jar.class, task -> {
             task.from("README.md");
             task.getArchiveClassifier().set("sources");
         });
+
+        project.getTasks().named("assemble", task -> task.dependsOn(sourceJar));
 
         project.getPlugins().apply(MavenBasePublishPlugin.class);
         PublishingExtension publishing = project.getExtensions().getByType(PublishingExtension.class);
