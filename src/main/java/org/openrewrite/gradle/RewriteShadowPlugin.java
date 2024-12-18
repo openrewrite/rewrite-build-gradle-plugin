@@ -35,7 +35,7 @@ public class RewriteShadowPlugin implements Plugin<Project> {
                 task.setEnabled(false));
 
         project.getTasks().withType(ShadowJar.class, task -> {
-            task.setConfigurations(singletonList(project.getConfigurations().getByName("compileClasspath")));
+            task.getConfigurations().set(singletonList(project.getConfigurations().getByName("compileClasspath")));
             task.getArchiveClassifier().set((String) null);
         });
     }
