@@ -15,16 +15,20 @@
  */
 package org.openrewrite.gradle;
 
-import org.gradle.api.Plugin;
-import org.gradle.api.Project;
-import org.owasp.dependencycheck.gradle.DependencyCheckPlugin;
-import org.owasp.dependencycheck.gradle.extension.DependencyCheckExtension;
-
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.gradle.api.Plugin;
+import org.gradle.api.Project;
+import org.owasp.dependencycheck.gradle.DependencyCheckPlugin;
+import org.owasp.dependencycheck.gradle.extension.DependencyCheckExtension;
 
 public class RewriteDependencyCheckPlugin implements Plugin<Project> {
 
@@ -34,7 +38,8 @@ public class RewriteDependencyCheckPlugin implements Plugin<Project> {
 
         float failBuildOnCVSS = Float
                 .parseFloat(System.getenv("FAIL_BUILD_ON_CVSS") != null ? System.getenv("FAIL_BUILD_ON_CVSS") : "9");
-        String format = System.getenv("DEPENDENCY_CHECK_FORMAT") != null ? System.getenv("OWASP_REPORT_FORMAT") : "HTML";
+        String format = System.getenv("DEPENDENCY_CHECK_FORMAT") != null ? System.getenv("DEPENDENCY_CHECK_FORMAT")
+                : "HTML";
 
         // upsert suppressions file
         generateSuppressionsFile(project);
@@ -44,8 +49,7 @@ public class RewriteDependencyCheckPlugin implements Plugin<Project> {
             ext.getAnalyzers().setNodeAuditEnabled(false);
             ext.getAnalyzers().setNodeEnabled(false);
             ext.getAnalyzers().retirejs(
-                    retireJs -> retireJs.setEnabled(false)
-            );
+                    retireJs -> retireJs.setEnabled(false));
             ext.setFailBuildOnCVSS(failBuildOnCVSS);
             ext.setFormat(format);
             ext.getNvd().setApiKey(System.getenv("NVD_API_KEY"));
@@ -61,7 +65,8 @@ public class RewriteDependencyCheckPlugin implements Plugin<Project> {
             project.getLogger().info("Creating build directory: {}", buildDir.getAbsolutePath());
             buildDir.mkdirs();
         }
-        // Copy suppressions.xml from the current loaded class's resources directory to the project's build directory
+        // Copy suppressions.xml from the current loaded class's resources directory to
+        // the project's build directory
         File sharedSuppressionsFile = new File(buildDir, "suppressions.xml");
         File projectSuppressionsFile = new File(project.getProjectDir(), "suppressions.xml");
 
@@ -82,7 +87,8 @@ public class RewriteDependencyCheckPlugin implements Plugin<Project> {
             suppressionFiles.add(sharedSuppressionsFile.getAbsolutePath());
             project.getLogger().info("Adding shared suppressions file: {}", sharedSuppressionsFile.getAbsolutePath());
             if (projectSuppressionsFile.exists()) {
-                project.getLogger().info("Adding project suppressions file: {}", projectSuppressionsFile.getAbsolutePath());
+                project.getLogger().info("Adding project suppressions file: {}",
+                        projectSuppressionsFile.getAbsolutePath());
                 suppressionFiles.add(projectSuppressionsFile.getAbsolutePath());
             }
             ext.setSuppressionFiles(suppressionFiles);
