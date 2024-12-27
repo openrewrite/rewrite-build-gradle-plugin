@@ -60,7 +60,7 @@
         <cve>CVE-2023-44387</cve>
         <cve>CVE-2023-49238</cve>
     </suppress>
-    <suppress until="2024-01-25Z">
+    <suppress until="2025-01-25Z">
         <notes><![CDATA[
        file name: rewrite-gradle-8.34.0-SNAPSHOT.jar: develocity-gradle-plugin-3.17.6.jar: junit-platform-engine-1.10.3.jar
        ]]></notes>
@@ -157,5 +157,17 @@
         <cve>CVE-2022-3171</cve>
         <cve>CVE-2022-3509</cve>
         <cve>CVE-2022-3510</cve>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
+   file name: rewrite-logging-frameworks-2.19.0-SNAPSHOT.jar: log4j-1.2.17.jar
+    sev: CRITICAL
+    reason: This is a false positive. Used for identifying log4j vulnerabilities.
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/log4j/log4j@.*$</packageUrl>
+        <cve>CVE-2022-23307</cve>
+        <cve>CVE-2022-23305</cve>
+        <cve>CVE-2019-17571</cve>
+        <cve>CVE-2020-9493</cve>
     </suppress>
 </suppressions>
