@@ -36,6 +36,8 @@ public class RewriteJavaPlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
+        project.getPlugins().apply(RewriteDependencyCheckPlugin.class);
+
         RewriteJavaExtension ext = project.getExtensions().create("rewriteJava", RewriteJavaExtension.class);
         ext.getJacksonVersion().convention("2.17.2");
 
@@ -105,7 +107,7 @@ public class RewriteJavaPlugin implements Plugin<Project> {
 //        );
 
         project.getTasks().withType(Test.class).configureEach(task -> {
-            if(System.getenv("CI") == null) {
+            if (System.getenv("CI") == null) {
                 // Developer machines typically use CPUs with hyper-threading, so the logical core count is double
                 // what is useful to enable
                 task.setMaxParallelForks(
