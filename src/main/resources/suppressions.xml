@@ -169,5 +169,8 @@
         <cve>CVE-2022-23305</cve>
         <cve>CVE-2019-17571</cve>
         <cve>CVE-2020-9493</cve>
+        <cve>CVE-2022-23302</cve>
+        <cve>CVE-2023-26464</cve>
+        <cve>CVE-2021-4104</cve>
     </suppress>
 </suppressions>
