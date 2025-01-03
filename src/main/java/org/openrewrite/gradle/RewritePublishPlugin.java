@@ -24,6 +24,7 @@ import nebula.plugin.publishing.publications.SourceJarPlugin;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.artifacts.ResolvedDependency;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.publish.PublishingExtension;
@@ -64,9 +65,16 @@ public class RewritePublishPlugin implements Plugin<Project> {
                     .findByName("nebula"));
         });
 
-        Configuration provided = project.getConfigurations().create("provided");
-        project.getConfigurations().named("compileOnly", compileOnly -> compileOnly.extendsFrom(provided));
-        project.getConfigurations().named("testImplementation", testImplementation -> testImplementation.extendsFrom(provided));
+        ConfigurationContainer configurations = project.getConfigurations();
+        Configuration provided = configurations.create("provided");
+        Configuration compileOnly = configurations.findByName("compileOnly");
+        if (compileOnly != null) {
+            compileOnly.extendsFrom(provided);
+        }
+        Configuration testImplementation = configurations.findByName("testImplementation");
+        if (testImplementation != null) {
+            testImplementation.extendsFrom(provided);
+        }
 
         project.getExtensions().configure(PublishingExtension.class, ext ->
                 ext.getPublications().named("nebula", MavenPublication.class, pub -> {
