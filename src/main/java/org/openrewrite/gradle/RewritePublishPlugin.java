@@ -23,15 +23,17 @@ import nebula.plugin.publishing.publications.JavadocJarPlugin;
 import nebula.plugin.publishing.publications.SourceJarPlugin;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.ResolvedDependency;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.maven.MavenPublication;
 import org.gradle.api.publish.tasks.GenerateModuleMetadata;
 import org.gradle.plugins.signing.SigningExtension;
 import org.gradle.plugins.signing.SigningPlugin;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 public class RewritePublishPlugin implements Plugin<Project> {
 
@@ -62,33 +64,40 @@ public class RewritePublishPlugin implements Plugin<Project> {
                     .findByName("nebula"));
         });
 
+        Configuration provided = project.getConfigurations().create("provided");
+        project.getConfigurations().named("compileOnly", compileOnly -> compileOnly.extendsFrom(provided));
+        project.getConfigurations().named("testImplementation", testImplementation -> testImplementation.extendsFrom(provided));
+
         project.getExtensions().configure(PublishingExtension.class, ext ->
                 ext.getPublications().named("nebula", MavenPublication.class, pub -> {
                     pub.suppressPomMetadataWarningsFor("runtimeElements");
 
-                    pub.pom(pom -> {
-                        pom.withXml(xml -> {
-                            Element dependencies = (Element) xml.asElement().getElementsByTagName("dependencies").item(0);
-                            if(dependencies != null) {
-                                NodeList dependencyList = dependencies.getElementsByTagName("dependency");
-                                int length = dependencyList.getLength();
-                                for (int i = 0; i < length; i++) {
-                                    Node dependency = dependencyList.item(i);
-                                    if (dependency.getNodeType() == Node.ELEMENT_NODE) {
-                                        Element dependencyElement = (Element) dependency;
-                                        Node scope = ((Element) dependency).getElementsByTagName("scope").item(0);
-                                        if (scope != null && (scope.getTextContent().equals("provided") ||
-                                                              dependencyElement.getElementsByTagName("groupId").item(0)
-                                                                      .getTextContent().equals("org.projectlombok"))) {
-                                            dependencies.removeChild(dependency);
-                                            i--;
-                                            length--;
-                                        }
-                                    }
+                    pub.pom(pom -> pom.withXml(xml -> {
+                        for(int i = 0; i < xml.asElement().getChildNodes().getLength(); i++) {
+                            Node node = xml.asElement().getChildNodes().item(i);
+                            if (node.getNodeType() == Node.ELEMENT_NODE && "dependencies".equals(node.getNodeName())) {
+                                Element dependencies = (Element) node;
+                                Document owner = dependencies.getOwnerDocument();
+                                for (ResolvedDependency providedDep : provided.getResolvedConfiguration().getFirstLevelModuleDependencies()) {
+                                    Element dependencyElement = dependencies.getOwnerDocument().createElement("dependency");
+                                    Element groupId = owner.createElement("groupId");
+                                    groupId.setTextContent(providedDep.getModuleGroup());
+                                    dependencyElement.appendChild(groupId);
+                                    Element artifactId = owner.createElement("artifactId");
+                                    artifactId.setTextContent(providedDep.getModuleName());
+                                    dependencyElement.appendChild(artifactId);
+                                    Element version = owner.createElement("version");
+                                    version.setTextContent(providedDep.getModuleVersion());
+                                    dependencyElement.appendChild(version);
+                                    Element scope = owner.createElement("scope");
+                                    scope.setTextContent("provided");
+                                    dependencyElement.appendChild(scope);
+                                    dependencies.appendChild(dependencyElement);
                                 }
+                                break;
                             }
-                        });
-                    });
+                        }
+                    }));
                 })
         );
     }

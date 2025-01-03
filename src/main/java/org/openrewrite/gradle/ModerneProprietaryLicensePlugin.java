@@ -18,16 +18,10 @@ package org.openrewrite.gradle;
 import nebula.plugin.publishing.maven.MavenBasePublishPlugin;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.plugins.JavaPlugin;
-import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.maven.MavenPublication;
 import org.gradle.api.publish.maven.internal.publication.DefaultMavenPom;
-import org.gradle.api.tasks.TaskProvider;
 import org.gradle.jvm.tasks.Jar;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 public class ModerneProprietaryLicensePlugin implements Plugin<Project> {
 
