@@ -4,12 +4,12 @@ import nl.javadude.gradle.plugins.license.LicenseExtension
 import java.util.*
 
 plugins {
-    id("nebula.release") version "17.1.0"
+    id("com.netflix.nebula.release") version "latest.release"
     id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
     id("org.owasp.dependencycheck") version "10.+"
-    id("nebula.maven-resolved-dependencies") version "18.4.0"
-    id("nebula.maven-apache-license") version "18.4.0"
-    id("com.gradle.plugin-publish") version "1.1.0"
+    id("com.netflix.nebula.maven-resolved-dependencies") version "latest.release"
+    id("com.netflix.nebula.maven-apache-license") version "latest.release"
+    id("com.gradle.plugin-publish") version "latest.release"
     id("com.github.hierynomus.license") version "0.16.1"
 }
 
@@ -211,11 +211,9 @@ dependencies {
     implementation("gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:latest.release")
     implementation("com.github.jk1:gradle-license-report:1.16")
     implementation("org.owasp:dependency-check-gradle:10.+")
-    implementation("com.netflix.nebula:gradle-contacts-plugin:latest.release")
+    implementation("com.netflix.nebula.contacts:com.netflix.nebula.contacts.gradle.plugin:latest.release")
     implementation("com.netflix.nebula:gradle-info-plugin:latest.release")
-    implementation("com.netflix.nebula:nebula-release-plugin:18.0.+") {
-        because("Git user.name is not set.")
-    }
+    implementation("com.netflix.nebula.release:com.netflix.nebula.release.gradle.plugin:latest.release")
     implementation("com.netflix.nebula:nebula-publishing-plugin:latest.release")
     implementation("com.netflix.nebula:nebula-project-plugin:latest.release")
     implementation("io.github.gradle-nexus:publish-plugin:latest.release")

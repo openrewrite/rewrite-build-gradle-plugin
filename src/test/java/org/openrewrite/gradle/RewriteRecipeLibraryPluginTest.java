@@ -101,9 +101,7 @@ public class RewriteRecipeLibraryPluginTest {
                 plugins {
                     id 'org.openrewrite.build.recipe-library'
                 }
-                                
                 version = '1.0'
-                                
                 recipeDependencies {
                     parserClasspath 'com.google.guava:guava:30.1-jre'
                     parserClasspath 'com.google.guava:guava:31.1-jre'
