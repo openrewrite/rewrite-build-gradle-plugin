@@ -187,22 +187,24 @@ tasks.named<JavaCompile>("compileJava") {
     options.release.set(8)
 }
 
-val rewriteVersion = "8.13.0"
+val rewriteVersion = "8.44.1"
 
 dependencies {
     compileOnly("org.openrewrite.gradle.tooling:model:latest.release")
 
-    implementation("org.openrewrite:rewrite-java:${rewriteVersion}")
-    implementation("org.openrewrite:rewrite-test:${rewriteVersion}")
-    implementation("org.openrewrite:rewrite-core:${rewriteVersion}")
-    implementation("org.openrewrite:rewrite-xml:${rewriteVersion}")
-    implementation("org.openrewrite:rewrite-properties:${rewriteVersion}")
-    implementation("org.openrewrite:rewrite-yaml:${rewriteVersion}")
-    implementation("org.openrewrite:rewrite-gradle:${rewriteVersion}")
-    implementation("org.openrewrite:rewrite-maven:${rewriteVersion}")
-    implementation("org.openrewrite:rewrite-java-8:${rewriteVersion}")
-    implementation("org.openrewrite:rewrite-java-11:${rewriteVersion}")
-    implementation("org.openrewrite:rewrite-java-17:${rewriteVersion}")
+    implementation(platform("org.openrewrite:rewrite-bom:${rewriteVersion}"))
+    implementation("org.openrewrite:rewrite-java")
+    implementation("org.openrewrite:rewrite-test")
+    implementation("org.openrewrite:rewrite-core")
+    implementation("org.openrewrite:rewrite-xml")
+    implementation("org.openrewrite:rewrite-properties")
+    implementation("org.openrewrite:rewrite-yaml")
+    implementation("org.openrewrite:rewrite-gradle")
+    implementation("org.openrewrite:rewrite-maven")
+    implementation("org.openrewrite:rewrite-java-8")
+    implementation("org.openrewrite:rewrite-java-11")
+    implementation("org.openrewrite:rewrite-java-17")
+    implementation("org.openrewrite:rewrite-java-21")
 
     compileOnly("org.projectlombok:lombok:latest.release")
     annotationProcessor("org.projectlombok:lombok:latest.release")
