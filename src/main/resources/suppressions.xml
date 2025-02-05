@@ -167,10 +167,19 @@
         <packageUrl regex="true">^pkg:maven/log4j/log4j@.*$</packageUrl>
         <cve>CVE-2022-23307</cve>
         <cve>CVE-2022-23305</cve>
+        <cve>CVE-2022-23302</cve>
         <cve>CVE-2019-17571</cve>
         <cve>CVE-2020-9493</cve>
         <cve>CVE-2022-23302</cve>
         <cve>CVE-2023-26464</cve>
         <cve>CVE-2021-4104</cve>
+    </suppress>
+    <suppress until="2025-03-28Z">
+        <notes><![CDATA[
+        file name: javax.json-1.1.4.jar
+        reason: Used in antlr (4.11.1) code generation only. Not on the runtime classpath
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.glassfish/javax\.json@.*$</packageUrl>
+        <vulnerabilityName>CVE-2023-7272</vulnerabilityName>
     </suppress>
 </suppressions>
