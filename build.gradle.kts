@@ -229,7 +229,7 @@ dependencies {
     implementation("io.github.classgraph:classgraph:latest.release")
     implementation("org.eclipse.jgit:org.eclipse.jgit:latest.release")
 
-    testImplementation(platform("org.junit:junit-bom:latest.release"))
+    testImplementation(platform("org.junit:junit-bom:5.11.+")) // Avoids 5.12.0-M1
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.junit.jupiter:junit-jupiter-params")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
