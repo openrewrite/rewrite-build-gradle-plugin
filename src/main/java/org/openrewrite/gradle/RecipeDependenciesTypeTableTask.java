@@ -15,8 +15,6 @@
  */
 package org.openrewrite.gradle;
 
-import org.apache.ivy.plugins.latest.LatestLexicographicStrategy;
-import org.apache.ivy.plugins.version.*;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.file.SourceDirectorySet;
@@ -32,16 +30,6 @@ import java.util.Map;
 import static java.util.Objects.requireNonNull;
 
 public class RecipeDependenciesTypeTableTask extends DefaultTask {
-
-    private static final ChainVersionMatcher versionMatcher = new ChainVersionMatcher();
-
-    static {
-        versionMatcher.add(new ExactVersionMatcher());
-        versionMatcher.add(new LatestVersionMatcher());
-        versionMatcher.add(new PatternVersionMatcher());
-        versionMatcher.add(new SubVersionMatcher());
-        versionMatcher.add(new VersionRangeMatcher("latest", new LatestLexicographicStrategy()));
-    }
 
     @TaskAction
     void download() throws IOException {
