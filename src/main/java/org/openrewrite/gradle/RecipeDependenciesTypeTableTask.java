@@ -52,7 +52,7 @@ public class RecipeDependenciesTypeTableTask extends DefaultTask {
                     String artifact = dependency.getKey().getName();
                     String version = requireNonNull(dependency.getKey().getVersion(), "version");
                     writer.jar(group, artifact, version).write(dependency.getValue().toPath());
-                    getLogger().info("Wrote %s:%s:%s to %s", group, artifact, version, tsvFile);
+                    getLogger().info(String.format("Wrote %s:%s:%s to %s", group, artifact, version, tsvFile));
                 }
             }
         }

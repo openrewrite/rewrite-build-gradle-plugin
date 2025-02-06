@@ -47,11 +47,8 @@ class RecipeDependenciesTypeTableTaskTest {
     @Test
     void createTypeTable() throws IOException {
         Files.writeString(settingsFile.toPath(), "rootProject.name = 'my-project'");
-        File cp = new File(projectDir, TypeTable.DEFAULT_RESOURCE_PATH);
-        assertThat(cp.mkdirs()).isTrue();
-
-        //language=groovy
         Files.writeString(buildFile.toPath(),
+                //language=groovy
                 """
                         plugins {
                             id 'org.openrewrite.build.recipe-library-base'
@@ -67,7 +64,7 @@ class RecipeDependenciesTypeTableTaskTest {
 
         BuildResult result = GradleRunner.create()
                 .withProjectDir(projectDir)
-                .withArguments("createTypeTable", "--stacktrace")
+                .withArguments("createTypeTable", "--info", "--stacktrace")
                 .withPluginClasspath()
                 .withDebug(true)
                 .build();
@@ -75,6 +72,10 @@ class RecipeDependenciesTypeTableTaskTest {
 
         assertEquals(SUCCESS, requireNonNull(result.task(":createTypeTable")).getOutcome());
 
-        assertThat(cp).isFile();
+        File tsvFile = new File(projectDir, "src/main/resources/" + TypeTable.DEFAULT_RESOURCE_PATH);
+        assertThat(tsvFile)
+                .isFile()
+                .isReadable()
+                .isNotEmpty();
     }
 }
