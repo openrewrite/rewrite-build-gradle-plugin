@@ -20,11 +20,14 @@ import org.gradle.testkit.runner.GradleRunner;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.openrewrite.InMemoryExecutionContext;
 import org.openrewrite.java.internal.parser.TypeTable;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
 
 import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -72,10 +75,19 @@ class RecipeDependenciesTypeTableTaskTest {
 
         assertEquals(SUCCESS, requireNonNull(result.task(":createTypeTable")).getOutcome());
 
+        // Assert type table created
         File tsvFile = new File(projectDir, "src/main/resources/" + TypeTable.DEFAULT_RESOURCE_PATH);
         assertThat(tsvFile)
                 .isFile()
                 .isReadable()
                 .isNotEmpty();
+
+        // Load classes from the type table
+        InMemoryExecutionContext ctx = new InMemoryExecutionContext();
+        ctx.putMessage(TypeTable.VERIFY_CLASS_WRITING, true);
+        TypeTable table = new TypeTable(ctx, Files.newInputStream(tsvFile.toPath()), List.of("guava"));
+        Path guavaClassesDir = table.load("guava");
+        assertThat(guavaClassesDir).isNotEmptyDirectory();
+        System.out.println(guavaClassesDir);
     }
 }
