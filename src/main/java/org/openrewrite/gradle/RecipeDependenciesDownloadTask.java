@@ -32,6 +32,7 @@ import java.util.Map;
 
 import static java.util.Objects.requireNonNull;
 
+@Deprecated
 public class RecipeDependenciesDownloadTask extends DefaultTask {
 
     private static final ChainVersionMatcher versionMatcher = new ChainVersionMatcher();
