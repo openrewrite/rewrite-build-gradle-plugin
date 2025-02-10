@@ -82,7 +82,7 @@ public class RewriteJavaPlugin implements Plugin<Project> {
         deps.add("implementation", "org.jetbrains:annotations:latest.release");
         deps.add("compileOnly", "com.google.code.findbugs:jsr305:latest.release");
 
-        deps.add("testImplementation", deps.platform("org.junit:junit-bom:5.11.+")); // Avoids 5.12.0-M1
+        deps.add("testImplementation", deps.platform("org.junit:junit-bom:latest.release"));
         deps.add("testImplementation", "org.junit.jupiter:junit-jupiter-api");
         deps.add("testImplementation", "org.junit.jupiter:junit-jupiter-params");
         deps.add("testRuntimeOnly", "org.junit.jupiter:junit-jupiter-engine");
