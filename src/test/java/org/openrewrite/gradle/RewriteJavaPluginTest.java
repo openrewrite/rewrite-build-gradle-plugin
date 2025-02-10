@@ -44,13 +44,14 @@ public class RewriteJavaPluginTest {
 
     @Test
     public void testRetry() throws IOException {
-        writeFile(settingsFile, "rootProject.name = 'my-project'");
-        String buildFileContent = """
+        Files.writeString(settingsFile.toPath(), "rootProject.name = 'my-project'");
+        Files.writeString(buildFile.toPath(),
+                //language=gradle
+                """
                 plugins {
                     id 'org.openrewrite.build.language-library'
                 }
-                """;
-        writeFile(buildFile, buildFileContent);
+                """);
 
         BuildResult result = GradleRunner.create()
                 .withProjectDir(testProjectDir)
@@ -59,9 +60,5 @@ public class RewriteJavaPluginTest {
                 .build();
 
         assertEquals(NO_SOURCE, requireNonNull(result.task(":test")).getOutcome());
-    }
-
-    private void writeFile(File destination, String content) throws IOException {
-        Files.write(destination.toPath(), content.getBytes());
     }
 }
