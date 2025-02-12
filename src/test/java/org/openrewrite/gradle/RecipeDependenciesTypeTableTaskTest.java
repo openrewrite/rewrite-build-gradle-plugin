@@ -83,9 +83,7 @@ class RecipeDependenciesTypeTableTaskTest {
                 .isNotEmpty();
 
         // Load classes from the type table
-        InMemoryExecutionContext ctx = new InMemoryExecutionContext();
-        ctx.putMessage(TypeTable.VERIFY_CLASS_WRITING, true); // TODO No need to verify again here
-        TypeTable table = new TypeTable(ctx, Files.newInputStream(tsvFile.toPath()), List.of("guava"));
+        TypeTable table = new TypeTable(new InMemoryExecutionContext(), Files.newInputStream(tsvFile.toPath()), List.of("guava"));
         Path guavaClassesDir = table.load("guava");
         assertThat(guavaClassesDir).isDirectoryRecursivelyContaining("glob:**/Optional.class");
     }
