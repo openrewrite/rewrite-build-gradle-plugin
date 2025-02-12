@@ -73,10 +73,10 @@ public class RewriteJavaPlugin implements Plugin<Project> {
 
     private static void addDependencies(Project project, RewriteJavaExtension ext) {
         DependencyHandler deps = project.getDependencies();
-        deps.add("compileOnly", "org.projectlombok:lombok:latest.release");
-        deps.add("testCompileOnly", "org.projectlombok:lombok:latest.release");
-        deps.add("annotationProcessor", "org.projectlombok:lombok:latest.release");
-        deps.add("testAnnotationProcessor", "org.projectlombok:lombok:latest.release");
+        deps.add("compileOnly", "org.openrewrite.tools:lombok:latest.release");
+        deps.add("testCompileOnly", "org.openrewrite.tools:lombok:latest.release");
+        deps.add("annotationProcessor", "org.openrewrite.tools:lombok:latest.release");
+        deps.add("testAnnotationProcessor", "org.openrewrite.tools:lombok:latest.release");
         deps.add("api", deps.platform("com.fasterxml.jackson:jackson-bom:" + ext.getJacksonVersion().get()));
 
         deps.add("implementation", "org.jetbrains:annotations:latest.release");
