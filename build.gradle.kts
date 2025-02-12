@@ -206,8 +206,8 @@ dependencies {
     implementation("org.openrewrite:rewrite-java-17")
     implementation("org.openrewrite:rewrite-java-21")
 
-    compileOnly("org.projectlombok:lombok:latest.release")
-    annotationProcessor("org.projectlombok:lombok:latest.release")
+    compileOnly("org.openrewrite.tools:lombok:latest.release")
+    annotationProcessor("org.openrewrite.tools:lombok:latest.release")
 
     implementation("org.apache.ivy:ivy:2.5.2")
     implementation("gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:latest.release")
