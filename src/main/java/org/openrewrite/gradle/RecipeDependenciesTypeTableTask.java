@@ -50,7 +50,10 @@ public class RecipeDependenciesTypeTableTask extends DefaultTask {
                 for (Map.Entry<Dependency, File> dependency : extension.getResolved().entrySet()) {
                     String group = requireNonNull(dependency.getKey().getGroup(), "group");
                     String artifact = dependency.getKey().getName();
-                    String version = requireNonNull(dependency.getKey().getVersion(), "version");
+                    // Determine actual version; e.g. 5.+ might resolve to 5.3.39
+                    String version = dependency.getValue().getName()
+                            .substring(artifact.length() + 1)
+                            .replaceAll(".jar$", "");
                     writer.jar(group, artifact, version).write(dependency.getValue().toPath());
                     getLogger().info(String.format("Wrote %s:%s:%s to %s", group, artifact, version, tsvFile));
                 }

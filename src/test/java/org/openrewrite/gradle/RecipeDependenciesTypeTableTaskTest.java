@@ -17,6 +17,7 @@ package org.openrewrite.gradle;
 
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.GradleRunner;
+import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -48,43 +49,70 @@ class RecipeDependenciesTypeTableTaskTest {
     }
 
     @Test
-    void createTypeTable() throws IOException {
-        Files.writeString(settingsFile.toPath(), "rootProject.name = 'my-project'");
-        Files.writeString(buildFile.toPath(),
-                //language=groovy
-                """
-                        plugins {
-                            id 'org.openrewrite.build.recipe-library-base'
-                        }
-                        repositories {
-                            mavenCentral()
-                        }
-                        recipeDependencies {
-                            parserClasspath 'com.google.guava:guava:30.1-jre'
-                            parserClasspath 'com.google.guava:guava:31.1-jre'
-                        }
-                        """);
-
-        BuildResult result = GradleRunner.create()
-                .withProjectDir(projectDir)
-                .withArguments("createTypeTable", "--info", "--stacktrace")
-                .withPluginClasspath()
-                .withDebug(true)
-                .build();
-        System.out.println(result.getOutput());
+    void multipleVersionsOfGuava() throws IOException {
+        BuildResult result = createSourceFiles("""
+          plugins {
+              id 'org.openrewrite.build.recipe-library-base'
+          }
+          repositories {
+              mavenCentral()
+          }
+          recipeDependencies {
+              parserClasspath 'com.google.guava:guava:30.1-jre'
+              parserClasspath 'com.google.guava:guava:31.1-jre'
+          }
+          """);
 
         assertEquals(SUCCESS, requireNonNull(result.task(":createTypeTable")).getOutcome());
 
         // Assert type table created
         File tsvFile = new File(projectDir, "src/main/resources/" + TypeTable.DEFAULT_RESOURCE_PATH);
         assertThat(tsvFile)
-                .isFile()
-                .isReadable()
-                .isNotEmpty();
+          .isFile()
+          .isReadable()
+          .isNotEmpty();
 
         // Load classes from the type table
         TypeTable table = new TypeTable(new InMemoryExecutionContext(), Files.newInputStream(tsvFile.toPath()), List.of("guava"));
-        Path guavaClassesDir = table.load("guava");
-        assertThat(guavaClassesDir).isDirectoryRecursivelyContaining("glob:**/Optional.class");
+        assertThat(table.load("guava")).isDirectoryRecursivelyContaining("glob:**/Optional.class");
+    }
+
+    @Test
+    void resolveFivePlusToActualVersion() throws IOException {
+        BuildResult result = createSourceFiles("""
+          plugins {
+              id 'org.openrewrite.build.recipe-library-base'
+          }
+          repositories {
+              mavenCentral()
+          }
+          recipeDependencies {
+              parserClasspath("org.springframework:spring-core:5.+") // Note the '+' in the version! Below we use `5.3`
+          }
+          """);
+
+        assertEquals(SUCCESS, requireNonNull(result.task(":createTypeTable")).getOutcome());
+
+        // Assert type table created
+        File tsvFile = new File(projectDir, "src/main/resources/" + TypeTable.DEFAULT_RESOURCE_PATH);
+        assertThat(tsvFile)
+          .isFile()
+          .isReadable()
+          .isNotEmpty();
+
+        // Load more specific `5.3` version from type table, which should not contain `5.+`
+        TypeTable table = new TypeTable(new InMemoryExecutionContext(), Files.newInputStream(tsvFile.toPath()), List.of("spring-core-5.3"));
+        assertThat(table.load("spring-core-5.3")).isDirectoryRecursivelyContaining("glob:**/Order.class");
+    }
+
+    private BuildResult createSourceFiles(@Language("gradle") String source) throws IOException {
+        Files.writeString(settingsFile.toPath(), "rootProject.name = 'my-project'");
+        Files.writeString(buildFile.toPath(), source);
+        return GradleRunner.create()
+          .withProjectDir(projectDir)
+          .withArguments("createTypeTable", "--info", "--stacktrace")
+          .withPluginClasspath()
+          .withDebug(true)
+          .build();
     }
 }
