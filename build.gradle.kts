@@ -187,7 +187,7 @@ tasks.named<JavaCompile>("compileJava") {
     options.release.set(8)
 }
 
-val rewriteVersion = "8.45.3"
+val rewriteVersion = "8.45.5"
 
 dependencies {
     compileOnly("org.openrewrite.gradle.tooling:model:latest.release")
