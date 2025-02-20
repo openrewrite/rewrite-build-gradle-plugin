@@ -4,7 +4,7 @@ import nl.javadude.gradle.plugins.license.LicenseExtension
 import java.util.*
 
 plugins {
-    id("com.netflix.nebula.release") version "19.0.10"
+    id("com.netflix.nebula.release") version "latest.release"
     id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
     id("org.owasp.dependencycheck") version "10.+"
     id("com.netflix.nebula.maven-resolved-dependencies") version "latest.release"
@@ -216,7 +216,7 @@ dependencies {
     implementation("com.netflix.nebula.contacts:com.netflix.nebula.contacts.gradle.plugin:latest.release")
     implementation("com.netflix.nebula:gradle-info-plugin:latest.release")
     implementation("com.netflix.nebula.release:com.netflix.nebula.release.gradle.plugin:latest.release")
-    implementation("com.netflix.nebula:nebula-publishing-plugin:latest.release")
+    implementation("com.netflix.nebula:nebula-publishing-plugin:21.1.0")
     implementation("com.netflix.nebula:nebula-project-plugin:latest.release")
     implementation("io.github.gradle-nexus:publish-plugin:latest.release")
     implementation("com.gradleup.shadow:com.gradleup.shadow.gradle.plugin:9.0.0-beta7") // Latest supporting Java 8
