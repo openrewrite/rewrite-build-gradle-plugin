@@ -4,7 +4,7 @@ import nl.javadude.gradle.plugins.license.LicenseExtension
 import java.util.*
 
 plugins {
-    id("com.netflix.nebula.release") version "latest.release"
+    id("com.netflix.nebula.release") version "19.0.10"
     id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
     id("org.owasp.dependencycheck") version "10.+"
     id("com.netflix.nebula.maven-resolved-dependencies") version "latest.release"
