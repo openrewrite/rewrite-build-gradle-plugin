@@ -6,7 +6,7 @@ import java.util.*
 plugins {
     id("com.netflix.nebula.release") version "latest.release"
     id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
-    id("org.owasp.dependencycheck") version "10.+"
+    id("org.owasp.dependencycheck") version "12.1+"
     id("com.netflix.nebula.maven-resolved-dependencies") version "latest.release"
     id("com.netflix.nebula.maven-apache-license") version "latest.release"
     id("com.gradle.plugin-publish") version "latest.release"
