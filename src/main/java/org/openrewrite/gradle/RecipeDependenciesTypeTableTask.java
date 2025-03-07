@@ -31,6 +31,16 @@ import static java.util.Objects.requireNonNull;
 
 public class RecipeDependenciesTypeTableTask extends DefaultTask {
 
+    @Override
+    public String getDescription() {
+        return "Processes dependencies from the \"recipeDependencies\" DSL into Type Tables for use with OpenRewrite's JavaParser.";
+    }
+
+    @Override
+    public String getGroup() {
+        return "OpenRewrite";
+    }
+
     @TaskAction
     void download() throws IOException {
         SourceDirectorySet resources = getProject().getExtensions().getByType(JavaPluginExtension.class)

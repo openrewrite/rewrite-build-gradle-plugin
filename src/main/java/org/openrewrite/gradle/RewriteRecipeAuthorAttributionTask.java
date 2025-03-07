@@ -30,11 +30,13 @@ import org.eclipse.jgit.lib.PersonIdent;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.file.ProjectLayout;
 import org.gradle.api.tasks.*;
 import org.gradle.work.ChangeType;
 import org.gradle.work.FileChange;
 import org.gradle.work.InputChanges;
 
+import javax.inject.Inject;
 import java.io.File;
 import java.net.URI;
 import java.nio.file.Files;
@@ -45,7 +47,18 @@ import java.util.stream.Collectors;
 @CacheableTask
 public class RewriteRecipeAuthorAttributionTask extends DefaultTask {
 
-    private final DirectoryProperty sources = getProject().getObjects().directoryProperty();
+    @Override
+    public String getDescription() {
+        return "Extracts git contribution history to credit recipe authors.";
+    }
+
+    @Override
+    public String getGroup() {
+        return "OpenRewrite";
+    }
+
+    private final DirectoryProperty sources = getProject().getObjects().directoryProperty()
+            .convention(getProject().getLayout().getProjectDirectory().dir("src/main/java"));
 
     public void setSources(File sourceDirectory) {
         sources.set(sourceDirectory);

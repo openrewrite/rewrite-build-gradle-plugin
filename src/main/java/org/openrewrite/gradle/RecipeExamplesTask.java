@@ -33,6 +33,16 @@ import java.util.stream.Collectors;
 public class RecipeExamplesTask extends DefaultTask {
     private final DirectoryProperty sources = getProject().getObjects().directoryProperty();
 
+    @Override
+    public String getDescription() {
+        return "Extracts example recipe usage from tests to generate examples suitable for documentation.";
+    }
+
+    @Override
+    public String getGroup() {
+        return "OpenRewrite";
+    }
+
     @SkipWhenEmpty
     @InputDirectory
     @PathSensitive(PathSensitivity.NAME_ONLY)
@@ -58,8 +68,7 @@ public class RecipeExamplesTask extends DefaultTask {
         try {
             extractExamples(allJavaFiles, new InMemoryExecutionContext());
         } catch (Exception e) {
-            e.printStackTrace();
-            getLogger().lifecycle("Extract examples fail");
+            getLogger().warn("Extract recipe examples failed", e);
         }
     }
 
@@ -96,13 +105,13 @@ public class RecipeExamplesTask extends DefaultTask {
             inputs.add(input);
         }
 
-        getLogger().lifecycle("Parsing " + allJavaFiles.size() + " java files...");
+        getLogger().info("Parsing {} java files for recipe examples",  allJavaFiles.size());
 
         List<SourceFile> sourceFiles = parser.parseInputs(inputs, null, ctx)
             .collect(Collectors.toList());
         int resultCount = 0;
 
-        getLogger().lifecycle("Parsing java files finished.");
+        getLogger().info("Parsing java files finished.");
         for (SourceFile s : sourceFiles) {
             ExamplesExtractor examplesExtractor = new ExamplesExtractor();
             try {
@@ -113,10 +122,10 @@ public class RecipeExamplesTask extends DefaultTask {
                     writeYamlFile(s.getSourcePath().getFileName().toString(), getOutputDirectory(), yamlContent);
                 }
             } catch (Exception e) {
-                getLogger().error("Parsing file {} failed.", s.getSourcePath().getFileName().toString());
+                getLogger().warn("Parsing file {} failed.", s.getSourcePath().getFileName().toString(), e);
             }
         }
-        getLogger().lifecycle("Generated " + resultCount + " recipe examples yaml files");
+        getLogger().info("Generated {} recipe examples yaml files", resultCount);
     }
 
     void writeYamlFile(String originalTestFileName, Path outputPath, String data) {
@@ -139,7 +148,7 @@ public class RecipeExamplesTask extends DefaultTask {
             writer.close();
             // getLogger().lifecycle("Generated recipe examples yaml '{}' for the test file '{}'",  fileName, originalTestFileName);
         } catch (IOException e) {
-            e.printStackTrace();
+            getLogger().warn("Failed to write recipe examples yaml file", e);
         }
     }
 }
