@@ -30,13 +30,11 @@ import org.eclipse.jgit.lib.PersonIdent;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.file.ProjectLayout;
 import org.gradle.api.tasks.*;
 import org.gradle.work.ChangeType;
 import org.gradle.work.FileChange;
 import org.gradle.work.InputChanges;
 
-import javax.inject.Inject;
 import java.io.File;
 import java.net.URI;
 import java.nio.file.Files;
@@ -72,7 +70,7 @@ public class RewriteRecipeAuthorAttributionTask extends DefaultTask {
         return sources;
     }
 
-    private Set<URI> classpath;
+    private Set<URI> classpath = Collections.emptySet();
 
     public void setClasspath(FileCollection classpath) {
         this.classpath = classpath.getFiles().stream().map(File::toURI).collect(Collectors.toSet());
@@ -85,7 +83,7 @@ public class RewriteRecipeAuthorAttributionTask extends DefaultTask {
 
     @OutputDirectory
     public Path getOutputDirectory() {
-        return getProject().getBuildDir().toPath().resolve("rewrite/attribution")
+        return getProject().getLayout().getBuildDirectory().get().getAsFile().toPath().resolve("rewrite/attribution")
                 .resolve(sources.get().getAsFile().getName());
     }
 
