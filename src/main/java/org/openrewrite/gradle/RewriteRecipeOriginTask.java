@@ -73,8 +73,8 @@ public class RewriteRecipeOriginTask extends DefaultTask {
                     "type: specs.openrewrite.org/v1beta/origin%n" +
                             "recipeName: %s%n" +
                             "recipeUrl: \"%s/tree/main/%s\"%n" +
-                            "recipeLicenseUrl: \"%s\"%n",
-                    "recipeLicenseName: \"%s\"%n",
+                            "recipeLicenseUrl: \"%s\"%n" +
+                            "recipeLicenseName: \"%s\"%n",
                     recipeFqn, repoBaseUrl, file.getAbsoluteFile(), recipeLicenseUrl, recipeLicenseName);
             Files.write(targetPath, yaml.getBytes());
         }
