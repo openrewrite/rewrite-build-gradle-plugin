@@ -19,8 +19,6 @@ import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ClassInfoList;
 import io.github.classgraph.ScanResult;
-import lombok.Getter;
-import lombok.Setter;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
@@ -41,34 +39,12 @@ import java.util.stream.Collectors;
 @CacheableTask
 public class RewriteRecipeOriginTask extends DefaultTask {
 
-    @Getter(onMethod_ = {
-            @SkipWhenEmpty,
-            @InputDirectory,
-            @PathSensitive(PathSensitivity.NAME_ONLY),
-            @IgnoreEmptyDirectories})
     private final DirectoryProperty sources = getProject().getObjects().directoryProperty();
 
-    @Getter(onMethod_ = @Internal)
     private Set<URI> classpath;
-    @Setter
-    @Getter(onMethod_ = @SkipWhenEmpty)
-    private String recipeLicenseUrl;
-    @Setter
-    @Getter(onMethod_ = @SkipWhenEmpty)
     private String recipeLicenseName;
-    @Setter
-    @Getter(onMethod_ = @SkipWhenEmpty)
+    private String recipeLicenseUrl;
     private String repoBaseUrl;
-
-    @OutputDirectory
-    public Path getOutputDirectory() {
-        return getProject().getBuildDir().toPath().resolve("rewrite/origin")
-                .resolve(sources.get().getAsFile().getName());
-    }
-
-    public void setClasspath(FileCollection classpath) {
-        this.classpath = classpath.getFiles().stream().map(File::toURI).collect(Collectors.toSet());
-    }
 
     public void setSources(File sourceDirectory) {
         sources.set(sourceDirectory);
@@ -98,7 +74,7 @@ public class RewriteRecipeOriginTask extends DefaultTask {
                             "recipeName: %s%n" +
                             "recipeUrl: \"%s/tree/main/%s\"%n" +
                             "recipeLicenseUrl: \"%s\"%n",
-                            "recipeLicenseName: \"%s\"%n",
+                    "recipeLicenseName: \"%s\"%n",
                     recipeFqn, repoBaseUrl, file.getAbsoluteFile(), recipeLicenseUrl, recipeLicenseName);
             Files.write(targetPath, yaml.getBytes());
         }
@@ -117,5 +93,55 @@ public class RewriteRecipeOriginTask extends DefaultTask {
             }
         }
         return fileNameToFqn;
+    }
+
+    @OutputDirectory
+    public Path getOutputDirectory() {
+        return getProject().getBuildDir().toPath().resolve("rewrite/origin")
+                .resolve(sources.get().getAsFile().getName());
+    }
+
+    public void setClasspath(FileCollection classpath) {
+        this.classpath = classpath.getFiles().stream().map(File::toURI).collect(Collectors.toSet());
+    }
+
+    @IgnoreEmptyDirectories
+    @InputDirectory
+    @SkipWhenEmpty
+    @PathSensitive(PathSensitivity.NAME_ONLY)
+    public DirectoryProperty getSources() {
+        return this.sources;
+    }
+
+    @Internal
+    public Set<URI> getClasspath() {
+        return this.classpath;
+    }
+
+    @Input
+    public String getRecipeLicenseName() {
+        return this.recipeLicenseName;
+    }
+
+    @Input
+    public String getRecipeLicenseUrl() {
+        return this.recipeLicenseUrl;
+    }
+
+    @Input
+    public String getRepoBaseUrl() {
+        return this.repoBaseUrl;
+    }
+
+    public void setRecipeLicenseName(String recipeLicenseName) {
+        this.recipeLicenseName = recipeLicenseName;
+    }
+
+    public void setRecipeLicenseUrl(String recipeLicenseUrl) {
+        this.recipeLicenseUrl = recipeLicenseUrl;
+    }
+
+    public void setRepoBaseUrl(String repoBaseUrl) {
+        this.repoBaseUrl = repoBaseUrl;
     }
 }
