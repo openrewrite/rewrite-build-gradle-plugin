@@ -52,7 +52,10 @@ public class RewriteRecipeOriginTask extends DefaultTask {
     private Set<URI> classpath;
     @Setter
     @Getter(onMethod_ = @SkipWhenEmpty)
-    private String recipeLicense;
+    private String recipeLicenseUrl;
+    @Setter
+    @Getter(onMethod_ = @SkipWhenEmpty)
+    private String recipeLicenseName;
     @Setter
     @Getter(onMethod_ = @SkipWhenEmpty)
     private String repoBaseUrl;
@@ -95,7 +98,8 @@ public class RewriteRecipeOriginTask extends DefaultTask {
                             "recipeName: %s%n" +
                             "recipeUrl: \"%s/tree/main/%s\"%n" +
                             "recipeLicenseUrl: \"%s\"%n",
-                    recipeFqn, repoBaseUrl, file.getAbsoluteFile(), recipeLicense);
+                            "recipeLicenseName: \"%s\"%n",
+                    recipeFqn, repoBaseUrl, file.getAbsoluteFile(), recipeLicenseUrl, recipeLicenseName);
             Files.write(targetPath, yaml.getBytes());
         }
     }

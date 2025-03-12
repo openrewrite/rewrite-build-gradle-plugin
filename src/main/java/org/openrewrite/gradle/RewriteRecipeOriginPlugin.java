@@ -31,6 +31,7 @@ import org.gradle.language.jvm.tasks.ProcessResources;
 
 import java.io.File;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.eclipse.jgit.util.StringUtils.capitalize;
@@ -39,7 +40,8 @@ public class RewriteRecipeOriginPlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
-        String recipeLicense = determineLicense(project);
+        String recipeLicenseUrl = determineLicenseDetail(MavenPomLicense::getUrl, project);
+        String recipeLicenseName = determineLicenseDetail(MavenPomLicense::getName, project);
         String repoUrl = determineRepoUrl(project);
 
         JavaPluginExtension java = project.getExtensions().findByType(JavaPluginExtension.class);
@@ -61,7 +63,8 @@ public class RewriteRecipeOriginPlugin implements Plugin<Project> {
                         task.dependsOn(mainSource.getCompileJavaTaskName());
                         task.setSources(sourceDir);
                         task.setClasspath(mainSource.getOutput().getClassesDirs());
-                        task.setRecipeLicense(recipeLicense);
+                        task.setRecipeLicenseUrl(recipeLicenseUrl);
+                        task.setRecipeLicenseName(recipeLicenseName);
                         task.setRepoBaseUrl(repoUrl);
                     }
             );
@@ -97,7 +100,7 @@ public class RewriteRecipeOriginPlugin implements Plugin<Project> {
         return repoUrls.get(0);
     }
 
-    private String determineLicense(Project project) {
+    private String determineLicenseDetail(Function<MavenPomLicense, Property<String>> extractor, Project project) {
         List<String> licenses = project.getExtensions()
                 .getByType(PublishingExtension.class)
                 .getPublications()
@@ -107,7 +110,7 @@ public class RewriteRecipeOriginPlugin implements Plugin<Project> {
                 .map(DefaultMavenPom.class::cast)
                 .map(DefaultMavenPom::getLicenses)
                 .flatMap(List::stream)
-                .map(MavenPomLicense::getUrl)
+                .map(extractor)
                 .map(Property<String>::get)
                 .distinct()
                 .collect(Collectors.toList());
