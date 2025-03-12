@@ -90,6 +90,9 @@
         <cve>CVE-2018-1000184</cve>
         <cve>CVE-2023-46650</cve>
         <cve>CVE-2022-36885</cve>
+        <cve>CVE-2022-34793</cve>
+        <cve>CVE-2022-34792</cve>
+        <cve>CVE-2022-34794</cve>
     </suppress>
     <suppress until="2025-04-07Z">
         <notes><![CDATA[
