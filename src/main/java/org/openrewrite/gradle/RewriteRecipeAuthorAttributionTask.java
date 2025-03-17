@@ -174,6 +174,9 @@ public class RewriteRecipeAuthorAttributionTask extends DefaultTask {
         Map<Contributor, Integer> contributors = new HashMap<>();
 
         BlameResult blame = g.blame().setFilePath(relativeUnixStylePath).call();
+        if (blame == null) {
+            return Collections.emptyList();
+        }
         RawText resultContents = blame.getResultContents();
         if (resultContents == null) {
             return Collections.emptyList();
