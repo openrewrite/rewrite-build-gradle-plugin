@@ -25,6 +25,8 @@ import org.gradle.api.publish.maven.internal.publication.DefaultMavenPom;
 import org.gradle.jvm.tasks.Jar;
 import org.openrewrite.internal.lang.Nullable;
 
+import java.util.Map;
+
 public class ModerneProprietaryLicensePlugin implements Plugin<Project> {
 
     @Override
@@ -48,6 +50,9 @@ public class ModerneProprietaryLicensePlugin implements Plugin<Project> {
         PublishingExtension publishing = project.getExtensions().getByType(PublishingExtension.class);
         publishing.publications(publications ->
                 publications.withType(MavenPublication.class, p -> configureLicense(p, emptySourcesJar)));
+
+        project.getTasks().withType(Jar.class).configureEach(jar ->
+                jar.getManifest().attributes(Map.of("License", "Moderne Proprietary License")));
     }
 
     private void configureLicense(MavenPublication publication, @Nullable Jar sourcesJar) {
