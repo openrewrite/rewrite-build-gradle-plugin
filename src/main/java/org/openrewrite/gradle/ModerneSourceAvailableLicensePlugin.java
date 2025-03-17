@@ -21,6 +21,9 @@ import org.gradle.api.Project;
 import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.maven.MavenPublication;
 import org.gradle.api.publish.maven.internal.publication.DefaultMavenPom;
+import org.gradle.jvm.tasks.Jar;
+
+import java.util.Map;
 
 public class ModerneSourceAvailableLicensePlugin implements Plugin<Project> {
 
@@ -29,6 +32,9 @@ public class ModerneSourceAvailableLicensePlugin implements Plugin<Project> {
         project.getPlugins().apply(MavenBasePublishPlugin.class);
         PublishingExtension publishing = project.getExtensions().getByType(PublishingExtension.class);
         publishing.publications(publications -> publications.withType(MavenPublication.class, this::configureLicense));
+
+        project.getTasks().withType(Jar.class).configureEach(jar ->
+                jar.getManifest().attributes(Map.of("License", "Moderne Source Available License")));
     }
 
     private void configureLicense(MavenPublication publication) {

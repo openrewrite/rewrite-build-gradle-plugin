@@ -23,11 +23,9 @@ import nl.javadude.gradle.plugins.license.LicenseExtension;
 import nl.javadude.gradle.plugins.license.LicensePlugin;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.jvm.tasks.Jar;
 
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Optional;
+import java.util.*;
 
 public class RewriteLicensePlugin implements Plugin<Project> {
 
@@ -44,6 +42,9 @@ public class RewriteLicensePlugin implements Plugin<Project> {
             ((org.gradle.api.plugins.ExtraPropertiesExtension) task.getExtensions().getByName("ext"))
                     .set("year", Calendar.getInstance().get(Calendar.YEAR));
         });
+
+        project.getTasks().withType(Jar.class).configureEach(jar ->
+                jar.getManifest().attributes(Map.of("License", "Apache License Version 2.0")));
 
         project.getExtensions().configure(LicenseExtension.class, ext -> {
             ext.setSkipExistingHeaders(Optional
