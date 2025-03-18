@@ -29,6 +29,9 @@ import java.util.*;
 
 public class RewriteLicensePlugin implements Plugin<Project> {
 
+    private static final String LICENSE_NAME = "Apache License Version 2.0";
+    private static final String LICENSE_URL = "https://www.apache.org/licenses/LICENSE-2.0";
+
     @Override
     public void apply(Project project) {
         project.getPlugins().apply(LicensePlugin.class);
@@ -44,7 +47,10 @@ public class RewriteLicensePlugin implements Plugin<Project> {
         });
 
         project.getTasks().withType(Jar.class).configureEach(jar ->
-                jar.getManifest().attributes(Map.of("License", "Apache License Version 2.0")));
+                jar.getManifest().attributes(Map.of(
+                        "License-Name", LICENSE_NAME,
+                        "License-Url", LICENSE_URL
+                )));
 
         project.getExtensions().configure(LicenseExtension.class, ext -> {
             ext.setSkipExistingHeaders(Optional

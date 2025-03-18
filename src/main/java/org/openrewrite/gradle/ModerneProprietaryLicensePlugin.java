@@ -29,6 +29,9 @@ import java.util.Map;
 
 public class ModerneProprietaryLicensePlugin implements Plugin<Project> {
 
+    private static final String LICENSE_NAME = "Moderne Proprietary License";
+    private static final String LICENSE_URL = "https://docs.moderne.io/licensing/overview";
+
     @Override
     public void apply(Project project) {
         // Empty JARs are OK: https://central.sonatype.org/publish/requirements/#supply-javadoc-and-sources
@@ -52,7 +55,10 @@ public class ModerneProprietaryLicensePlugin implements Plugin<Project> {
                 publications.withType(MavenPublication.class, p -> configureLicense(p, emptySourcesJar)));
 
         project.getTasks().withType(Jar.class).configureEach(jar ->
-                jar.getManifest().attributes(Map.of("License", "Moderne Proprietary License")));
+                jar.getManifest().attributes(Map.of(
+                        "License-Name", LICENSE_NAME,
+                        "License-Url", LICENSE_URL
+                )));
     }
 
     private void configureLicense(MavenPublication publication, @Nullable Jar sourcesJar) {
@@ -64,8 +70,8 @@ public class ModerneProprietaryLicensePlugin implements Plugin<Project> {
                 pom.licenses(licenses ->
                         licenses.license(license -> {
                             ((DefaultMavenPom) licenses).getLicenses().clear();
-                            license.getName().set("Moderne Proprietary License");
-                            license.getUrl().set("https://docs.moderne.io/licensing/overview");
+                            license.getName().set(LICENSE_NAME);
+                            license.getUrl().set(LICENSE_URL);
                         })
                 )
         );

@@ -27,6 +27,9 @@ import java.util.Map;
 
 public class ModerneSourceAvailableLicensePlugin implements Plugin<Project> {
 
+    private static final String LICENSE_NAME = "Moderne Source Available License";
+    private static final String LICENSE_URL = "https://docs.moderne.io/licensing/moderne-source-available-license";
+
     @Override
     public void apply(Project project) {
         project.getPlugins().apply(MavenBasePublishPlugin.class);
@@ -34,7 +37,10 @@ public class ModerneSourceAvailableLicensePlugin implements Plugin<Project> {
         publishing.publications(publications -> publications.withType(MavenPublication.class, this::configureLicense));
 
         project.getTasks().withType(Jar.class).configureEach(jar ->
-                jar.getManifest().attributes(Map.of("License", "Moderne Source Available License")));
+                jar.getManifest().attributes(Map.of(
+                        "License-Name", LICENSE_NAME,
+                        "License-Url", LICENSE_URL
+                )));
     }
 
     private void configureLicense(MavenPublication publication) {
@@ -42,8 +48,8 @@ public class ModerneSourceAvailableLicensePlugin implements Plugin<Project> {
             pom.licenses(licenses -> {
                 ((DefaultMavenPom) licenses).getLicenses().clear();
                 licenses.license(license -> {
-                    license.getName().set("Moderne Source Available License");
-                    license.getUrl().set("https://docs.moderne.io/licensing/moderne-source-available-license");
+                    license.getName().set(LICENSE_NAME);
+                    license.getUrl().set(LICENSE_URL);
                 });
             });
         });
