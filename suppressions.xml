@@ -178,4 +178,12 @@
         <packageUrl regex="true">^pkg:maven/commons-io/commons-io@.*$</packageUrl>
         <vulnerabilityName>CVE-2024-47554</vulnerabilityName>
     </suppress>
+    <suppress until="2025-05-31Z">
+        <notes><![CDATA[
+   file name: okio-2.10.0.jar
+   reason: Already patched downstream, just a matter of time before it trickles through to us
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/com.squareup.okio/okio@.*$</packageUrl>
+        <vulnerabilityName>CVE-2023-3635</vulnerabilityName>
+    </suppress>
 </suppressions>
