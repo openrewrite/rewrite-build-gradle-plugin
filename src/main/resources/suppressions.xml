@@ -79,7 +79,7 @@
         <cve>CVE-2023-35946</cve>
         <cve>CVE-2023-42445</cve>
     </suppress>
-    <suppress until="2025-04-07Z">
+    <suppress until="2025-05-31Z">
         <notes><![CDATA[
        file name: rewrite-jenkins-0.22.0-SNAPSHOT.jar
        sev: HIGH
@@ -94,7 +94,7 @@
         <cve>CVE-2022-34792</cve>
         <cve>CVE-2022-34794</cve>
     </suppress>
-    <suppress until="2025-04-07Z">
+    <suppress until="2025-05-31Z">
         <notes><![CDATA[
        file name: rewrite-openapi-0.6.0-SNAPSHOT.jar
            sev: HIGH
