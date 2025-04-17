@@ -9,7 +9,7 @@
         <packageUrl regex="true">^pkg:maven/com\.squareup\.okio/okio@.*$</packageUrl>
         <cve>CVE-2023-3635</cve>
     </suppress>
-    <suppress until="2025-04-05Z">
+    <suppress until="2025-05-31Z">
         <notes><![CDATA[
             sev: HIGH
             file name: rewrite-core-8.13.0-SNAPSHOT.jar (shaded: org.eclipse.jgit:org.eclipse.jgit:5.13.2.202306221912-r)
