@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
-    <suppress until="2025-04-05Z">
+    <suppress until="2025-05-31Z">
         <notes><![CDATA[
             file name: okio-jvm-2.10.0.jar
             sev: HIGH
@@ -9,7 +9,7 @@
         <packageUrl regex="true">^pkg:maven/com\.squareup\.okio/okio@.*$</packageUrl>
         <cve>CVE-2023-3635</cve>
     </suppress>
-    <suppress until="2025-04-05Z">
+    <suppress until="2025-05-31Z">
         <notes><![CDATA[
             sev: HIGH
             file name: rewrite-core-8.13.0-SNAPSHOT.jar (shaded: org.eclipse.jgit:org.eclipse.jgit:5.13.2.202306221912-r)
@@ -177,13 +177,5 @@
    ]]></notes>
         <packageUrl regex="true">^pkg:maven/commons-io/commons-io@.*$</packageUrl>
         <vulnerabilityName>CVE-2024-47554</vulnerabilityName>
-    </suppress>
-    <suppress until="2025-05-31Z">
-        <notes><![CDATA[
-   file name: okio-2.10.0.jar
-   reason: Already patched downstream, just a matter of time before it trickles through to us
-   ]]></notes>
-        <packageUrl regex="true">^pkg:maven/com.squareup.okio/okio@.*$</packageUrl>
-        <vulnerabilityName>CVE-2023-3635</vulnerabilityName>
     </suppress>
 </suppressions>
