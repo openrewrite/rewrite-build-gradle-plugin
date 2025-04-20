@@ -29,7 +29,7 @@ import static java.util.Objects.requireNonNull;
 import static org.gradle.testkit.runner.TaskOutcome.NO_SOURCE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class RewriteJavaPluginTest {
+class RewriteJavaPluginTest {
     @TempDir
     File testProjectDir;
 

@@ -21,7 +21,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class RecipeDependenciesDownloadTaskTest {
+class RecipeDependenciesDownloadTaskTest {
 
     @ParameterizedTest
     @CsvSource(

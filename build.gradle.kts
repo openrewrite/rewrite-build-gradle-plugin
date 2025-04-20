@@ -126,13 +126,6 @@ gradlePlugin {
             implementationClass = "org.openrewrite.gradle.RewriteRecipeAuthorAttributionPlugin"
             tags = listOf("rewrite", "refactoring")
         }
-        create("build-recipe-examples") {
-            id = "org.openrewrite.build.recipe-examples"
-            displayName = "Rewrite recipe examples"
-            description = "Produces a `/META-INF/rewrite/recipe-example.yml` file containing recipe examples"
-            implementationClass = "org.openrewrite.gradle.RewriteRecipeExamplesPlugin"
-            tags = listOf("rewrite", "refactoring")
-        }
         create("moderne-source-available-license") {
             id = "org.openrewrite.build.moderne-source-available-license"
             displayName = "Moderne Source Available License"
