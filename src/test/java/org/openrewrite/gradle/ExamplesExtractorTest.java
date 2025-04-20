@@ -15,7 +15,6 @@
  */
 package org.openrewrite.gradle;
 
-
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -36,10 +35,8 @@ class ExamplesExtractorTest implements RewriteTest {
       import org.openrewrite.ExecutionContext;
       import org.openrewrite.Recipe;
       import org.openrewrite.TreeVisitor;
-      import org.openrewrite.internal.lang.NonNullApi;
       import org.openrewrite.java.JavaIsoVisitor;
       
-      @NonNullApi
       public class ChainStringBuilderAppendCalls extends Recipe {
           @Override
           public String getDisplayName() {
@@ -72,22 +69,22 @@ class ExamplesExtractorTest implements RewriteTest {
           java(
             """
               package org.openrewrite.staticanalysis;
-                              
+
               import org.junit.jupiter.api.Test;
               import org.openrewrite.Recipe;
               import org.openrewrite.DocumentExample;
               import org.openrewrite.test.RecipeSpec;
               import org.openrewrite.test.RewriteTest;
-                              
+
               import static org.openrewrite.java.Assertions.java;
-                              
+
               class ChainStringBuilderAppendCallsTest implements RewriteTest {
                   @Override
                   public void defaults(RecipeSpec spec) {
                       Recipe recipe = new ChainStringBuilderAppendCalls();
                       spec.recipe(recipe);
                   }
-                  
+
                   @DocumentExample(value = "Objects concatenation.")
                   @Test
                   void objectsConcatenation() {
@@ -166,16 +163,16 @@ class ExamplesExtractorTest implements RewriteTest {
           java(
             """
               package org.openrewrite.staticanalysis;
-                              
+
               import org.junit.jupiter.api.Test;
               import org.openrewrite.DocumentExample;
               import org.openrewrite.test.RecipeSpec;
               import org.openrewrite.test.RewriteTest;
-                              
+
               import static org.openrewrite.java.Assertions.java;
-                              
+
               class ChainStringBuilderAppendCallsTest implements RewriteTest {
-                  
+
                   @DocumentExample("Objects concatenation.")
                   @Test
                   void objectsConcatenation() {
@@ -254,16 +251,16 @@ class ExamplesExtractorTest implements RewriteTest {
           java(
             """
               package org.openrewrite.staticanalysis;
-                              
+
               import org.junit.jupiter.api.Test;
               import org.openrewrite.DocumentExample;
               import org.openrewrite.test.RecipeSpec;
               import org.openrewrite.test.RewriteTest;
-                              
+
               import static org.openrewrite.java.Assertions.java;
-                              
+
               class ChainStringBuilderAppendCallsTest implements RewriteTest {
-                  
+
                   @DocumentExample
                   @Test
                   void objectsConcatenation() {
@@ -374,7 +371,6 @@ class ExamplesExtractorTest implements RewriteTest {
                           required = false)
                   @Nullable
                   Boolean excludeFinalClasses;
-
 
                   @Override
                   public TreeVisitor<?, ExecutionContext> getVisitor() {
@@ -549,7 +545,7 @@ class ExamplesExtractorTest implements RewriteTest {
           java(
             """
               package org.openrewrite.java.migrate.net;
-              
+
               import org.junit.jupiter.api.Test;
               import org.openrewrite.DocumentExample;
               import org.openrewrite.config.Environment;
@@ -557,7 +553,7 @@ class ExamplesExtractorTest implements RewriteTest {
               import org.openrewrite.test.RewriteTest;
 
               import static org.openrewrite.java.Assertions.java;
-              
+
               class JavaNetAPIsTest implements RewriteTest {
                   @Override
                   public void defaults(RecipeSpec spec) {
@@ -567,7 +563,7 @@ class ExamplesExtractorTest implements RewriteTest {
                           .build()
                           .activateRecipes("org.openrewrite.java.migrate.net.JavaNetAPIs"));
                   }
-              
+
                   @DocumentExample
                   @Test
                   void multicastSocketGetTTLToGetTimeToLive() {
@@ -576,9 +572,9 @@ class ExamplesExtractorTest implements RewriteTest {
                         java(
                           ""\"
                             package org.openrewrite.example;
-              
+
                             import java.net.MulticastSocket;
-              
+
                             public class Test {
                                 public static void method() {
                                     MulticastSocket s = new MulticastSocket(0);
@@ -588,9 +584,9 @@ class ExamplesExtractorTest implements RewriteTest {
                             ""\",
                           ""\"
                             package org.openrewrite.example;
-              
+
                             import java.net.MulticastSocket;
-              
+
                             public class Test {
                                 public static void method() {
                                     MulticastSocket s = new MulticastSocket(0);
@@ -616,9 +612,9 @@ class ExamplesExtractorTest implements RewriteTest {
               sources:
               - before: |
                   package org.openrewrite.example;
-              
+
                   import java.net.MulticastSocket;
-              
+
                   public class Test {
                       public static void method() {
                           MulticastSocket s = new MulticastSocket(0);
@@ -627,9 +623,9 @@ class ExamplesExtractorTest implements RewriteTest {
                   }
                 after: |
                   package org.openrewrite.example;
-              
+
                   import java.net.MulticastSocket;
-              
+
                   public class Test {
                       public static void method() {
                           MulticastSocket s = new MulticastSocket(0);

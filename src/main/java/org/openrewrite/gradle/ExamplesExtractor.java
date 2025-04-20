@@ -31,7 +31,6 @@ import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
 import org.openrewrite.java.tree.TypeUtils;
-import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.*;
@@ -44,37 +43,37 @@ import java.util.stream.Stream;
  * Output is the content of the yaml file to present examples
  * Format is like:
  * <pre>
- *               type: specs.openrewrite.org/v1beta/example
- *               recipeName: test.ChangeTextToHello
- *               examples:
- *                 - description: "Change World to Hello in a text file"
- *                   sources:
- *                     - before: "World"
- *                       after: "Hello!"
- *                       path: "1.txt"
- *                       language: "text"
- *                     - before: "World 2"
- *                       after: "Hello 2!"
- *                       path: "2.txt"
- *                       language: "text"
- *                 - description: "Change World to Hello in a java file"
- *                   parameters:
- *                     - arg0
- *                     - arg1
- *                   sources:
- *                     - before: |
- *                         public class A {
- *                             void method() {
- *                                 System.out.println("World");
- *                             }
- *                         }
- *                       after: |
- *                         public class A {
- *                             void method() {
- *                                 System.out.println("Hello!");
- *                             }
- *                         }
- *                       language: "java"
+ * type: specs.openrewrite.org/v1beta/example
+ * recipeName: test.ChangeTextToHello
+ * examples:
+ *   - description: "Change World to Hello in a text file"
+ *     sources:
+ *       - before: "World"
+ *         after: "Hello!"
+ *         path: "1.txt"
+ *         language: "text"
+ *       - before: "World 2"
+ *         after: "Hello 2!"
+ *         path: "2.txt"
+ *         language: "text"
+ *   - description: "Change World to Hello in a java file"
+ *     parameters:
+ *       - arg0
+ *       - arg1
+ *     sources:
+ *       - before: |
+ *           public class A {
+ *               void method() {
+ *                   System.out.println("World");
+ *               }
+ *           }
+ *         after: |
+ *           public class A {
+ *               void method() {
+ *                   System.out.println("Hello!");
+ *               }
+ *           }
+ *         language: "java"
  * </pre>
  */
 public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
@@ -82,22 +81,16 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
     private static final AnnotationMatcher TEST_ANNOTATION_MATCHER = new AnnotationMatcher("@org.junit.jupiter.api.Test");
     private static final AnnotationMatcher DOCUMENT_EXAMPLE_ANNOTATION_MATCHER = new AnnotationMatcher("@org.openrewrite.DocumentExample");
 
+    private static final MethodMatcher DEFAULTS_METHOD_MATCHER = new MethodMatcher(
+            "org.openrewrite.test.RewriteTest defaults(org.openrewrite.test.RecipeSpec)", true);
     private static final MethodMatcher REWRITE_RUN_METHOD_MATCHER_WITH_SPEC =
             new MethodMatcher("org.openrewrite.test.RewriteTest rewriteRun(java.util.function.Consumer, org.openrewrite.test.SourceSpecs[])");
     private static final MethodMatcher REWRITE_RUN_METHOD_MATCHER =
             new MethodMatcher("org.openrewrite.test.RewriteTest rewriteRun(org.openrewrite.test.SourceSpecs[])");
 
-    private static final MethodMatcher JAVA_METHOD_MATCHER = new MethodMatcher("org.openrewrite.java.Assertions java(..)");
+    private static final MethodMatcher ASSERTIONS_METHOD_MATCHER = new MethodMatcher("org.openrewrite.*.Assertions *(..)");
     private static final MethodMatcher BUILD_GRADLE_METHOD_MATCHER = new MethodMatcher("org.openrewrite.gradle.Assertions buildGradle(..)");
     private static final MethodMatcher POM_XML_METHOD_MATCHER = new MethodMatcher("org.openrewrite.maven.Assertions pomXml(..)");
-    private static final MethodMatcher XML_METHOD_MATCHER = new MethodMatcher("org.openrewrite.xml.Assertions xml(..)");
-    private static final MethodMatcher YAML_METHOD_MATCHER = new MethodMatcher("org.openrewrite.yaml.Assertions yaml(..)");
-    private static final MethodMatcher PROTOBUF_METHOD_MATCHER = new MethodMatcher("org.openrewrite.protobuf.proto.Assertions proto(..)");
-    private static final MethodMatcher PROPERTIES_METHOD_MATCHER = new MethodMatcher("org.openrewrite.properties.Assertions properties(..)");
-    private static final MethodMatcher JSON_METHOD_MATCHER = new MethodMatcher("org.openrewrite.json.Assertions json(..)");
-    private static final MethodMatcher HCL_METHOD_MATCHER = new MethodMatcher("org.openrewrite.hcl.Assertions hcl(..)");
-    private static final MethodMatcher GROOVY_METHOD_MATCHER = new MethodMatcher("org.openrewrite.groovy.Assertions groovy(..)");
-    private static final MethodMatcher KOTLIN_METHOD_MATCHER = new MethodMatcher("org.openrewrite.kotlin.Assertions kotlin(..)");
     private static final MethodMatcher ACTIVE_RECIPES_METHOD_MATCHER = new MethodMatcher("org.openrewrite.config.Environment activateRecipes(..)");
     private static final MethodMatcher PATH_METHOD_MATCHER = new MethodMatcher("org.openrewrite.test.SourceSpec path(java.lang.String)");
 
@@ -128,17 +121,14 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
 
     @Override
     public J.MethodDeclaration visitMethodDeclaration(J.MethodDeclaration method, ExecutionContext ctx) {
-        if (method.getName().getSimpleName().equals("defaults") &&
-            method.getMethodType() != null &&
-            !method.getMethodType().getDeclaringType().getInterfaces().isEmpty() &&
-            method.getMethodType().getDeclaringType().getInterfaces().get(0).getFullyQualifiedName().equals("org.openrewrite.test.RewriteTest")) {
+        if (DEFAULTS_METHOD_MATCHER.matches(method.getMethodType())) {
             defaultRecipe = findRecipe(method);
             return method;
         }
 
         List<J.Annotation> annotations = method.getLeadingAnnotations();
         if (hasNotAnnotation(annotations, TEST_ANNOTATION_MATCHER) ||
-            hasNotAnnotation(annotations, DOCUMENT_EXAMPLE_ANNOTATION_MATCHER)) {
+                hasNotAnnotation(annotations, DOCUMENT_EXAMPLE_ANNOTATION_MATCHER)) {
             return method;
         }
 
@@ -213,15 +203,13 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
                      boolean usingDefaultRecipe,
                      List<RecipeExample> examples) {
             if (recipe == null ||
-                StringUtils.isNullOrEmpty(recipe.getName()) ||
-                examples.isEmpty()
+                    StringUtils.isNullOrEmpty(recipe.getName()) ||
+                    examples.isEmpty()
             ) {
                 return "";
             }
 
             Map<String, Object> data = new LinkedHashMap<>();
-            DumperOptions options = new DumperOptions();
-            options.setDefaultFlowStyle(DumperOptions.FlowStyle.FLOW);
 
             data.put("type", recipeType);
             data.put("recipeName", recipe.getName());
@@ -346,30 +334,14 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
                                                             RecipeExample.Source source) {
                 method = super.visitMethodInvocation(method, source);
                 String language;
-                if (JAVA_METHOD_MATCHER.matches(method)) {
-                    language = "java";
-                } else if (BUILD_GRADLE_METHOD_MATCHER.matches(method)) {
+                if (BUILD_GRADLE_METHOD_MATCHER.matches(method)) {
                     source.setPath("build.gradle");
                     language = "groovy";
                 } else if (POM_XML_METHOD_MATCHER.matches(method)) {
                     source.setPath("pom.xml");
                     language = "xml";
-                } else if (XML_METHOD_MATCHER.matches(method)) {
-                    language = "xml";
-                } else if (YAML_METHOD_MATCHER.matches(method)) {
-                    language = "yaml";
-                } else if (PROTOBUF_METHOD_MATCHER.matches(method)) {
-                    language = "protobuf";
-                } else if (PROPERTIES_METHOD_MATCHER.matches(method)) {
-                    language = "properties";
-                } else if (JSON_METHOD_MATCHER.matches(method)) {
-                    language = "json";
-                } else if (HCL_METHOD_MATCHER.matches(method)) {
-                    language = "hcl";
-                } else if (GROOVY_METHOD_MATCHER.matches(method)) {
-                    language = "groovy";
-                } else if (KOTLIN_METHOD_MATCHER.matches(method)) {
-                    language = "kotlin";
+                } else if (ASSERTIONS_METHOD_MATCHER.matches(method)) {
+                    language = method.getSimpleName();
                 } else if (PATH_METHOD_MATCHER.matches(method)) {
                     if (method.getArguments().get(0) instanceof J.Literal) {
                         source.setPath((String) ((J.Literal) method.getArguments().get(0)).getValue());
@@ -443,8 +415,8 @@ public class ExamplesExtractor extends JavaIsoVisitor<ExecutionContext> {
 
     private static boolean isRecipeSpecRecipeMethod(J.MethodInvocation method) {
         return "recipe".equals(method.getName().getSimpleName()) &&
-               method.getSelect() != null &&
-               TypeUtils.isOfClassType(method.getSelect().getType(), "org.openrewrite.test.RecipeSpec");
+                method.getSelect() != null &&
+                TypeUtils.isOfClassType(method.getSelect().getType(), "org.openrewrite.test.RecipeSpec");
     }
 }
 
