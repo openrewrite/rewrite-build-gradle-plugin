@@ -23,7 +23,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.*;
 import static org.openrewrite.gradle.RewriteRecipeAuthorAttributionTask.Contributor.distinct;
 
-public class ContributorTest {
+class ContributorTest {
 
     @Test
     void mostRecentUsernameForEmail() {

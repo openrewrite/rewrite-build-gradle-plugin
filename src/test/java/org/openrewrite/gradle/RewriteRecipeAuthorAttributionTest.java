@@ -36,7 +36,7 @@ import java.util.zip.ZipInputStream;
 import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class RewriteRecipeAuthorAttributionTest {
+class RewriteRecipeAuthorAttributionTest {
 
     static BuildResult runGradle(Path buildRoot, String... args) {
         String[] argsWithStacktrace = Stream.concat(

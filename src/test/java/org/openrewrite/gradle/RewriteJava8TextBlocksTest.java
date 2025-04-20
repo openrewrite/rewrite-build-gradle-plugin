@@ -29,7 +29,7 @@ import static java.util.Objects.requireNonNull;
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class RewriteJava8TextBlocksTest {
+class RewriteJava8TextBlocksTest {
     @TempDir
     File testProjectDir;
 

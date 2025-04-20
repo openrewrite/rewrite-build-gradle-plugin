@@ -28,7 +28,6 @@ public class RewriteRecipeLibraryBasePlugin implements Plugin<Project> {
 
         project.getPlugins().apply(RewriteJavaPlugin.class);
         project.getPlugins().apply(RewriteRecipeAuthorAttributionPlugin.class);
-//        project.getPlugins().apply(RewriteRecipeExamplesPlugin.class);
 
         project.getExtensions().create("recipeDependencies", RecipeDependenciesExtension.class);
         project.getTasks().register("createTypeTable", RecipeDependenciesTypeTableTask.class);
