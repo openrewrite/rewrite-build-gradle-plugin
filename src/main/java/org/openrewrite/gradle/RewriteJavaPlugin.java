@@ -49,7 +49,7 @@ public class RewriteJavaPlugin implements Plugin<Project> {
         });
 
         project.getExtensions().configure(JavaPluginExtension.class, java -> java.toolchain(toolchain -> toolchain.getLanguageVersion()
-                .set(JavaLanguageVersion.of(17))));
+                .set(JavaLanguageVersion.of(21))));
 
         project.getConfigurations().all(config -> config.resolutionStrategy(strategy ->
                 strategy.cacheDynamicVersionsFor(0, "seconds")));
