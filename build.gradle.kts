@@ -177,7 +177,7 @@ java {
 }
 
 tasks.named<JavaCompile>("compileJava") {
-    options.release.set(11)
+    options.release.set(17)
 }
 
 val rewriteVersion = "8.49.0"
