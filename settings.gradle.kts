@@ -1,7 +1,5 @@
 rootProject.name = "rewrite-build-gradle-plugin"
 
-include("plugin")
-
 plugins {
     id("com.gradle.develocity") version "latest.release"
     id("com.gradle.common-custom-user-data-gradle-plugin") version "latest.release"
