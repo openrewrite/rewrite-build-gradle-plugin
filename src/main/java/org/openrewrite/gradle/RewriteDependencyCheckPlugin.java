@@ -15,6 +15,11 @@
  */
 package org.openrewrite.gradle;
 
+import org.gradle.api.Plugin;
+import org.gradle.api.Project;
+import org.owasp.dependencycheck.gradle.DependencyCheckPlugin;
+import org.owasp.dependencycheck.gradle.extension.DependencyCheckExtension;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -25,11 +30,6 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.gradle.api.Plugin;
-import org.gradle.api.Project;
-import org.owasp.dependencycheck.gradle.DependencyCheckPlugin;
-import org.owasp.dependencycheck.gradle.extension.DependencyCheckExtension;
-
 public class RewriteDependencyCheckPlugin implements Plugin<Project> {
 
     @Override
@@ -38,8 +38,8 @@ public class RewriteDependencyCheckPlugin implements Plugin<Project> {
 
         float failBuildOnCVSS = Float
                 .parseFloat(System.getenv("FAIL_BUILD_ON_CVSS") != null ? System.getenv("FAIL_BUILD_ON_CVSS") : "9");
-        String format = System.getenv("DEPENDENCY_CHECK_FORMAT") != null ? System.getenv("DEPENDENCY_CHECK_FORMAT")
-                : "HTML";
+        String format = System.getenv("DEPENDENCY_CHECK_FORMAT") != null ? System.getenv("DEPENDENCY_CHECK_FORMAT") :
+                "HTML";
 
         // upsert suppressions file
         generateSuppressionsFile(project);

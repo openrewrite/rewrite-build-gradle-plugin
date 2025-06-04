@@ -44,14 +44,13 @@ public class ModerneSourceAvailableLicensePlugin implements Plugin<Project> {
     }
 
     private void configureLicense(MavenPublication publication) {
-        publication.pom(pom -> {
+        publication.pom(pom ->
             pom.licenses(licenses -> {
                 ((DefaultMavenPom) licenses).getLicenses().clear();
                 licenses.license(license -> {
                     license.getName().set(LICENSE_NAME);
                     license.getUrl().set(LICENSE_URL);
                 });
-            });
-        });
+            }));
     }
 }

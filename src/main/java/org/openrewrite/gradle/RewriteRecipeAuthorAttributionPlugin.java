@@ -18,10 +18,14 @@ package org.openrewrite.gradle;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.plugins.JavaPluginExtension;
-import org.gradle.api.tasks.*;
+import org.gradle.api.tasks.Copy;
+import org.gradle.api.tasks.SourceSet;
+import org.gradle.api.tasks.TaskContainer;
+import org.gradle.api.tasks.TaskProvider;
 import org.gradle.language.jvm.tasks.ProcessResources;
 
 import java.io.File;
+
 import static org.eclipse.jgit.util.StringUtils.capitalize;
 
 public class RewriteRecipeAuthorAttributionPlugin implements Plugin<Project> {

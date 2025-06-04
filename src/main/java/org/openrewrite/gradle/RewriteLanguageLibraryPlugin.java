@@ -20,6 +20,7 @@ import org.gradle.api.Project;
 
 public class RewriteLanguageLibraryPlugin implements Plugin<Project> {
 
+    @Override
     public void apply(Project project) {
         project.getPlugins().apply(RewriteDependencyRepositoriesPlugin.class);
         project.getPlugins().apply(RewriteJavaPlugin.class);

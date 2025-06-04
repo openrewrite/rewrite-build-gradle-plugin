@@ -58,13 +58,12 @@ public class RewriteJavaPlugin implements Plugin<Project> {
         configureJavaCompile(project);
         configureTesting(project);
 
-        project.getTasks().withType(Javadoc.class).configureEach(task -> {
+        project.getTasks().withType(Javadoc.class).configureEach(task ->
             task.options(opt -> {
                 ((CoreJavadocOptions) opt)
                         .addStringOption("Xdoclint:none", "-quiet");
                 opt.encoding("UTF-8");
-            });
-        });
+            }));
 
         // Work around build error relating to an IntelliJ file named classpath.index that is locally being included
         // multiple times within our jars. Unclear why this is happening, but it would not affect CI so working around for now

@@ -41,10 +41,9 @@ public class RewriteLicensePlugin implements Plugin<Project> {
             ext.renderers = new ReportRenderer[]{new com.github.jk1.license.render.CsvReportRenderer()};
         });
 
-        project.getTasks().withType(LicenseFormat.class, task -> {
+        project.getTasks().withType(LicenseFormat.class, task ->
             ((org.gradle.api.plugins.ExtraPropertiesExtension) task.getExtensions().getByName("ext"))
-                    .set("year", Calendar.getInstance().get(Calendar.YEAR));
-        });
+                    .set("year", Calendar.getInstance().get(Calendar.YEAR)));
 
         project.getTasks().withType(Jar.class).configureEach(jar ->
                 jar.getManifest().attributes(Map.of(
