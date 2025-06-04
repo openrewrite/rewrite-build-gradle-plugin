@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
-    <suppress until="2025-05-31Z">
+    <suppress until="2025-07-31Z">
         <notes><![CDATA[
             file name: okio-jvm-2.10.0.jar
             sev: HIGH
@@ -8,6 +8,15 @@
         ]]></notes>
         <packageUrl regex="true">^pkg:maven/com\.squareup\.okio/okio@.*$</packageUrl>
         <cve>CVE-2023-3635</cve>
+    </suppress>
+    <suppress until="2025-06-18Z">
+        <notes><![CDATA[
+            file name: commons-beanutils-1.9.4.jar
+            sev: HIGH
+            reason: Waiting for release of https://github.com/dependency-check/DependencyCheck/commit/0e0cd58ee2d3ce75979b6160e6b1ad5fbeb34d8b, not directly used by us
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/commons-beanutils/commons-beanutils@.*$</packageUrl>
+        <cve>CVE-2025-48734</cve>
     </suppress>
     <suppress until="2025-05-31Z">
         <notes><![CDATA[

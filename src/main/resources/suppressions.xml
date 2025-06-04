@@ -79,7 +79,7 @@
         <cve>CVE-2023-35946</cve>
         <cve>CVE-2023-42445</cve>
     </suppress>
-    <suppress until="2025-05-31Z">
+    <suppress until="2025-07-31Z">
         <notes><![CDATA[
        file name: rewrite-jenkins-0.22.0-SNAPSHOT.jar
        sev: HIGH
@@ -94,7 +94,7 @@
         <cve>CVE-2022-34792</cve>
         <cve>CVE-2022-34794</cve>
     </suppress>
-    <suppress until="2025-05-31Z">
+    <suppress until="2025-07-31Z">
         <notes><![CDATA[
        file name: rewrite-openapi-0.6.0-SNAPSHOT.jar
            sev: HIGH
@@ -143,7 +143,7 @@
         <packageUrl regex="true">^pkg:maven/org\.yaml/snakeyaml@.*$</packageUrl>
         <cve>CVE-2022-1471</cve>
     </suppress>
-    <suppress until="2025-05-31Z">
+    <suppress until="2025-07-31Z">
         <notes><![CDATA[
             file name: org.eclipse.jgit-4.4.1.201607150455-r.jar
             sev: High
