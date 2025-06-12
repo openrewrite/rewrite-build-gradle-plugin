@@ -33,7 +33,7 @@ public class RewriteJava8TextBlocksPlugin implements Plugin<Project> {
     public void apply(Project project) {
         project.getTasks().named("compileJava", JavaCompile.class, task -> {
             task.getOptions().getRelease().set((Integer) null);
-            task.doLast(new MarkClassfileWithLanguageLevel8DoLast(project.fileTree(task.getOutputs(), tree -> tree.include("**/*.class"))));
+            task.doLast(new MarkClassfileWithLanguageLevel8DoLast(project.fileTree(task.getDestinationDirectory(), tree -> tree.include("**/*.class"))));
         });
     }
 }
