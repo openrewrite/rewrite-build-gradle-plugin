@@ -32,7 +32,10 @@ configure<org.owasp.dependencycheck.gradle.extension.DependencyCheckExtension> {
 
 nexusPublishing {
     repositories {
-        sonatype()
+        sonatype {
+            nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://central.sonatype.com/repository/maven-snapshots/"))
+        }
     }
 }
 
@@ -180,7 +183,7 @@ tasks.named<JavaCompile>("compileJava") {
     options.release.set(17)
 }
 
-val rewriteVersion = "8.49.0"
+val rewriteVersion = "8.49.0" //TODO: update this to the just released version before publishing!
 
 dependencies {
     compileOnly("org.openrewrite.gradle.tooling:model:latest.release")
