@@ -19,6 +19,7 @@ import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.compile.JavaCompile;
 
 import java.io.File;
@@ -30,44 +31,28 @@ public class RewriteJava8TextBlocksPlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
-        project.getTasks().withType(JavaCompile.class).getByName("compileJava", task ->
-                task.getOptions().getRelease().set((Integer) null));
-
-        project.getTasks().withType(JavaCompile.class).getByName("compileJava",
-                new MarkClassfileWithLanguageLevel8(project));
-    }
-}
-
-class MarkClassfileWithLanguageLevel8 implements Action<Task> {
-    private final Project project;
-
-    MarkClassfileWithLanguageLevel8(Project project) {
-        this.project = project;
-    }
-
-    @Override
-    public void execute(Task task) {
-        task.doLast(new MarkClassfileWithLanguageLevel8DoLast(project));
+        project.getTasks().named("compileJava", JavaCompile.class, task -> {
+            task.getOptions().getRelease().set((Integer) null);
+            task.doLast(new MarkClassfileWithLanguageLevel8DoLast(project.fileTree(task.getDestinationDirectory(), tree -> tree.include("**/*.class"))));
+        });
     }
 }
 
 class MarkClassfileWithLanguageLevel8DoLast implements Action<Task> {
-    private final Project project;
+    private final FileCollection classes;
 
-    MarkClassfileWithLanguageLevel8DoLast(Project project) {
-        this.project = project;
+    MarkClassfileWithLanguageLevel8DoLast(FileCollection classes) {
+        this.classes = classes;
     }
 
     @Override
     public void execute(Task task) {
-        for (File out : task.getOutputs().getFiles()) {
-            for (File clazz : project.fileTree(out, tree -> tree.include("**/*.class")).getFiles()) {
-                try (RandomAccessFile file = new RandomAccessFile(clazz, "rw")) {
-                    file.seek(6);
-                    file.writeShort(52);
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
+        for (File clazz : classes.getFiles()) {
+            try (RandomAccessFile file = new RandomAccessFile(clazz, "rw")) {
+                file.seek(6);
+                file.writeShort(52);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
             }
         }
     }
