@@ -105,6 +105,7 @@
         <cve>CVE-2022-22970</cve>
         <cve>CVE-2014-3625</cve>
         <cve>CVE-2014-1904</cve>
+        <cve>CVE-2024-22259</cve>
     </suppress>
     <suppress until="2025-07-01Z">
         <notes><![CDATA[
