@@ -16,9 +16,12 @@
 package org.openrewrite.gradle;
 
 import org.gradle.api.DefaultTask;
+import org.gradle.api.GradleException;
 import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.SourceDirectorySet;
 import org.gradle.api.plugins.JavaPluginExtension;
+import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 import org.openrewrite.java.internal.parser.TypeTable;
 
@@ -26,10 +29,25 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Map;
+import java.util.Set;
 
 import static java.util.Objects.requireNonNull;
 
-public class RecipeDependenciesTypeTableTask extends DefaultTask {
+public abstract class RecipeDependenciesTypeTableTask extends DefaultTask {
+
+    /**
+     * The target directory where the type table file will be written.
+     * <p>
+     * Defaults to {@code src/main/resources} in the project directory.
+     */
+    @OutputDirectory
+    public abstract DirectoryProperty getTargetDir();
+
+    public RecipeDependenciesTypeTableTask() {
+        getTargetDir().convention(
+                getProject().getLayout().getProjectDirectory().dir("src/main/resources")
+        );
+    }
 
     @Override
     public String getDescription() {
@@ -43,31 +61,56 @@ public class RecipeDependenciesTypeTableTask extends DefaultTask {
 
     @TaskAction
     void download() throws IOException {
+        File matchedDir = findMatchingDir();
+        File tsvFile = createTsvFile(matchedDir);
+
+        RecipeDependenciesExtension extension = getProject().getExtensions().getByType(RecipeDependenciesExtension.class);
+        try (TypeTable.Writer writer = TypeTable.newWriter(Files.newOutputStream(tsvFile.toPath()))) {
+            for (Map.Entry<Dependency, File> dependency : extension.getResolved().entrySet()) {
+                String group = requireNonNull(dependency.getKey().getGroup(), "group");
+                String artifact = dependency.getKey().getName();
+                // Determine actual version; e.g. 5.+ might resolve to 5.3.39
+                String version = dependency.getValue().getName()
+                        .substring(artifact.length() + 1)
+                        .replaceAll(".jar$", "");
+                writer.jar(group, artifact, version).write(dependency.getValue().toPath());
+                getLogger().info("Wrote %s:%s:%s to %s".formatted(group, artifact, version, tsvFile));
+            }
+        }
+    }
+
+    /**
+     * Finds the directory that matches the target directory specified in the task.
+     * <p>
+     * It checks against the main source set resources directories.
+     *
+     * @return The matching directory.
+     * @throws GradleException if the target directory is not found in the main source set resources directories.
+     */
+    private File findMatchingDir() {
+        File targetDirFile = getTargetDir().get().getAsFile();
+
         SourceDirectorySet resources = getProject().getExtensions().getByType(JavaPluginExtension.class)
                 .getSourceSets()
                 .getByName("main")
                 .getResources();
 
-        for (File sourceDirectory : resources.getSourceDirectories()) {
-            File tsvFile = new File(sourceDirectory, TypeTable.DEFAULT_RESOURCE_PATH);
-            File parentFile = tsvFile.getParentFile();
-            if (!parentFile.exists() && !parentFile.mkdirs()) {
-                throw new IllegalStateException("Unable to create " + parentFile);
-            }
+        Set<File> resourcesDirs = resources.getSourceDirectories().getFiles();
 
-            RecipeDependenciesExtension extension = getProject().getExtensions().getByType(RecipeDependenciesExtension.class);
-            try (TypeTable.Writer writer = TypeTable.newWriter(Files.newOutputStream(tsvFile.toPath()))) {
-                for (Map.Entry<Dependency, File> dependency : extension.getResolved().entrySet()) {
-                    String group = requireNonNull(dependency.getKey().getGroup(), "group");
-                    String artifact = dependency.getKey().getName();
-                    // Determine actual version; e.g. 5.+ might resolve to 5.3.39
-                    String version = dependency.getValue().getName()
-                            .substring(artifact.length() + 1)
-                            .replaceAll(".jar$", "");
-                    writer.jar(group, artifact, version).write(dependency.getValue().toPath());
-                    getLogger().info("Wrote %s:%s:%s to %s".formatted(group, artifact, version, tsvFile));
-                }
-            }
+        return resourcesDirs.stream()
+                .filter(dir -> dir.getAbsolutePath().equals(targetDirFile.getAbsolutePath()))
+                .findFirst()
+                .orElseThrow(() -> new GradleException("Provided target directory '" + targetDirFile.getAbsolutePath() +
+                        "' is not found in main source set resources directories. " +
+                        "Available directories: " + resourcesDirs));
+    }
+
+    private File createTsvFile(File matchedDir) {
+        File tsvFile = new File(matchedDir, TypeTable.DEFAULT_RESOURCE_PATH);
+        File parentFile = tsvFile.getParentFile();
+        if (!parentFile.exists() && !parentFile.mkdirs()) {
+            throw new IllegalStateException("Unable to create " + parentFile);
         }
+        return tsvFile;
     }
 }
