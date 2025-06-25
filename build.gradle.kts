@@ -210,7 +210,7 @@ dependencies {
     implementation("com.netflix.nebula:gradle-info-plugin:latest.release")
     implementation("com.netflix.nebula.release:com.netflix.nebula.release.gradle.plugin:20.2.0") // pinned pending Gradle 9.x
     implementation("com.netflix.nebula:nebula-publishing-plugin:21.1.0") // pinned to avoid breaking on missing ScmInfoExtension
-    implementation("com.netflix.nebula:nebula-project-plugin:latest.release")
+    implementation("com.netflix.nebula:nebula-project-plugin:11.0.0") // latest brings in nebula-publishing-plugin 21.2.0
     implementation("io.github.gradle-nexus:publish-plugin:latest.release")
     implementation("com.gradleup.shadow:com.gradleup.shadow.gradle.plugin:9.0.0-beta7") // Latest supporting Java 8
     implementation("org.gradle:test-retry-gradle-plugin:latest.release")
