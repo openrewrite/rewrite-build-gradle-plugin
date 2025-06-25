@@ -4,7 +4,7 @@ import nl.javadude.gradle.plugins.license.LicenseExtension
 import java.util.*
 
 plugins {
-    id("com.netflix.nebula.release") version "latest.release"
+    id("com.netflix.nebula.release") version "20.2.0" // pinned pending Gradle 9.x
     id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
     id("org.owasp.dependencycheck") version "latest.release"
     id("com.netflix.nebula.maven-resolved-dependencies") version "latest.release"
@@ -208,7 +208,7 @@ dependencies {
     implementation("org.owasp:dependency-check-gradle:latest.release")
     implementation("com.netflix.nebula.contacts:com.netflix.nebula.contacts.gradle.plugin:latest.release")
     implementation("com.netflix.nebula:gradle-info-plugin:latest.release")
-    implementation("com.netflix.nebula.release:com.netflix.nebula.release.gradle.plugin:latest.release")
+    implementation("com.netflix.nebula.release:com.netflix.nebula.release.gradle.plugin:20.2.0") // pinned pending Gradle 9.x
     implementation("com.netflix.nebula:nebula-publishing-plugin:21.1.0") // pinned to avoid breaking on missing ScmInfoExtension
     implementation("com.netflix.nebula:nebula-project-plugin:latest.release")
     implementation("io.github.gradle-nexus:publish-plugin:latest.release")
