@@ -17,7 +17,6 @@ package org.openrewrite.gradle;
 
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.GradleRunner;
-import org.intellij.lang.annotations.Language;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,6 +35,7 @@ import java.util.Collection;
 import static java.util.Collections.singletonList;
 import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.gradle.testkit.runner.TaskOutcome.FAILED;
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -54,7 +54,7 @@ class RecipeDependenciesTypeTableTaskTest {
 
     @Test
     void multipleVersionsOfGuava() throws Exception {
-        BuildResult result = createSourceFiles("""
+        createGradleBuildFiles("""
           plugins {
               id 'org.openrewrite.build.recipe-library-base'
           }
@@ -67,6 +67,7 @@ class RecipeDependenciesTypeTableTaskTest {
           }
           """);
 
+        BuildResult result = runTypeTableTaskAndSucceed();
         assertEquals(SUCCESS, requireNonNull(result.task(":createTypeTable")).getOutcome());
 
         // Assert type table created
@@ -83,7 +84,7 @@ class RecipeDependenciesTypeTableTaskTest {
 
     @Test
     void resolveFivePlusToActualVersion() throws Exception {
-        BuildResult result = createSourceFiles("""
+        createGradleBuildFiles("""
           plugins {
               id 'org.openrewrite.build.recipe-library-base'
           }
@@ -95,6 +96,7 @@ class RecipeDependenciesTypeTableTaskTest {
           }
           """);
 
+        BuildResult result = runTypeTableTaskAndSucceed();
         assertEquals(SUCCESS, requireNonNull(result.task(":createTypeTable")).getOutcome());
 
         // Assert type table created
@@ -109,15 +111,121 @@ class RecipeDependenciesTypeTableTaskTest {
         assertThat(table.load("spring-core-5.3")).isDirectoryRecursivelyContaining("glob:**/Order.class");
     }
 
-    private BuildResult createSourceFiles(@Language("gradle") String source) throws IOException {
+    @Test
+    void usesDefaultIfMultipleResourcesDirectoriesHaveBeenDefined() throws Exception {
+        createGradleBuildFiles("""
+          plugins {
+              id 'java'
+              id 'org.openrewrite.build.recipe-library-base'
+          }
+          repositories {
+              mavenCentral()
+          }
+          recipeDependencies {
+              parserClasspath 'com.google.guava:guava:30.1-jre'
+          }
+          sourceSets {
+              main {
+                  resources.srcDir('build/custom-resources')
+              }
+          }
+          """);
+
+        BuildResult result = runTypeTableTaskAndSucceed();
+        assertEquals(SUCCESS, requireNonNull(result.task(":createTypeTable")).getOutcome());
+
+        // Assert type table created
+        File tsvFile = new File(projectDir, "src/main/resources/" + TypeTable.DEFAULT_RESOURCE_PATH);
+        assertThat(tsvFile)
+          .isFile()
+          .isReadable()
+          .isNotEmpty();
+
+        // Load classes from the type table
+        TypeTable table = createTypeTable(tsvFile, "guava");
+        assertThat(table.load("guava")).isDirectoryRecursivelyContaining("glob:**/Optional.class");
+    }
+
+    @Test
+    void canSelectCustomResourcesDirectory() throws Exception {
+        createGradleBuildFiles("""
+          plugins {
+              id 'java'
+              id 'org.openrewrite.build.recipe-library-base'
+          }
+          repositories {
+              mavenCentral()
+          }
+          recipeDependencies {
+              parserClasspath 'com.google.guava:guava:30.1-jre'
+          }
+          sourceSets.main {
+              resources.srcDir('very/custom')
+          }
+          createTypeTable {
+              targetDir = layout.projectDirectory.dir('very/custom')
+          }
+          """);
+
+        BuildResult result = runTypeTableTaskAndSucceed();
+        assertEquals(SUCCESS, requireNonNull(result.task(":createTypeTable")).getOutcome());
+
+        // Assert type table created
+        File tsvFile = new File(projectDir, "very/custom/" + TypeTable.DEFAULT_RESOURCE_PATH);
+        assertThat(tsvFile)
+          .isFile()
+          .isReadable()
+          .isNotEmpty();
+
+        // Load classes from the type table
+        TypeTable table = createTypeTable(tsvFile, "guava");
+        assertThat(table.load("guava")).isDirectoryRecursivelyContaining("glob:**/Optional.class");
+    }
+
+    @Test
+    void throwsExceptionForNonExistentResourcesDirectory() throws Exception {
+        createGradleBuildFiles("""
+          plugins {
+              id 'org.openrewrite.build.recipe-library-base'
+          }
+          repositories {
+              mavenCentral()
+          }
+          recipeDependencies {
+              parserClasspath 'com.google.guava:guava:30.1-jre'
+          }
+          createTypeTable {
+              targetDir = layout.projectDirectory.dir('very/custom')
+          }
+          """);
+
+        BuildResult result = runTypeTableTaskAndFail();
+        assertEquals(FAILED, requireNonNull(result.task(":createTypeTable")).getOutcome());
+
+        File tsvFile = new File(projectDir, "very/custom/" + TypeTable.DEFAULT_RESOURCE_PATH);
+        assertThat(tsvFile)
+          .doesNotExist();
+    }
+
+    private void createGradleBuildFiles(String buildFileContent) throws IOException {
         Files.writeString(settingsFile.toPath(), "rootProject.name = 'my-project'");
-        Files.writeString(buildFile.toPath(), source);
+        Files.writeString(buildFile.toPath(), buildFileContent);
+    }
+
+    private BuildResult runTypeTableTaskAndSucceed() {
+        return createGradleRunner().build();
+    }
+
+    private BuildResult runTypeTableTaskAndFail() {
+        return createGradleRunner().buildAndFail();
+    }
+
+    private GradleRunner createGradleRunner() {
         return GradleRunner.create()
           .withProjectDir(projectDir)
           .withArguments("createTypeTable", "--info", "--stacktrace")
           .withPluginClasspath()
-          .withDebug(true)
-          .build();
+          .withDebug(true);
     }
 
     private static @Nullable TypeTable createTypeTable(File tsvFile, String guava) throws Exception {
