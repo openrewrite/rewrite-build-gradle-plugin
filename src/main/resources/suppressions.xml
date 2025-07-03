@@ -1,84 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
-    <suppress until="2025-04-07Z">
-        <notes><![CDATA[
-            file name: poi-3.16.jar
-            sev: HIGH
-            reason: via rewrite-apache for recipe
-            ]]></notes>
-        <packageUrl regex="true">^pkg:maven/org\.apache\.poi/poi@.*$</packageUrl>
-        <cve>CVE-2017-12626</cve>
-        <cve>CVE-2019-12415</cve>
-        <cve>CVE-2022-26336</cve>
-    </suppress>
-    <suppress until="2025-04-07Z">
-        <notes><![CDATA[
-   file name: rewrite-gradle-8.35.0-SNAPSHOT.jar: gradle-core-api-6.1.1.jar
-   We need to support older gradle versions to be able to migrate away from them.
-   ]]></notes>
-        <sha1>4da65dfe7b47b63368629a7a687c17e54c2d4dfc</sha1>
-        <cpe>cpe:/a:gradle:gradle</cpe>
-    </suppress>
-    <suppress until="2025-04-07Z">
-        <notes><![CDATA[
-   file name: rewrite-gradle-8.9.0-SNAPSHOT.jar: gradle-testing-base-6.1.1.jar, gradle-testing-jvm-6.1.1.jar, gradle-resources-6.1.1.jar, gradle-messaging-6.1.1.jar, gradle-logging-6.1.1.jar, gradle-native-6.1.1.jar, gradle-core-api-6.1.1.jar
-        sev: HIGH
-        reason: This is a false positive. The vulnerability is in the Gradle 7.6.2 and 8.2 and these are gradle core api's
-]]></notes>
-        <filePath regex="true">
-            .*META-INF\/rewrite\/classpath\/gradle.*6\.1\.1\.jar
-        </filePath>
-        <cve>CVE-2023-35947</cve>
-        <cve>CVE-2021-29428</cve>
-        <cve>CVE-2020-11979</cve>
-        <cve>CVE-2021-32751</cve>
-        <cve>CVE-2021-29427</cve>
-    </suppress>
-    <suppress until="2025-04-07Z">
-        <notes><![CDATA[
-        file name: rewrite-gradle-8.9.0-SNAPSHOT.jar: gradle-enterprise-gradle-plugin-3.13.4.jar
-        sev: HIGH
-        reason: This is a false positive. The vulnerability is in the Gradle 7.6.2 and 8.2 and this is a plugin jar
-   ]]></notes>
-        <cve>CVE-2019-11065</cve>
-        <cve>CVE-2019-11402</cve>
-        <cve>CVE-2019-11403</cve>
-        <cve>CVE-2019-15052</cve>
-        <cve>CVE-2019-16370</cve>
-        <cve>CVE-2020-11979</cve>
-        <cve>CVE-2020-15767</cve>
-        <cve>CVE-2020-15773</cve>
-        <cve>CVE-2021-29428</cve>
-        <cve>CVE-2021-29429</cve>
-        <cve>CVE-2021-32751</cve>
-        <cve>CVE-2021-41589</cve>
-        <cve>CVE-2022-25364</cve>
-        <cve>CVE-2022-30587</cve>
-        <cve>CVE-2023-35946</cve>
-        <cve>CVE-2023-35947</cve>
-        <cve>CVE-2023-42445</cve>
-        <cve>CVE-2023-44387</cve>
-        <cve>CVE-2023-49238</cve>
-    </suppress>
-    <suppress until="2025-04-07Z">
-        <notes><![CDATA[
-       file name: rewrite-gradle-8.34.0-SNAPSHOT.jar: develocity-gradle-plugin-3.17.6.jar: junit-platform-engine-1.10.3.jar
-       ]]></notes>
-        <cve>CVE-2023-45161</cve>
-        <cve>CVE-2023-45163</cve>
-        <cve>CVE-2023-5964</cve>
-        <cve>CVE-2019-15052</cve>
-        <cve>CVE-2023-35947</cve>
-        <cve>CVE-2021-29428</cve>
-        <cve>CVE-2020-11979</cve>
-        <cve>CVE-2021-32751</cve>
-        <cve>CVE-2023-44387</cve>
-        <cve>CVE-2019-11065</cve>
-        <cve>CVE-2019-16370</cve>
-        <cve>CVE-2021-29429</cve>
-        <cve>CVE-2023-35946</cve>
-        <cve>CVE-2023-42445</cve>
-    </suppress>
     <suppress until="2025-07-31Z">
         <notes><![CDATA[
        file name: rewrite-jenkins-0.22.0-SNAPSHOT.jar
@@ -103,46 +24,6 @@
         <packageUrl regex="true">^pkg:maven/org\.openrewrite\.recipe/rewrite-openapi@.*$</packageUrl>
         <cve>CVE-2022-24863</cve>
     </suppress>
-    <suppress until="2025-04-07Z">
-        <notes><![CDATA[
-       file name: spring-*.jar
-       sev: CRITICAL
-       reason: Evidence is from jars packaged into `rewrite-spring` as reference and not executed code.
-       ]]></notes>
-        <cve>CVE-2018-1258</cve>
-        <cve>CVE-2016-1000027</cve>
-        <cve>CVE-2023-34053</cve>
-        <cve>CVE-2023-20873</cve>
-        <cve>CVE-2022-27772</cve>
-        <cve>CVE-2023-20883</cve>
-        <cve>CVE-2022-22965</cve>
-        <cve>CVE-2022-22950</cve>
-        <cve>CVE-2023-20861</cve>
-        <cve>CVE-2022-22968</cve>
-        <cve>CVE-2022-22970</cve>
-        <cve>CVE-2024-22259</cve>
-        <cve>CVE-2024-22262</cve>
-        <cve>CVE-2024-38809</cve>
-    </suppress>
-    <suppress until="2025-04-07Z">
-        <notes><![CDATA[
-         file name: guava-31.1-jre.jar
-         sev: HIGH
-         reason: False positive. Not referenced
-       ]]></notes>
-        <packageUrl regex="true">^pkg:maven/com\.google\.guava/guava@.*$</packageUrl>
-        <cve>CVE-2023-2976</cve>
-        <cve>CVE-2020-8908</cve>
-    </suppress>
-    <suppress until="2025-04-07Z">
-        <notes><![CDATA[
-            file name: snakeyaml-1.33.jar
-            Severity: HIGH
-            False positive: We are not parsing untrusted user input. Not used directly in this repository.
-        ]]></notes>
-        <packageUrl regex="true">^pkg:maven/org\.yaml/snakeyaml@.*$</packageUrl>
-        <cve>CVE-2022-1471</cve>
-    </suppress>
     <suppress until="2025-07-31Z">
         <notes><![CDATA[
             file name: org.eclipse.jgit-4.4.1.201607150455-r.jar
@@ -151,16 +32,6 @@
         ]]></notes>
         <packageUrl regex="true">^pkg:maven/org\.eclipse\.jgit/org\.eclipse\.jgit@.*$</packageUrl>
         <vulnerabilityName>CVE-2023-4759</vulnerabilityName>
-    </suppress>
-    <suppress until="2025-05-31Z">
-        <notes><![CDATA[
-           file name: protobuf-java-3.19.2.jar
-         ]]></notes>
-        <packageUrl regex="true">^pkg:maven/com\.google\.protobuf/protobuf-java@.*$</packageUrl>
-        <cve>CVE-2022-3171</cve>
-        <cve>CVE-2022-3509</cve>
-        <cve>CVE-2022-3510</cve>
-        <cve>CVE-2024-7254</cve>
     </suppress>
     <suppress>
         <notes><![CDATA[
@@ -177,13 +48,5 @@
         <cve>CVE-2022-23302</cve>
         <cve>CVE-2023-26464</cve>
         <cve>CVE-2021-4104</cve>
-    </suppress>
-    <suppress until="2025-04-07Z">
-        <notes><![CDATA[
-        file name: javax.json-1.1.4.jar
-        reason: Used in antlr (4.11.1) code generation only. Not on the runtime classpath
-        ]]></notes>
-        <packageUrl regex="true">^pkg:maven/org\.glassfish/javax\.json@.*$</packageUrl>
-        <vulnerabilityName>CVE-2023-7272</vulnerabilityName>
     </suppress>
 </suppressions>
