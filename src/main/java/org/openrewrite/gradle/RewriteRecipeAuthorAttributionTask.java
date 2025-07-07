@@ -62,10 +62,10 @@ public class RewriteRecipeAuthorAttributionTask extends DefaultTask {
         sources.set(sourceDirectory);
     }
 
-    @SkipWhenEmpty
+    @IgnoreEmptyDirectories
     @InputDirectory
     @PathSensitive(PathSensitivity.NAME_ONLY)
-    @IgnoreEmptyDirectories
+    @SkipWhenEmpty
     public DirectoryProperty getSources() {
         return sources;
     }
