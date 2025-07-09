@@ -21,7 +21,6 @@ import io.github.gradlenexus.publishplugin.NexusRepository;
 import nebula.plugin.release.NetflixOssStrategies;
 import nebula.plugin.release.ReleasePlugin;
 import nebula.plugin.release.git.base.ReleasePluginExtension;
-import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 

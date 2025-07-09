@@ -154,9 +154,9 @@ repositories {
 configurations.all {
     resolutionStrategy {
         eachDependency {
-            if (requested.group == "org.apache.commons"
-                && requested.name == "commons-compress"
-                && requested.version.toString().startsWith("1.25")
+            if (requested.group == "org.apache.commons" &&
+                requested.name == "commons-compress" &&
+                requested.version.toString().startsWith("1.25")
             ) {
                 useVersion("1.26.0")
             }
@@ -218,6 +218,7 @@ dependencies {
     implementation("com.gradleup.shadow:com.gradleup.shadow.gradle.plugin:9.0.0-beta7") // Latest supporting Java 8
     implementation("org.gradle:test-retry-gradle-plugin:latest.release")
 
+    implementation("org.jspecify:jspecify:1.0.0")
     implementation(platform("com.fasterxml.jackson:jackson-bom:2.17.+"))
     implementation("com.fasterxml.jackson.core:jackson-core")
     implementation("com.fasterxml.jackson.core:jackson-databind")
