@@ -43,6 +43,8 @@ public class RewriteRecipeAuthorAttributionPlugin implements Plugin<Project> {
         TaskContainer tasks = project.getTasks();
         TaskProvider<Copy> copyAttribution = tasks.register("copyAttribution", Copy.class);
         tasks.named("processResources", ProcessResources.class).configure(task -> task.dependsOn(copyAttribution));
+        
+        // Process Java source directories
         for (File sourceDir : mainSource.getAllSource().getSrcDirs()) {
             TaskProvider<RewriteRecipeAuthorAttributionTask> attr = tasks.register(
                     "rewriteRecipeAuthorAttribution" + capitalize(sourceDir.getName()), RewriteRecipeAuthorAttributionTask.class,
@@ -56,7 +58,25 @@ public class RewriteRecipeAuthorAttributionPlugin implements Plugin<Project> {
             copyAttribution.configure(task -> {
                 task.dependsOn(attr);
                 task.from(attr.get().getOutputDirectory());
-                task.into(new File(project.getBuildDir(), "resources/main/META-INF/rewrite/attribution"));
+                task.into(project.getLayout().getBuildDirectory().dir("resources/main/META-INF/rewrite/attribution").get().getAsFile());
+            });
+        }
+        
+        // Process YAML recipe files in resources
+        File yamlRecipeDir = new File(project.getProjectDir(), "src/main/resources/META-INF/rewrite");
+        if (yamlRecipeDir.exists() && yamlRecipeDir.isDirectory()) {
+            TaskProvider<RewriteRecipeAuthorAttributionTask> yamlAttr = tasks.register(
+                    "rewriteRecipeAuthorAttributionYaml", RewriteRecipeAuthorAttributionTask.class,
+                    task -> {
+                        task.setSources(yamlRecipeDir);
+                        task.setIsYamlRecipes(true);
+                    }
+            );
+
+            copyAttribution.configure(task -> {
+                task.dependsOn(yamlAttr);
+                task.from(yamlAttr.get().getOutputDirectory());
+                task.into(project.getLayout().getBuildDirectory().dir("resources/main/META-INF/rewrite/attribution").get().getAsFile());
             });
         }
     }
