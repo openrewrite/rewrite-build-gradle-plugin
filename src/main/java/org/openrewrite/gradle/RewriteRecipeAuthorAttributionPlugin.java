@@ -64,8 +64,8 @@ public class RewriteRecipeAuthorAttributionPlugin implements Plugin<Project> {
         
         // Process YAML recipe files in resources
         File yamlRecipeDir = new File(project.getProjectDir(), "src/main/resources/META-INF/rewrite");
-        if (yamlRecipeDir.exists() && yamlRecipeDir.isDirectory()) {
-            TaskProvider<RewriteRecipeAuthorAttributionTask> yamlAttr = tasks.register(
+        if (yamlRecipeDir.isDirectory()) {
+            TaskProvider<RewriteRecipeAuthorAttributionTask> attr = tasks.register(
                     "rewriteRecipeAuthorAttributionYaml", RewriteRecipeAuthorAttributionTask.class,
                     task -> {
                         task.setSources(yamlRecipeDir);
@@ -74,8 +74,8 @@ public class RewriteRecipeAuthorAttributionPlugin implements Plugin<Project> {
             );
 
             copyAttribution.configure(task -> {
-                task.dependsOn(yamlAttr);
-                task.from(yamlAttr.get().getOutputDirectory());
+                task.dependsOn(attr);
+                task.from(attr.get().getOutputDirectory());
                 task.into(project.getLayout().getBuildDirectory().dir("resources/main/META-INF/rewrite/attribution").get().getAsFile());
             });
         }

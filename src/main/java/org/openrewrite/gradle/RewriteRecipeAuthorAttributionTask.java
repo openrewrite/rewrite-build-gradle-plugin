@@ -15,6 +15,9 @@
  */
 package org.openrewrite.gradle;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.MappingIterator;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfo;
@@ -25,7 +28,6 @@ import lombok.With;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.blame.BlameResult;
-import org.eclipse.jgit.diff.RawText;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.DirectoryProperty;
@@ -34,6 +36,7 @@ import org.gradle.api.tasks.*;
 import org.gradle.work.ChangeType;
 import org.gradle.work.FileChange;
 import org.gradle.work.InputChanges;
+import org.jspecify.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -180,13 +183,17 @@ public class RewriteRecipeAuthorAttributionTask extends DefaultTask {
             String relativePath = getProject().getRootDir().toPath()
                     .relativize(recipeFile.toPath()).toString()
                     .replace('\\', '/');
-            List<Contributor> contributors = listContributors(g, relativePath);
+            BlameResult blame = g.blame().setFilePath(relativePath).call();
+            if (blame == null || blame.getResultContents() == null) {
+                continue;
+            }
 
+            List<Contributor> contributors = extractContributorsForRange(blame, 0, blame.getResultContents().size());
             Attribution attribution = new Attribution("specs.openrewrite.org/v1beta/attribution", recipeFqn, contributors);
             String yaml = mapper.writeValueAsString(attribution);
 
             Files.createDirectories(targetPath.getParent());
-            Files.write(targetPath, yaml.getBytes());
+            Files.writeString(targetPath, yaml);
         }
     }
 
@@ -207,53 +214,74 @@ public class RewriteRecipeAuthorAttributionTask extends DefaultTask {
             }
 
             try {
-                // Read the YAML file to extract recipe name
-                Map<String, Object> yamlContent = mapper.readValue(yamlFile, Map.class);
-                String recipeName = (String) yamlContent.get("name");
-
-                if (recipeName == null) {
-                    getLogger().debug("Skipping YAML file without recipe name: " + yamlFile);
-                    continue;
-                }
-
                 // git commands only accept forward slashes in paths, regardless of operating system
                 String relativePath = getProject().getRootDir().toPath()
                         .relativize(yamlFile.toPath()).toString()
                         .replace('\\', '/');
-                List<Contributor> contributors = listContributors(g, relativePath);
+                BlameResult blame = g.blame().setFilePath(relativePath).call();
 
-                Attribution attribution = new Attribution("specs.openrewrite.org/v1beta/attribution", recipeName, contributors);
-                String yaml = mapper.writeValueAsString(attribution);
+                for (RecipeLineNumbers recipe : recipeLineNumbers(yamlFile)) {
+                    List<Contributor> contributors = extractContributorsForRange(blame, recipe.startLine, recipe.endLine);
 
-                Path targetPath = outputDir.resolve(recipeName + ".yml");
-                Files.createDirectories(targetPath.getParent());
-                Files.write(targetPath, yaml.getBytes());
+                    Attribution attr = new Attribution("specs.openrewrite.org/v1beta/attribution", recipe.name, contributors);
+                    String yaml = mapper.writeValueAsString(attr);
+
+                    Path targetPath = outputDir.resolve(recipe.name + ".yml");
+                    Files.createDirectories(targetPath.getParent());
+                    Files.writeString(targetPath, yaml);
+                }
             } catch (Exception e) {
                 getLogger().warn("Unable to process YAML recipe file: " + yamlFile, e);
             }
         }
     }
 
-    private static List<Contributor> listContributors(Git g, String relativeUnixStylePath) throws GitAPIException {
-        Map<Contributor, Integer> contributors = new HashMap<>();
+    record RecipeLineNumbers(String name, int startLine, int endLine) {
+    }
 
-        BlameResult blame = g.blame().setFilePath(relativeUnixStylePath).call();
+    private static List<RecipeLineNumbers> recipeLineNumbers(File file) throws IOException {
+        MappingIterator<Map<String, Object>> mapMappingIterator = new YAMLMapper()
+                .readValues(new YAMLFactory().createParser(file), new TypeReference<>() {
+                });
+
+        String recipeName = null;
+        int startLine = 0;
+        int endLine;
+        List<RecipeLineNumbers> list = new ArrayList<>();
+        while (mapMappingIterator.hasNext()) {
+            // Store the previous entry
+            endLine = mapMappingIterator.getCurrentLocation().getLineNr() - 1;
+            if (recipeName != null) {
+                list.add(new RecipeLineNumbers(recipeName, startLine, endLine - 1));
+            }
+
+            // Start reading the next entry
+            startLine = endLine;
+            Map<String, Object> entry = mapMappingIterator.next();
+            recipeName = "specs.openrewrite.org/v1beta/recipe".equals(entry.get("type")) ? (String) entry.get("name") : null;
+        }
+        // Store the last entry
+        endLine = mapMappingIterator.getCurrentLocation().getLineNr() - 1;
+        if (recipeName != null) {
+            list.add(new RecipeLineNumbers(recipeName, startLine, endLine));
+        }
+        return list;
+    }
+
+    private static List<Contributor> extractContributorsForRange(@Nullable BlameResult blame, int start, int end) {
         if (blame == null) {
             return Collections.emptyList();
         }
-        RawText resultContents = blame.getResultContents();
-        if (resultContents == null) {
-            return Collections.emptyList();
-        }
-
-        for (int i = 0; i < resultContents.size(); i++) {
+        Map<Contributor, Integer> contributors = new HashMap<>();
+        for (int i = start; i < end; i++) {
             PersonIdent author = blame.getSourceAuthor(i);
-            contributors.compute(new Contributor(author.getName(), author.getEmailAddress(), 0), (k, v) -> v == null ? 1 : v + 1);
+            contributors.compute(
+                    new Contributor(author.getName(), author.getEmailAddress(), 0),
+                    (k, v) -> v == null ? 1 : v + 1);
         }
-
         return Contributor.distinct(contributors.entrySet().stream()
                 .map(entry -> entry.getKey().withLineCount(entry.getValue()))
                 .sorted(Comparator.comparing(Contributor::getLineCount).reversed())
-                .collect(Collectors.toList()));
+                .toList());
     }
 }
