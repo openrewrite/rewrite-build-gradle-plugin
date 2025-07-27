@@ -17,6 +17,7 @@ package org.openrewrite.gradle;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.file.DuplicatesStrategy;
 import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.tasks.Copy;
 import org.gradle.api.tasks.SourceSet;
@@ -77,6 +78,7 @@ public class RewriteRecipeAuthorAttributionPlugin implements Plugin<Project> {
                 task.dependsOn(attr);
                 task.from(attr.get().getOutputDirectory());
                 task.into(project.getLayout().getBuildDirectory().dir("resources/main/META-INF/rewrite/attribution").get().getAsFile());
+                task.setDuplicatesStrategy(DuplicatesStrategy.WARN);
             });
         }
     }

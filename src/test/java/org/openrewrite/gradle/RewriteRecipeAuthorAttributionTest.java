@@ -54,9 +54,11 @@ class RewriteRecipeAuthorAttributionTest {
     }
 
     @Test
-    void javaAttribution(@TempDir(cleanup = CleanupMode.ON_SUCCESS) Path repositoryRoot) throws IOException {
+    void attribution(@TempDir(cleanup = CleanupMode.ON_SUCCESS) Path repositoryRoot) {
         writeSampleProject(repositoryRoot);
         BuildResult result = runGradle(repositoryRoot, "jar", "-Dorg.gradle.caching=true", "--rerun-tasks");
+
+        // Ensure Java attribution task is executed successfully
         assertThat(requireNonNull(result.task(":rewriteRecipeAuthorAttributionJava")).getOutcome())
           .isEqualTo(TaskOutcome.SUCCESS);
         File expectedOutput = new File(repositoryRoot.toFile(), "build/resources/main/META-INF/rewrite/attribution/org.openrewrite.ExampleRecipe.yml");
@@ -70,19 +72,12 @@ class RewriteRecipeAuthorAttributionTest {
             email: "sam@moderne.io"
             lineCount: 14
           """);
-        BuildResult rerunResult = runGradle(repositoryRoot, "clean", "jar", "-Dorg.gradle.caching=true");
-        assertThat(requireNonNull(rerunResult.task(":rewriteRecipeAuthorAttributionJava")).getOutcome())
-          .as("Task should have been cached on the first execution and retrieved from the cache after cleaning")
-          .isEqualTo(TaskOutcome.FROM_CACHE);
-    }
 
-    @Test
-    void yamlAttribution(@TempDir(cleanup = CleanupMode.ON_SUCCESS) Path repositoryRoot) throws IOException {
-        writeSampleProject(repositoryRoot);
-        BuildResult result = runGradle(repositoryRoot, "jar", "-Dorg.gradle.caching=true", "--rerun-tasks");
+
+        // Ensure YAML attribution task is executed successfully
         assertThat(requireNonNull(result.task(":rewriteRecipeAuthorAttributionYaml")).getOutcome())
           .isEqualTo(TaskOutcome.SUCCESS);
-        File expectedOutput = new File(repositoryRoot.toFile(), "build/resources/main/META-INF/rewrite/attribution/org.openrewrite.java.migrate.jacoco.UpgradeJaCoCo.yml");
+        expectedOutput = new File(repositoryRoot.toFile(), "build/resources/main/META-INF/rewrite/attribution/org.openrewrite.java.migrate.jacoco.UpgradeJaCoCo.yml");
         //language=YAML
         assertThat(expectedOutput).hasContent("""
           ---
@@ -98,7 +93,11 @@ class RewriteRecipeAuthorAttributionTest {
           """
         );
 
+        // Ensure running the task again retrieves the cached result
         BuildResult rerunResult = runGradle(repositoryRoot, "clean", "jar", "-Dorg.gradle.caching=true");
+        assertThat(requireNonNull(rerunResult.task(":rewriteRecipeAuthorAttributionJava")).getOutcome())
+          .as("Task should have been cached on the first execution and retrieved from the cache after cleaning")
+          .isEqualTo(TaskOutcome.FROM_CACHE);
         assertThat(requireNonNull(rerunResult.task(":rewriteRecipeAuthorAttributionYaml")).getOutcome())
           .as("Task should have been cached on the first execution and retrieved from the cache after cleaning")
           .isEqualTo(TaskOutcome.FROM_CACHE);
