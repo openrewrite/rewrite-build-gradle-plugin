@@ -89,7 +89,7 @@ class RewriteRecipeAuthorAttributionTest {
             lineCount: 11
           - name: "Jente"
             email: "jente@moderne.io"
-            lineCount: 3
+            lineCount: 4
           """
         );
 

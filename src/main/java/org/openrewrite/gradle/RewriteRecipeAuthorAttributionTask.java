@@ -255,7 +255,7 @@ public class RewriteRecipeAuthorAttributionTask extends DefaultTask {
             // Store the previous entry
             endLine = mapMappingIterator.getCurrentLocation().getLineNr() - 1;
             if (recipeName != null) {
-                list.add(new RecipeLineNumbers(recipeName, startLine, endLine - 1));
+                list.add(new RecipeLineNumbers(recipeName, startLine, endLine));
             }
 
             // Start reading the next entry
