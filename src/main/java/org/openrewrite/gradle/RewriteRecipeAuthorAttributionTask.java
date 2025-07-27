@@ -36,6 +36,7 @@ import org.gradle.work.FileChange;
 import org.gradle.work.InputChanges;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -140,51 +141,96 @@ public class RewriteRecipeAuthorAttributionTask extends DefaultTask {
     @TaskAction
     void execute(InputChanges inputChanges) {
         try (Git g = Git.open(getProject().getRootDir())) {
-            Map<String, String> recipeFileNameToFqn = new HashMap<>();
-            
             if (isYamlRecipes) {
                 // For YAML recipes, map file names to recipe names extracted from YAML
                 processYamlRecipes(g, inputChanges);
                 return;
             }
-            
-            try (ScanResult scanResult = new ClassGraph().enableClassInfo()
-                    .overrideClasspath(classpath)
-                    .scan()) {
-                ClassInfoList recipeClasses = scanResult.getSubclasses("org.openrewrite.Recipe");
-                for (ClassInfo recipeClass : recipeClasses) {
-                    recipeFileNameToFqn.put(recipeClass.getSourceFile(), recipeClass.getName());
-                }
+            processJavaRecipes(inputChanges, g);
+        } catch (Exception e) {
+            getLogger().warn("Unable to complete attribution of recipe authors", e);
+        }
+    }
+
+    private void processJavaRecipes(InputChanges inputChanges, Git g) throws IOException, GitAPIException {
+        Map<String, String> recipeFileNameToFqn = new HashMap<>();
+        try (ScanResult scanResult = new ClassGraph().enableClassInfo()
+                .overrideClasspath(classpath)
+                .scan()) {
+            ClassInfoList recipeClasses = scanResult.getSubclasses("org.openrewrite.Recipe");
+            for (ClassInfo recipeClass : recipeClasses) {
+                recipeFileNameToFqn.put(recipeClass.getSourceFile(), recipeClass.getName());
             }
-            YAMLMapper mapper = new YAMLMapper();
-            Path outputDir = getOutputDirectory();
-            for (FileChange change : inputChanges.getFileChanges(sources)) {
-                File recipeFile = change.getFile();
-                String recipeFqn = recipeFileNameToFqn.get(recipeFile.getName());
-                if (recipeFqn == null) {
-                    continue;
-                }
-                Path targetPath = outputDir.resolve(recipeFqn + ".yml");
-                if (change.getChangeType() == ChangeType.REMOVED) {
-                    Files.delete(targetPath);
+        }
+        YAMLMapper mapper = new YAMLMapper();
+        Path outputDir = getOutputDirectory();
+        for (FileChange change : inputChanges.getFileChanges(sources)) {
+            File recipeFile = change.getFile();
+            String recipeFqn = recipeFileNameToFqn.get(recipeFile.getName());
+            if (recipeFqn == null) {
+                continue;
+            }
+            Path targetPath = outputDir.resolve(recipeFqn + ".yml");
+            if (change.getChangeType() == ChangeType.REMOVED) {
+                Files.delete(targetPath);
+                continue;
+            }
+
+            // git commands only accept forward slashes in paths, regardless of operating system
+            String relativePath = getProject().getRootDir().toPath()
+                    .relativize(recipeFile.toPath()).toString()
+                    .replace('\\', '/');
+            List<Contributor> contributors = listContributors(g, relativePath);
+
+            Attribution attribution = new Attribution("specs.openrewrite.org/v1beta/attribution", recipeFqn, contributors);
+            String yaml = mapper.writeValueAsString(attribution);
+
+            Files.createDirectories(targetPath.getParent());
+            Files.write(targetPath, yaml.getBytes());
+        }
+    }
+
+    private void processYamlRecipes(Git g, InputChanges inputChanges) throws Exception {
+        YAMLMapper mapper = new YAMLMapper();
+        Path outputDir = getOutputDirectory();
+
+        for (FileChange change : inputChanges.getFileChanges(sources)) {
+            File yamlFile = change.getFile();
+            if (!yamlFile.getName().endsWith(".yml") && !yamlFile.getName().endsWith(".yaml")) {
+                continue;
+            }
+
+            if (change.getChangeType() == ChangeType.REMOVED) {
+                Path targetPath = outputDir.resolve(yamlFile.getName().replaceFirst("\\.[^.]+$", "") + ".yml");
+                Files.delete(targetPath);
+                continue;
+            }
+
+            try {
+                // Read the YAML file to extract recipe name
+                Map<String, Object> yamlContent = mapper.readValue(yamlFile, Map.class);
+                String recipeName = (String) yamlContent.get("name");
+
+                if (recipeName == null) {
+                    getLogger().debug("Skipping YAML file without recipe name: " + yamlFile);
                     continue;
                 }
 
                 // git commands only accept forward slashes in paths, regardless of operating system
                 String relativePath = getProject().getRootDir().toPath()
-                        .relativize(recipeFile.toPath()).toString()
+                        .relativize(yamlFile.toPath()).toString()
                         .replace('\\', '/');
                 List<Contributor> contributors = listContributors(g, relativePath);
 
-                Attribution attribution = new Attribution("specs.openrewrite.org/v1beta/attribution", recipeFqn, contributors);
+                Attribution attribution = new Attribution("specs.openrewrite.org/v1beta/attribution", recipeName, contributors);
                 String yaml = mapper.writeValueAsString(attribution);
 
+                Path targetPath = outputDir.resolve(recipeName + ".yml");
                 Files.createDirectories(targetPath.getParent());
                 Files.write(targetPath, yaml.getBytes());
+            } catch (Exception e) {
+                getLogger().warn("Unable to process YAML recipe file: " + yamlFile, e);
             }
-
-        } catch (Exception e) {
-            getLogger().warn("Unable to complete attribution of recipe authors", e);
         }
     }
 
@@ -209,49 +255,5 @@ public class RewriteRecipeAuthorAttributionTask extends DefaultTask {
                 .map(entry -> entry.getKey().withLineCount(entry.getValue()))
                 .sorted(Comparator.comparing(Contributor::getLineCount).reversed())
                 .collect(Collectors.toList()));
-    }
-
-    private void processYamlRecipes(Git g, InputChanges inputChanges) throws Exception {
-        YAMLMapper mapper = new YAMLMapper();
-        Path outputDir = getOutputDirectory();
-        
-        for (FileChange change : inputChanges.getFileChanges(sources)) {
-            File yamlFile = change.getFile();
-            if (!yamlFile.getName().endsWith(".yml") && !yamlFile.getName().endsWith(".yaml")) {
-                continue;
-            }
-            
-            if (change.getChangeType() == ChangeType.REMOVED) {
-                Path targetPath = outputDir.resolve(yamlFile.getName().replaceFirst("\\.[^.]+$", "") + ".yml");
-                Files.delete(targetPath);
-                continue;
-            }
-            
-            try {
-                // Read the YAML file to extract recipe name
-                Map<String, Object> yamlContent = mapper.readValue(yamlFile, Map.class);
-                String recipeName = (String) yamlContent.get("name");
-                
-                if (recipeName == null) {
-                    getLogger().debug("Skipping YAML file without recipe name: " + yamlFile);
-                    continue;
-                }
-                
-                // git commands only accept forward slashes in paths, regardless of operating system
-                String relativePath = getProject().getRootDir().toPath()
-                        .relativize(yamlFile.toPath()).toString()
-                        .replace('\\', '/');
-                List<Contributor> contributors = listContributors(g, relativePath);
-                
-                Attribution attribution = new Attribution("specs.openrewrite.org/v1beta/attribution", recipeName, contributors);
-                String yaml = mapper.writeValueAsString(attribution);
-                
-                Path targetPath = outputDir.resolve(recipeName + ".yml");
-                Files.createDirectories(targetPath.getParent());
-                Files.write(targetPath, yaml.getBytes());
-            } catch (Exception e) {
-                getLogger().warn("Unable to process YAML recipe file: " + yamlFile, e);
-            }
-        }
     }
 }
