@@ -68,7 +68,7 @@ class RewriteRecipeAuthorAttributionTest {
           contributors:
           - name: "Sam Snyder"
             email: "sam@moderne.io"
-            lineCount: 14"
+            lineCount: 14
           """);
         BuildResult rerunResult = runGradle(repositoryRoot, "clean", "jar", "-Dorg.gradle.caching=true");
         assertThat(requireNonNull(rerunResult.task(":rewriteRecipeAuthorAttributionJava")).getOutcome())
