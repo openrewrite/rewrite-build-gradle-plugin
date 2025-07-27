@@ -17,8 +17,10 @@ package org.openrewrite.gradle;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.MappingIterator;
+import com.fasterxml.jackson.databind.RuntimeJsonMappingException;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ClassInfoList;
@@ -220,7 +222,8 @@ public class RewriteRecipeAuthorAttributionTask extends DefaultTask {
                         .replace('\\', '/');
                 BlameResult blame = g.blame().setFilePath(relativePath).call();
 
-                for (RecipeLineNumbers recipe : recipeLineNumbers(yamlFile)) {
+                List<RecipeLineNumbers> recipeLineNumbers = recipeLineNumbers(yamlFile);
+                for (RecipeLineNumbers recipe : recipeLineNumbers) {
                     List<Contributor> contributors = extractContributorsForRange(blame, recipe.startLine, recipe.endLine);
 
                     Attribution attr = new Attribution("specs.openrewrite.org/v1beta/attribution", recipe.name, contributors);
@@ -240,8 +243,9 @@ public class RewriteRecipeAuthorAttributionTask extends DefaultTask {
     }
 
     private static List<RecipeLineNumbers> recipeLineNumbers(File file) throws IOException {
-        MappingIterator<Map<String, Object>> mapMappingIterator = new YAMLMapper()
-                .readValues(new YAMLFactory().createParser(file), new TypeReference<>() {
+        YAMLParser parser = new YAMLFactory().createParser(file);
+        var mapMappingIterator = new YAMLMapper()
+                .readValues(parser, new TypeReference<Map<String, Object>>() {
                 });
 
         String recipeName = null;
@@ -257,8 +261,13 @@ public class RewriteRecipeAuthorAttributionTask extends DefaultTask {
 
             // Start reading the next entry
             startLine = endLine;
-            Map<String, Object> entry = mapMappingIterator.next();
-            recipeName = "specs.openrewrite.org/v1beta/recipe".equals(entry.get("type")) ? (String) entry.get("name") : null;
+            try {
+                Map<String, Object> entry = mapMappingIterator.next();
+                recipeName = "specs.openrewrite.org/v1beta/recipe".equals(entry.get("type")) ? (String) entry.get("name") : null;
+            } catch (RuntimeJsonMappingException e) {
+                // Cannot deserialize value of type `java.util.LinkedHashMap<java.lang.String,java.lang.Object>` from Null value (token `JsonToken.VALUE_NULL`)
+                recipeName = null;
+            }
         }
         // Store the last entry
         endLine = mapMappingIterator.getCurrentLocation().getLineNr() - 1;
