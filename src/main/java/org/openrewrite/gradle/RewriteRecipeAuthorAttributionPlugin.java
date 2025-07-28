@@ -53,7 +53,6 @@ public class RewriteRecipeAuthorAttributionPlugin implements Plugin<Project> {
 
         // Process Java source directories
         for (File sourceDir : mainSource.getAllJava().getSourceDirectories()) {
-            System.err.println("Processing source directory: " + sourceDir);
             TaskProvider<RewriteRecipeAuthorAttributionTask> attr = tasks.register(
                     "rewriteRecipeAuthorAttribution" + capitalize(sourceDir.getName()), RewriteRecipeAuthorAttributionTask.class,
                     task -> {
