@@ -75,7 +75,7 @@ class RewriteRecipeAuthorAttributionTest {
 
 
         // Ensure YAML attribution task is executed successfully
-        assertThat(requireNonNull(result.task(":rewriteRecipeAuthorAttributionYaml")).getOutcome())
+        assertThat(requireNonNull(result.task(":rewriteRecipeAuthorAttributionResources")).getOutcome())
           .isEqualTo(TaskOutcome.SUCCESS);
         expectedOutput = new File(repositoryRoot.toFile(), "build/resources/main/META-INF/rewrite/attribution/org.openrewrite.java.migrate.jacoco.UpgradeJaCoCo.yml");
         //language=YAML
@@ -98,7 +98,7 @@ class RewriteRecipeAuthorAttributionTest {
         assertThat(requireNonNull(rerunResult.task(":rewriteRecipeAuthorAttributionJava")).getOutcome())
           .as("Task should have been cached on the first execution and retrieved from the cache after cleaning")
           .isEqualTo(TaskOutcome.FROM_CACHE);
-        assertThat(requireNonNull(rerunResult.task(":rewriteRecipeAuthorAttributionYaml")).getOutcome())
+        assertThat(requireNonNull(rerunResult.task(":rewriteRecipeAuthorAttributionResources")).getOutcome())
           .as("Task should have been cached on the first execution and retrieved from the cache after cleaning")
           .isEqualTo(TaskOutcome.FROM_CACHE);
     }

@@ -44,35 +44,20 @@ public class RewriteRecipeAuthorAttributionPlugin implements Plugin<Project> {
         TaskProvider<Copy> copyAttribution = tasks.register("copyAttribution", Copy.class);
         tasks.named("processResources", ProcessResources.class).configure(task -> task.dependsOn(copyAttribution));
 
-        // Process Java source directories
-        for (File sourceDir : mainSource.getAllJava().getSourceDirectories()) {
+        for (File sourceDir : mainSource.getAllSource().getSourceDirectories()) {
             TaskProvider<RewriteRecipeAuthorAttributionTask> attr = tasks.register(
-                    "rewriteRecipeAuthorAttribution" + capitalize(sourceDir.getName()), RewriteRecipeAuthorAttributionTask.class,
+                    "rewriteRecipeAuthorAttribution" + capitalize(sourceDir.getName()),
+                    RewriteRecipeAuthorAttributionTask.class,
                     task -> {
-                        task.dependsOn(mainSource.getCompileJavaTaskName());
+                        if (sourceDir.getName().toLowerCase().contains("resources")) {
+                            task.setIsYamlRecipes(true);
+                        } else {
+                            task.dependsOn(mainSource.getCompileJavaTaskName());
+                        }
                         task.setSources(sourceDir);
                         task.setClasspath(mainSource.getOutput().getClassesDirs());
                     }
             );
-
-            copyAttribution.configure(task -> {
-                task.dependsOn(attr);
-                task.from(attr.get().getOutputDirectory());
-                task.into(project.getLayout().getBuildDirectory()
-                        .dir("resources/main/META-INF/rewrite/attribution").get().getAsFile());
-            });
-        }
-
-        // Process YAML recipe files in resources
-        for (File yamlRecipeDir : mainSource.getResources().getSourceDirectories()) {
-            TaskProvider<RewriteRecipeAuthorAttributionTask> attr = tasks.register(
-                    "rewriteRecipeAuthorAttributionYaml", RewriteRecipeAuthorAttributionTask.class,
-                    task -> {
-                        task.setSources(yamlRecipeDir);
-                        task.setIsYamlRecipes(true);
-                    }
-            );
-
             copyAttribution.configure(task -> {
                 task.dependsOn(attr);
                 task.from(attr.get().getOutputDirectory());
