@@ -18,6 +18,7 @@ package org.openrewrite.gradle;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.file.DuplicatesStrategy;
+import org.gradle.api.file.FileCollection;
 import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.tasks.Copy;
 import org.gradle.api.tasks.SourceSet;
@@ -26,7 +27,12 @@ import org.gradle.api.tasks.TaskProvider;
 import org.gradle.language.jvm.tasks.ProcessResources;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
+import static java.util.stream.Collectors.toSet;
 import static org.eclipse.jgit.util.StringUtils.capitalize;
 
 public class RewriteRecipeAuthorAttributionPlugin implements Plugin<Project> {
@@ -44,9 +50,10 @@ public class RewriteRecipeAuthorAttributionPlugin implements Plugin<Project> {
         TaskContainer tasks = project.getTasks();
         TaskProvider<Copy> copyAttribution = tasks.register("copyAttribution", Copy.class);
         tasks.named("processResources", ProcessResources.class).configure(task -> task.dependsOn(copyAttribution));
-        
+
         // Process Java source directories
-        for (File sourceDir : mainSource.getAllSource().getSrcDirs()) {
+        for (File sourceDir : mainSource.getAllJava().getSourceDirectories()) {
+            System.err.println("Processing source directory: " + sourceDir);
             TaskProvider<RewriteRecipeAuthorAttributionTask> attr = tasks.register(
                     "rewriteRecipeAuthorAttribution" + capitalize(sourceDir.getName()), RewriteRecipeAuthorAttributionTask.class,
                     task -> {
@@ -59,13 +66,13 @@ public class RewriteRecipeAuthorAttributionPlugin implements Plugin<Project> {
             copyAttribution.configure(task -> {
                 task.dependsOn(attr);
                 task.from(attr.get().getOutputDirectory());
-                task.into(project.getLayout().getBuildDirectory().dir("resources/main/META-INF/rewrite/attribution").get().getAsFile());
+                task.into(project.getLayout().getBuildDirectory()
+                        .dir("resources/main/META-INF/rewrite/attribution").get().getAsFile());
             });
         }
-        
+
         // Process YAML recipe files in resources
-        File yamlRecipeDir = new File(project.getProjectDir(), "src/main/resources/META-INF/rewrite");
-        if (yamlRecipeDir.isDirectory()) {
+        for (File yamlRecipeDir : mainSource.getResources().getSourceDirectories()) {
             TaskProvider<RewriteRecipeAuthorAttributionTask> attr = tasks.register(
                     "rewriteRecipeAuthorAttributionYaml", RewriteRecipeAuthorAttributionTask.class,
                     task -> {
@@ -77,8 +84,8 @@ public class RewriteRecipeAuthorAttributionPlugin implements Plugin<Project> {
             copyAttribution.configure(task -> {
                 task.dependsOn(attr);
                 task.from(attr.get().getOutputDirectory());
-                task.into(project.getLayout().getBuildDirectory().dir("resources/main/META-INF/rewrite/attribution").get().getAsFile());
-                task.setDuplicatesStrategy(DuplicatesStrategy.WARN);
+                task.into(project.getLayout().getBuildDirectory()
+                        .dir("resources/main/META-INF/rewrite/attribution").get().getAsFile());
             });
         }
     }
