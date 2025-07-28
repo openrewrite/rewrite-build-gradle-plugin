@@ -43,20 +43,26 @@ public class RewriteRecipeAuthorAttributionPlugin implements Plugin<Project> {
         TaskContainer tasks = project.getTasks();
         TaskProvider<Copy> copyAttribution = tasks.register("copyAttribution", Copy.class);
         tasks.named("processResources", ProcessResources.class).configure(task -> task.dependsOn(copyAttribution));
-        for (File sourceDir : mainSource.getAllSource().getSrcDirs()) {
+
+        for (File sourceDir : mainSource.getAllSource().getSourceDirectories()) {
             TaskProvider<RewriteRecipeAuthorAttributionTask> attr = tasks.register(
-                    "rewriteRecipeAuthorAttribution" + capitalize(sourceDir.getName()), RewriteRecipeAuthorAttributionTask.class,
+                    "rewriteRecipeAuthorAttribution" + capitalize(sourceDir.getName()),
+                    RewriteRecipeAuthorAttributionTask.class,
                     task -> {
-                        task.dependsOn(mainSource.getCompileJavaTaskName());
+                        if (sourceDir.getName().toLowerCase().contains("resources")) {
+                            task.setIsYamlRecipes(true);
+                        } else {
+                            task.dependsOn(mainSource.getCompileJavaTaskName());
+                        }
                         task.setSources(sourceDir);
                         task.setClasspath(mainSource.getOutput().getClassesDirs());
                     }
             );
-
             copyAttribution.configure(task -> {
                 task.dependsOn(attr);
                 task.from(attr.get().getOutputDirectory());
-                task.into(new File(project.getBuildDir(), "resources/main/META-INF/rewrite/attribution"));
+                task.into(project.getLayout().getBuildDirectory()
+                        .dir("resources/main/META-INF/rewrite/attribution").get().getAsFile());
             });
         }
     }
