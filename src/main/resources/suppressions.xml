@@ -33,6 +33,13 @@
         <packageUrl regex="true">^pkg:maven/org\.eclipse\.jgit/org\.eclipse\.jgit@.*$</packageUrl>
         <vulnerabilityName>CVE-2023-4759</vulnerabilityName>
     </suppress>
+    <suppress until="2025-05-31Z">
+        <notes><![CDATA[
+           file name: protobuf-java-3.25.5.jar
+         ]]></notes>
+        <packageUrl regex="true">^pkg:maven/com\.google\.protobuf/protobuf-java@.*$</packageUrl>
+        <cve>CVE-2024-7254</cve>
+    </suppress>
     <suppress>
         <notes><![CDATA[
    file name: rewrite-logging-frameworks-2.19.0-SNAPSHOT.jar: log4j-1.2.17.jar
