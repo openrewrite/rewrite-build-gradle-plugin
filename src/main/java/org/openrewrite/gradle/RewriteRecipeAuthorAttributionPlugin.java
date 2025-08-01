@@ -18,10 +18,7 @@ package org.openrewrite.gradle;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.plugins.JavaPluginExtension;
-import org.gradle.api.tasks.Copy;
-import org.gradle.api.tasks.SourceSet;
-import org.gradle.api.tasks.TaskContainer;
-import org.gradle.api.tasks.TaskProvider;
+import org.gradle.api.tasks.*;
 import org.gradle.language.jvm.tasks.ProcessResources;
 
 import java.io.File;
@@ -43,12 +40,23 @@ public class RewriteRecipeAuthorAttributionPlugin implements Plugin<Project> {
         TaskContainer tasks = project.getTasks();
         TaskProvider<Copy> copyAttribution = tasks.register("copyAttribution", Copy.class);
         tasks.named("processResources", ProcessResources.class).configure(task -> task.dependsOn(copyAttribution));
+        
+        TaskProvider<Delete> deletePreviouslyGeneratedAttributions = project.getTasks().register(
+                "deletePreviouslyGeneratedAttributions",
+                Delete.class,
+                deleteTask -> deleteTask.delete(
+                        project.getLayout().getBuildDirectory().dir("rewrite/attribution/resources"),
+                        project.getLayout().getBuildDirectory().dir("rewrite/attribution/java"),
+                        project.getLayout().getBuildDirectory().dir("resources/main/META-INF/rewrite/attribution")
+                )
+        );
 
         for (File sourceDir : mainSource.getAllSource().getSourceDirectories()) {
             TaskProvider<RewriteRecipeAuthorAttributionTask> attr = tasks.register(
                     "rewriteRecipeAuthorAttribution" + capitalize(sourceDir.getName()),
                     RewriteRecipeAuthorAttributionTask.class,
                     task -> {
+                        task.dependsOn(deletePreviouslyGeneratedAttributions);
                         if (sourceDir.getName().toLowerCase().contains("resources")) {
                             task.setIsYamlRecipes(true);
                         } else {

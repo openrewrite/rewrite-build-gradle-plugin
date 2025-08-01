@@ -30,6 +30,7 @@ import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -90,6 +91,9 @@ class RewriteRecipeAuthorAttributionTest {
           - name: "Jente"
             email: "jente@moderne.io"
             lineCount: 4
+          - name: "Pierre Delagrave"
+            email: "pierre@moderne.io"
+            lineCount: 2
           """
         );
 
@@ -103,6 +107,89 @@ class RewriteRecipeAuthorAttributionTest {
           .isEqualTo(TaskOutcome.FROM_CACHE);
     }
 
+    @Test
+    void removeOneImperativeRecipe(@TempDir(cleanup = CleanupMode.ON_SUCCESS) Path repositoryRoot) throws IOException {
+        writeSampleProject(repositoryRoot);
+        BuildResult result = runGradle(repositoryRoot, "jar");
+        
+        assertThat(requireNonNull(result.task(":rewriteRecipeAuthorAttributionResources")).getOutcome())
+          .isEqualTo(TaskOutcome.SUCCESS);
+        
+        File exampleRecipeAttributions = new File(repositoryRoot.toFile(), "build/resources/main/META-INF/rewrite/attribution/org.openrewrite.ExampleRecipe.yml");
+        assertThat(exampleRecipeAttributions).exists();
+        
+        // Move instead of delete, because if there's no more files in the directory the task won't execute.
+        Files.move(
+          repositoryRoot.resolve("src/main/java/org/openrewrite/ExampleRecipe.java"),
+          repositoryRoot.resolve("src/main/java/org/openrewrite/file.name")
+        );
+        
+        result = runGradle(repositoryRoot, "jar");
+        assertThat(requireNonNull(result.task(":rewriteRecipeAuthorAttributionResources")).getOutcome())
+          .isEqualTo(TaskOutcome.SUCCESS);
+        
+        assertThat(exampleRecipeAttributions).doesNotExist();
+    }
+    
+    @Test
+    void removeOneDeclarativeRecipeFromYaml(@TempDir(cleanup = CleanupMode.ON_SUCCESS) Path repositoryRoot) throws IOException {
+        writeSampleProject(repositoryRoot);
+        BuildResult result = runGradle(repositoryRoot, "jar");
+        
+        assertThat(requireNonNull(result.task(":rewriteRecipeAuthorAttributionResources")).getOutcome())
+          .isEqualTo(TaskOutcome.SUCCESS);
+        
+        File testRecipeAttributions = new File(repositoryRoot.toFile(), "build/resources/main/META-INF/rewrite/attribution/org.openrewrite.java.migrate.Test.yml");
+        //language=yml
+        assertThat(testRecipeAttributions).hasContent("""
+          ---
+          type: "specs.openrewrite.org/v1beta/attribution"
+          recipeName: "org.openrewrite.java.migrate.Test"
+          contributors:
+          - name: "Pierre Delagrave"
+            email: "pierre@moderne.io"
+            lineCount: 9
+          """);
+        
+        Path recipeYmlPath = repositoryRoot.resolve("src/main/resources/META-INF/rewrite/recipe.yml");
+        var with2ndRecipeRemoved = Files.readAllLines(recipeYmlPath).stream()
+          .takeWhile(line -> !line.contains("# RecipeToDelete"))
+          .collect(Collectors.toList());
+        Files.write(recipeYmlPath, with2ndRecipeRemoved);
+        
+        result = runGradle(repositoryRoot, "jar");
+        assertThat(requireNonNull(result.task(":rewriteRecipeAuthorAttributionResources")).getOutcome())
+          .isEqualTo(TaskOutcome.SUCCESS);
+        
+        assertThat(testRecipeAttributions).doesNotExist();
+    }
+    
+    @Test
+    void removeEntireDeclarativeYamlFile(@TempDir(cleanup = CleanupMode.ON_SUCCESS) Path repositoryRoot) throws IOException {
+        writeSampleProject(repositoryRoot);
+        BuildResult result = runGradle(repositoryRoot, "jar");
+        
+        assertThat(requireNonNull(result.task(":rewriteRecipeAuthorAttributionResources")).getOutcome())
+          .isEqualTo(TaskOutcome.SUCCESS);
+        
+        File jacocoRecipeAttributions = new File(repositoryRoot.toFile(), "build/resources/main/META-INF/rewrite/attribution/org.openrewrite.java.migrate.jacoco.UpgradeJaCoCo.yml");
+        File testRecipeAttributions = new File(repositoryRoot.toFile(), "build/resources/main/META-INF/rewrite/attribution/org.openrewrite.java.migrate.Test.yml");
+        
+        assertThat(jacocoRecipeAttributions).exists();
+        assertThat(testRecipeAttributions).exists();
+        
+        Files.delete(repositoryRoot.resolve("src/main/resources/META-INF/rewrite/recipe.yml"));
+        // Because if there's no YMLs to process the task won't execute.
+        Files.createFile(repositoryRoot.resolve("src/main/resources/META-INF/rewrite/empty.yml"));
+        
+        result = runGradle(repositoryRoot, "jar");
+        assertThat(requireNonNull(result.task(":rewriteRecipeAuthorAttributionResources")).getOutcome())
+          .isEqualTo(TaskOutcome.SUCCESS);
+        
+        assertThat(jacocoRecipeAttributions).doesNotExist();
+        assertThat(testRecipeAttributions).doesNotExist();
+    }
+    
     static void writeSampleProject(Path repositoryRoot) {
         try (ZipInputStream zip = new ZipInputStream(requireNonNull(RewriteRecipeAuthorAttributionTest.class
           .getClassLoader().getResourceAsStream("sample.zip")))) {
