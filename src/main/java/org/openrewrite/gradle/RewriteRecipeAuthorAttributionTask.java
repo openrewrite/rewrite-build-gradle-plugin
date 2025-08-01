@@ -174,9 +174,7 @@ public class RewriteRecipeAuthorAttributionTask extends DefaultTask {
             if (recipeFqn == null) {
                 continue;
             }
-            Path targetPath = outputDir.resolve(recipeFqn + ".yml");
             if (change.getChangeType() == ChangeType.REMOVED) {
-                Files.delete(targetPath);
                 continue;
             }
 
@@ -193,12 +191,13 @@ public class RewriteRecipeAuthorAttributionTask extends DefaultTask {
             Attribution attribution = new Attribution("specs.openrewrite.org/v1beta/attribution", recipeFqn, contributors);
             String yaml = mapper.writeValueAsString(attribution);
 
+            Path targetPath = outputDir.resolve(recipeFqn + ".yml");
             Files.createDirectories(targetPath.getParent());
             Files.writeString(targetPath, yaml);
         }
     }
 
-    private void processYamlRecipes(Git g, InputChanges inputChanges) throws Exception {
+    private void processYamlRecipes(Git g, InputChanges inputChanges) {
         YAMLMapper mapper = new YAMLMapper();
         Path outputDir = getOutputDirectory();
 
@@ -209,8 +208,6 @@ public class RewriteRecipeAuthorAttributionTask extends DefaultTask {
             }
 
             if (change.getChangeType() == ChangeType.REMOVED) {
-                Path targetPath = outputDir.resolve(yamlFile.getName().replaceFirst("\\.[^.]+$", "") + ".yml");
-                Files.delete(targetPath);
                 continue;
             }
 
