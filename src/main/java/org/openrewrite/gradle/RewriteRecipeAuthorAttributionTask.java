@@ -176,7 +176,7 @@ public class RewriteRecipeAuthorAttributionTask extends DefaultTask {
             }
             Path targetPath = outputDir.resolve(recipeFqn + ".yml");
             if (change.getChangeType() == ChangeType.REMOVED) {
-                Files.delete(targetPath);
+                Files.deleteIfExists(targetPath);
                 continue;
             }
 
@@ -209,8 +209,9 @@ public class RewriteRecipeAuthorAttributionTask extends DefaultTask {
             }
 
             if (change.getChangeType() == ChangeType.REMOVED) {
+                // FIXME mismatches likely here, as `slf4j.yml` is not a recipe name; potentially change how we write
                 Path targetPath = outputDir.resolve(yamlFile.getName().replaceFirst("\\.[^.]+$", "") + ".yml");
-                Files.delete(targetPath);
+                Files.deleteIfExists(targetPath);
                 continue;
             }
 
