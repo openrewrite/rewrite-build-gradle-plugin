@@ -45,7 +45,10 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
+
+import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
+import static java.util.stream.Collectors.toSet;
 
 @CacheableTask
 public class RewriteRecipeAuthorAttributionTask extends DefaultTask {
@@ -75,10 +78,10 @@ public class RewriteRecipeAuthorAttributionTask extends DefaultTask {
         return sources;
     }
 
-    private Set<URI> classpath = Collections.emptySet();
+    private Set<URI> classpath = emptySet();
 
     public void setClasspath(FileCollection classpath) {
-        this.classpath = classpath.getFiles().stream().map(File::toURI).collect(Collectors.toSet());
+        this.classpath = classpath.getFiles().stream().map(File::toURI).collect(toSet());
     }
 
     @Internal
@@ -279,7 +282,7 @@ public class RewriteRecipeAuthorAttributionTask extends DefaultTask {
 
     private static List<Contributor> extractContributorsForRange(@Nullable BlameResult blame, int start, int end) {
         if (blame == null) {
-            return Collections.emptyList();
+            return emptyList();
         }
         Map<Contributor, Integer> contributors = new HashMap<>();
         for (int i = start; i < end; i++) {
