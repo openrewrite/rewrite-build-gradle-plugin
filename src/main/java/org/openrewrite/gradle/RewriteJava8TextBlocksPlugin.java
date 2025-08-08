@@ -27,11 +27,18 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.io.UncheckedIOException;
 
+/**
+ * Marks class files as Java 8 compatible regardless of what they were actually compiled to target.
+ * The idea here is to allow the use of multi-line text blocks. These compile to the exact same bytecode as a java 8
+ * string concatenation, but annoyingly bump the target bytecode level.
+ * Haphazard use of this can easily result in "ClassNotFound"/"MethodNotFound" etc. if other Java 9+ standard library
+ * or language features are used.
+ */
 public class RewriteJava8TextBlocksPlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
-        project.getTasks().named("compileJava", JavaCompile.class, task -> {
+        project.getTasks().withType(JavaCompile.class).configureEach(task -> {
             task.getOptions().getRelease().set((Integer) null);
             task.doLast(new MarkClassfileWithLanguageLevel8DoLast(project.fileTree(task.getDestinationDirectory(), tree -> tree.include("**/*.class"))));
         });
