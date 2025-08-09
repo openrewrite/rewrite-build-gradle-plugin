@@ -19,6 +19,7 @@ import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.GradleRunner;
 import org.gradle.testkit.runner.TaskOutcome;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.CleanupMode;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
@@ -40,42 +41,74 @@ class RewriteRecipeAuthorAttributionTest {
 
     static BuildResult runGradle(Path buildRoot, String... args) {
         String[] argsWithStacktrace = Stream.concat(
-                        Arrays.stream(args),
-                        Stream.of("--stacktrace"))
-                .toArray(String[]::new);
+            Arrays.stream(args),
+            Stream.of("--stacktrace"))
+          .toArray(String[]::new);
         return GradleRunner.create()
-                .withProjectDir(buildRoot.toFile())
-                .withDebug(ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0)
-                .withArguments(argsWithStacktrace)
-                .forwardOutput()
-                .withPluginClasspath()
-                .build();
+          .withProjectDir(buildRoot.toFile())
+          .withDebug(ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0)
+          .withArguments(argsWithStacktrace)
+          .forwardOutput()
+          .withPluginClasspath()
+          .build();
     }
 
     @Test
-    void javaAttribution(@TempDir Path repositoryRoot) throws IOException {
+    void attribution(@TempDir(cleanup = CleanupMode.ON_SUCCESS) Path repositoryRoot) {
         writeSampleProject(repositoryRoot);
         BuildResult result = runGradle(repositoryRoot, "jar", "-Dorg.gradle.caching=true", "--rerun-tasks");
-        assertThat(requireNonNull(result.task(":rewriteRecipeAuthorAttributionJava")).getOutcome())
-                .isEqualTo(TaskOutcome.SUCCESS);
-        File expectedOutput = new File(repositoryRoot.toFile(), "build/resources/main/META-INF/rewrite/attribution/org.openrewrite.ExampleRecipe.yml");
-        assertThat(expectedOutput.exists()).isTrue();
-        String contents = Files.readString(expectedOutput.toPath());
-        assertThat(contents).contains("email: \"sam@moderne.io\"");
-        assertThat(contents).contains("recipeName: \"org.openrewrite.ExampleRecipe\"");
 
+        // Ensure Java attribution task is executed successfully
+        assertThat(requireNonNull(result.task(":rewriteRecipeAuthorAttributionJava")).getOutcome())
+          .isEqualTo(TaskOutcome.SUCCESS);
+        File expectedOutput = new File(repositoryRoot.toFile(), "build/resources/main/META-INF/rewrite/attribution/org.openrewrite.ExampleRecipe.yml");
+        //language=YAML
+        assertThat(expectedOutput).hasContent("""
+          ---
+          type: "specs.openrewrite.org/v1beta/attribution"
+          recipeName: "org.openrewrite.ExampleRecipe"
+          contributors:
+          - name: "Sam Snyder"
+            email: "sam@moderne.io"
+            lineCount: 14
+          """);
+
+
+        // Ensure YAML attribution task is executed successfully
+        assertThat(requireNonNull(result.task(":rewriteRecipeAuthorAttributionResources")).getOutcome())
+          .isEqualTo(TaskOutcome.SUCCESS);
+        expectedOutput = new File(repositoryRoot.toFile(), "build/resources/main/META-INF/rewrite/attribution/org.openrewrite.java.migrate.jacoco.UpgradeJaCoCo.yml");
+        //language=YAML
+        assertThat(expectedOutput).hasContent("""
+          ---
+          type: "specs.openrewrite.org/v1beta/attribution"
+          recipeName: "org.openrewrite.java.migrate.jacoco.UpgradeJaCoCo"
+          contributors:
+          - name: "Tim te Beek"
+            email: "tim@moderne.io"
+            lineCount: 11
+          - name: "Jente"
+            email: "jente@moderne.io"
+            lineCount: 4
+          """
+        );
+
+        // Ensure running the task again retrieves the cached result
         BuildResult rerunResult = runGradle(repositoryRoot, "clean", "jar", "-Dorg.gradle.caching=true");
         assertThat(requireNonNull(rerunResult.task(":rewriteRecipeAuthorAttributionJava")).getOutcome())
-                .as("Task should have been cached on the first execution and retrieved from the cache after cleaning")
-                .isEqualTo(TaskOutcome.FROM_CACHE);
+          .as("Task should have been cached on the first execution and retrieved from the cache after cleaning")
+          .isEqualTo(TaskOutcome.FROM_CACHE);
+        assertThat(requireNonNull(rerunResult.task(":rewriteRecipeAuthorAttributionResources")).getOutcome())
+          .as("Task should have been cached on the first execution and retrieved from the cache after cleaning")
+          .isEqualTo(TaskOutcome.FROM_CACHE);
     }
 
     static void writeSampleProject(Path repositoryRoot) {
-        try(ZipInputStream zip = new ZipInputStream(requireNonNull(RewriteRecipeAuthorAttributionTest.class
-                .getClassLoader().getResourceAsStream("sample.zip")))) {
+        try (ZipInputStream zip = new ZipInputStream(requireNonNull(RewriteRecipeAuthorAttributionTest.class
+          .getClassLoader().getResourceAsStream("sample.zip")))) {
             ZipEntry entry;
             while ((entry = zip.getNextEntry()) != null) {
-                if(entry.isDirectory()) {
+                if (entry.isDirectory()) {
                     continue;
                 }
                 Path path = repositoryRoot.resolve(entry.getName());

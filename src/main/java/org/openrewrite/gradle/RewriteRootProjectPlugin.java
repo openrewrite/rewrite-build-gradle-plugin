@@ -17,11 +17,14 @@ package org.openrewrite.gradle;
 
 import io.github.gradlenexus.publishplugin.NexusPublishExtension;
 import io.github.gradlenexus.publishplugin.NexusPublishPlugin;
+import io.github.gradlenexus.publishplugin.NexusRepository;
 import nebula.plugin.release.NetflixOssStrategies;
 import nebula.plugin.release.ReleasePlugin;
 import nebula.plugin.release.git.base.ReleasePluginExtension;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+
+import java.net.URI;
 
 public class RewriteRootProjectPlugin implements Plugin<Project> {
 
@@ -30,7 +33,11 @@ public class RewriteRootProjectPlugin implements Plugin<Project> {
         project.getPlugins().apply(ReleasePlugin.class);
         project.getPlugins().apply(NexusPublishPlugin.class);
 
-        project.getExtensions().configure(NexusPublishExtension.class, ext -> ext.getRepositories().sonatype());
+        project.getExtensions().configure(NexusPublishExtension.class, ext ->
+                ext.getRepositories().sonatype(nexusRepository -> {
+                    nexusRepository.getNexusUrl().set(URI.create("https://ossrh-staging-api.central.sonatype.com/service/local/"));
+                    nexusRepository.getSnapshotRepositoryUrl().set(URI.create("https://central.sonatype.com/repository/maven-snapshots/"));
+        }));
 
         if (project.getExtensions().findByType(ReleasePluginExtension.class) != null) {
             project.getExtensions().configure(ReleasePluginExtension.class, ext ->

@@ -23,7 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RecipeDependenciesDownloadTaskTest {
 
-    @ParameterizedTest
     @CsvSource(
             textBlock = """
                     29.+    29.0-jre    true
@@ -32,6 +31,7 @@ class RecipeDependenciesDownloadTaskTest {
                     """,
             delimiterString = "    "
     )
+    @ParameterizedTest
     void matches(String selector, String oldVersion, boolean expected) {
         assertThat(RecipeDependenciesDownloadTask.shouldReplace(
                 new DefaultExternalModuleDependency("group", "name", selector),
