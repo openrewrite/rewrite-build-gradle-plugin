@@ -22,7 +22,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 
 import static java.util.Objects.requireNonNull;
@@ -43,7 +42,7 @@ class RewriteJavaPluginTest {
     }
 
     @Test
-    public void testRetry() throws IOException {
+    public void testRetry() throws Exception {
         Files.writeString(settingsFile.toPath(), "rootProject.name = 'my-project'");
         Files.writeString(buildFile.toPath(),
                 //language=gradle

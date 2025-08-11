@@ -44,7 +44,7 @@ class RewriteRecipeLibraryPluginTest {
     }
 
     @Test
-    void replaceWithNewerDependency() throws IOException {
+    void replaceWithNewerDependency() throws Exception {
         writeFile(settingsFile, "rootProject.name = 'my-project'");
         File cp = new File(projectDir, "src/main/resources/META-INF/rewrite/classpath");
         assertThat(cp.mkdirs()).isTrue();
@@ -91,7 +91,7 @@ class RewriteRecipeLibraryPluginTest {
     }
 
     @Test
-    void parserClasspathDependencies() throws IOException {
+    void parserClasspathDependencies() throws Exception {
         writeFile(settingsFile, "rootProject.name = 'my-project'");
         File cp = new File(projectDir, "src/main/resources/META-INF/rewrite/classpath");
         assertThat(cp.mkdirs()).isTrue();
