@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.Normalizer;
 import java.util.*;
 
 import static java.util.Collections.emptyList;
@@ -284,16 +285,19 @@ public class RewriteRecipeAuthorAttributionTask extends DefaultTask {
         if (blame == null) {
             return emptyList();
         }
-        Map<Contributor, Integer> contributors = new HashMap<>();
+        Map<Contributor, Integer> contributorsAndLinesChanged = new HashMap<>();
         for (int i = start; i < end; i++) {
             PersonIdent author = blame.getSourceAuthor(i);
-            contributors.compute(
-                    new Contributor(author.getName(), author.getEmailAddress(), 0),
+            String name = Normalizer.normalize(author.getName(), Normalizer.Form.NFKD)
+                    .replaceAll("\\p{M}", "");
+            contributorsAndLinesChanged.compute(
+                    new Contributor(name, author.getEmailAddress(), 0),
                     (k, v) -> v == null ? 1 : v + 1);
         }
-        return Contributor.distinct(contributors.entrySet().stream()
+        List<Contributor> contributorList = contributorsAndLinesChanged.entrySet().stream()
                 .map(entry -> entry.getKey().withLineCount(entry.getValue()))
                 .sorted(Comparator.comparing(Contributor::getLineCount).reversed())
-                .toList());
+                .toList();
+        return Contributor.distinct(contributorList);
     }
 }
