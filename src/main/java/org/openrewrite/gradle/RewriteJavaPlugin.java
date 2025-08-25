@@ -18,6 +18,7 @@ package org.openrewrite.gradle;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
+import org.gradle.api.attributes.Attribute;
 import org.gradle.api.file.DuplicatesStrategy;
 import org.gradle.api.plugins.JavaLibraryPlugin;
 import org.gradle.api.plugins.JavaPluginExtension;
@@ -34,6 +35,9 @@ import java.util.concurrent.TimeUnit;
 
 public class RewriteJavaPlugin implements Plugin<Project> {
 
+    private static final Attribute<String> CONFIGURATION_ORIGIN_ATTRIBUTE = 
+            Attribute.of("org.openrewrite.configuration.origin", String.class);
+
     @Override
     public void apply(Project project) {
         project.getPlugins().apply(RewriteDependencyCheckPlugin.class);
@@ -42,6 +46,12 @@ public class RewriteJavaPlugin implements Plugin<Project> {
         ext.getJacksonVersion().convention("2.17.2");
 
         project.getPlugins().apply(JavaLibraryPlugin.class);
+
+        // Fix Gradle 9.0+ configuration attribute conflicts between archives and signatures
+        // Archives configuration (created by java plugin) - tag with origin
+        project.getConfigurations().named("archives", config -> {
+            config.getAttributes().attribute(CONFIGURATION_ORIGIN_ATTRIBUTE, "java-plugin");
+        });
 
         project.getConfigurations().all(config -> {
             config.getResolutionStrategy().cacheChangingModulesFor(0, TimeUnit.SECONDS);
