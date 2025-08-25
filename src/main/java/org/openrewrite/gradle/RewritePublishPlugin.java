@@ -53,7 +53,6 @@ public class RewritePublishPlugin implements Plugin<Project> {
         project.getPlugins().apply(MavenApacheLicensePlugin.class);
 
         // Fix Gradle 9.0+ configuration attribute conflicts between archives and signatures
-        // Signatures configuration (created by signing plugin) - tag with origin
         project.getConfigurations().named("signatures", config -> {
             config.getAttributes().attribute(CONFIGURATION_ORIGIN_ATTRIBUTE, "signing-plugin");
         });

@@ -48,7 +48,6 @@ public class RewriteJavaPlugin implements Plugin<Project> {
         project.getPlugins().apply(JavaLibraryPlugin.class);
 
         // Fix Gradle 9.0+ configuration attribute conflicts between archives and signatures
-        // Archives configuration (created by java plugin) - tag with origin
         project.getConfigurations().named("archives", config -> {
             config.getAttributes().attribute(CONFIGURATION_ORIGIN_ATTRIBUTE, "java-plugin");
         });
