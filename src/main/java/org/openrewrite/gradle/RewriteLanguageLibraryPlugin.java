@@ -30,6 +30,5 @@ public class RewriteLanguageLibraryPlugin implements Plugin<Project> {
         project.getExtensions().create("recipeDependencies", RecipeDependenciesExtension.class);
         project.getTasks().register("createTypeTable", RecipeDependenciesTypeTableTask.class);
         project.getPlugins().apply(RewritePublishPlugin.class);
-        project.getPlugins().apply(RewriteRecipeAuthorAttributionPlugin.class);
     }
 }
