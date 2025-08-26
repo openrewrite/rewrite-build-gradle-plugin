@@ -212,7 +212,7 @@ dependencies {
     implementation("org.gradle:test-retry-gradle-plugin:latest.release")
 
     implementation("org.jspecify:jspecify:1.0.0")
-    implementation(platform("com.fasterxml.jackson:jackson-bom:2.17.+"))
+    implementation(platform("com.fasterxml.jackson:jackson-bom:2.17.2"))
     implementation("com.fasterxml.jackson.core:jackson-core")
     implementation("com.fasterxml.jackson.core:jackson-databind")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml")
