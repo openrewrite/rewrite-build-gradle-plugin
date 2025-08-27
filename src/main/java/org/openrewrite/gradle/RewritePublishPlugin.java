@@ -26,6 +26,7 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.artifacts.ResolvedDependency;
+import org.gradle.api.attributes.Attribute;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.maven.MavenPublication;
@@ -38,6 +39,9 @@ import org.w3c.dom.Node;
 
 public class RewritePublishPlugin implements Plugin<Project> {
 
+    private static final Attribute<String> CONFIGURATION_ORIGIN_ATTRIBUTE = 
+            Attribute.of("org.openrewrite.configuration.origin", String.class);
+
     @Override
     public void apply(Project project) {
         project.getPlugins().apply(JavaBasePlugin.class);
@@ -47,6 +51,12 @@ public class RewritePublishPlugin implements Plugin<Project> {
         project.getPlugins().apply(MavenPublishPlugin.class);
         project.getPlugins().apply(MavenResolvedDependenciesPlugin.class);
         project.getPlugins().apply(MavenApacheLicensePlugin.class);
+
+        // Fix Gradle 9.0+ configuration attribute conflicts between archives and signatures
+        // If the signatures configuration is removed, we need to also remove this attribute addition
+        project.getConfigurations().named("signatures", config -> {
+            config.getAttributes().attribute(CONFIGURATION_ORIGIN_ATTRIBUTE, "signing-plugin");
+        });
 
         // This plugin does not do anything if the shadow plugin is not applied, so it is safe to always apply it
         project.getPlugins().apply(MavenShadowPublishPlugin.class);
