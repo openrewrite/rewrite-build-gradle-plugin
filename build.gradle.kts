@@ -179,7 +179,6 @@ tasks.named<JavaCompile>("compileJava") {
 val rewriteVersion = "8.61.3"
 
 dependencies {
-    compileOnly("org.openrewrite.gradle.tooling:model:${rewriteVersion}")
     implementation("org.openrewrite:rewrite-java:${rewriteVersion}")
 
     compileOnly("org.projectlombok:lombok:latest.release")
