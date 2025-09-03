@@ -176,24 +176,11 @@ tasks.named<JavaCompile>("compileJava") {
     options.release.set(17)
 }
 
-val rewriteVersion = "8.56.1"
+val rewriteVersion = "8.61.3"
 
 dependencies {
-    compileOnly("org.openrewrite.gradle.tooling:model:latest.release")
-
-    implementation(platform("org.openrewrite:rewrite-bom:${rewriteVersion}"))
-    implementation("org.openrewrite:rewrite-java")
-    implementation("org.openrewrite:rewrite-test")
-    implementation("org.openrewrite:rewrite-core")
-    implementation("org.openrewrite:rewrite-xml")
-    implementation("org.openrewrite:rewrite-properties")
-    implementation("org.openrewrite:rewrite-yaml")
-    implementation("org.openrewrite:rewrite-gradle")
-    implementation("org.openrewrite:rewrite-maven")
-    implementation("org.openrewrite:rewrite-java-8")
-    implementation("org.openrewrite:rewrite-java-11")
-    implementation("org.openrewrite:rewrite-java-17")
-    implementation("org.openrewrite:rewrite-java-21")
+    compileOnly("org.openrewrite.gradle.tooling:model:${rewriteVersion}")
+    implementation("org.openrewrite:rewrite-java:${rewriteVersion}")
 
     compileOnly("org.projectlombok:lombok:latest.release")
     annotationProcessor("org.projectlombok:lombok:latest.release")
@@ -225,10 +212,8 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.junit.jupiter:junit-jupiter-params")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.assertj:assertj-core:latest.release")
-
-    testImplementation("org.openrewrite:rewrite-java:${rewriteVersion}")
-    testImplementation("org.openrewrite:rewrite-test:${rewriteVersion}")
 
     testImplementation(gradleTestKit())
 
