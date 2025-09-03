@@ -196,17 +196,12 @@ dependencies {
     implementation("com.netflix.nebula:nebula-project-plugin:11.0.0") // latest brings in nebula-publishing-plugin 21.2.0
     implementation("io.github.gradle-nexus:publish-plugin:latest.release")
     implementation("com.gradleup.shadow:com.gradleup.shadow.gradle.plugin:9.0.0-beta7") // Latest supporting Java 8
-    implementation("org.gradle:test-retry-gradle-plugin:latest.release")
 
     implementation("org.jspecify:jspecify:1.0.0")
     implementation(platform("com.fasterxml.jackson:jackson-bom:2.17.2"))
     implementation("com.fasterxml.jackson.core:jackson-core")
     implementation("com.fasterxml.jackson.core:jackson-databind")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml")
-
-    implementation("org.yaml:snakeyaml:latest.release")
-    implementation("io.github.classgraph:classgraph:latest.release")
-    implementation("org.eclipse.jgit:org.eclipse.jgit:latest.release")
 
     testImplementation(platform("org.junit:junit-bom:5.+"))
     testImplementation("org.junit.jupiter:junit-jupiter-api")
