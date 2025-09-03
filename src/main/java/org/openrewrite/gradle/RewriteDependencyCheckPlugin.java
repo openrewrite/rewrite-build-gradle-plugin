@@ -20,11 +20,7 @@ import org.gradle.api.Project;
 import org.owasp.dependencycheck.gradle.DependencyCheckPlugin;
 import org.owasp.dependencycheck.gradle.extension.DependencyCheckExtension;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
