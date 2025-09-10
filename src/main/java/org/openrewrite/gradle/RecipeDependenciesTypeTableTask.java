@@ -106,10 +106,11 @@ public abstract class RecipeDependenciesTypeTableTask extends DefaultTask {
     }
 
     private File createTsvFile(File matchedDir) throws IOException {
-        if (!matchedDir.mkdirs() && !matchedDir.isDirectory()) {
-            throw new IOException("Unable to create " + matchedDir);
-        }
         File tsvFile = new File(matchedDir, TypeTable.DEFAULT_RESOURCE_PATH);
+        File parentFile = tsvFile.getParentFile();
+        if (!parentFile.mkdirs() && !parentFile.isDirectory()) {
+            throw new IOException("Unable to create " + parentFile);
+        }
         Files.deleteIfExists(tsvFile.toPath().resolveSibling(tsvFile.getName().replace(".tsv.gz", ".tsv.zip")));
         return tsvFile;
     }
