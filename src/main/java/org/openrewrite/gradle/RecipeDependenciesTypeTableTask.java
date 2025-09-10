@@ -105,14 +105,12 @@ public abstract class RecipeDependenciesTypeTableTask extends DefaultTask {
                         "Available directories: " + resourcesDirs));
     }
 
-    private File createTsvFile(File matchedDir) {
-        File tsvFile = new File(matchedDir, TypeTable.DEFAULT_RESOURCE_PATH.replace(".tsv.gz", ".tsv.zip"));
-        File parentFile = tsvFile.getParentFile();
-        if (!parentFile.exists() && !parentFile.mkdirs()) {
-            throw new IllegalStateException("Unable to create " + parentFile);
-        } else if (tsvFile.exists()) {
-            tsvFile.delete();
+    private File createTsvFile(File matchedDir) throws IOException {
+        if (!matchedDir.mkdirs() && !matchedDir.isDirectory()) {
+            throw new IOException("Unable to create " + matchedDir);
         }
-        return new File(matchedDir, TypeTable.DEFAULT_RESOURCE_PATH);
+        File tsvFile = new File(matchedDir, TypeTable.DEFAULT_RESOURCE_PATH);
+        Files.deleteIfExists(tsvFile.toPath().resolveSibling(tsvFile.getName().replace(".tsv.gz", ".tsv.zip")));
+        return tsvFile;
     }
 }
