@@ -43,7 +43,7 @@ class RewriteJava8TextBlocksTest {
     }
 
     @Test
-    public void modifiedBytecodesToBeJava8Compatible() throws IOException {
+    public void modifiedBytecodesToBeJava8Compatible() throws Exception {
         writeFile(settingsFile, "rootProject.name = 'my-project'");
         String buildFileContent = """
                 plugins {

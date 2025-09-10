@@ -122,13 +122,6 @@ gradlePlugin {
             implementationClass = "org.openrewrite.gradle.RewriteRootProjectPlugin"
             tags = listOf("rewrite", "refactoring")
         }
-        create("build-recipe-author-attribution") {
-            id = "org.openrewrite.build.recipe-author-attribution"
-            displayName = "Rewrite recipe author attribution"
-            description = "Produces a `/META-INF/rewrite/recipe-authors.yml` file containing recipe author attribution"
-            implementationClass = "org.openrewrite.gradle.RewriteRecipeAuthorAttributionPlugin"
-            tags = listOf("rewrite", "refactoring")
-        }
         create("moderne-source-available-license") {
             id = "org.openrewrite.build.moderne-source-available-license"
             displayName = "Moderne Source Available License"
@@ -183,24 +176,10 @@ tasks.named<JavaCompile>("compileJava") {
     options.release.set(17)
 }
 
-val rewriteVersion = "8.56.1"
+val rewriteVersion = "8.61.3"
 
 dependencies {
-    compileOnly("org.openrewrite.gradle.tooling:model:latest.release")
-
-    implementation(platform("org.openrewrite:rewrite-bom:${rewriteVersion}"))
-    implementation("org.openrewrite:rewrite-java")
-    implementation("org.openrewrite:rewrite-test")
-    implementation("org.openrewrite:rewrite-core")
-    implementation("org.openrewrite:rewrite-xml")
-    implementation("org.openrewrite:rewrite-properties")
-    implementation("org.openrewrite:rewrite-yaml")
-    implementation("org.openrewrite:rewrite-gradle")
-    implementation("org.openrewrite:rewrite-maven")
-    implementation("org.openrewrite:rewrite-java-8")
-    implementation("org.openrewrite:rewrite-java-11")
-    implementation("org.openrewrite:rewrite-java-17")
-    implementation("org.openrewrite:rewrite-java-21")
+    implementation("org.openrewrite:rewrite-java:${rewriteVersion}")
 
     compileOnly("org.projectlombok:lombok:latest.release")
     annotationProcessor("org.projectlombok:lombok:latest.release")
@@ -216,26 +195,19 @@ dependencies {
     implementation("com.netflix.nebula:nebula-project-plugin:11.0.0") // latest brings in nebula-publishing-plugin 21.2.0
     implementation("io.github.gradle-nexus:publish-plugin:latest.release")
     implementation("com.gradleup.shadow:com.gradleup.shadow.gradle.plugin:9.0.0-beta7") // Latest supporting Java 8
-    implementation("org.gradle:test-retry-gradle-plugin:latest.release")
 
     implementation("org.jspecify:jspecify:1.0.0")
-    implementation(platform("com.fasterxml.jackson:jackson-bom:2.17.+"))
+    implementation(platform("com.fasterxml.jackson:jackson-bom:2.17.2"))
     implementation("com.fasterxml.jackson.core:jackson-core")
     implementation("com.fasterxml.jackson.core:jackson-databind")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml")
-
-    implementation("org.yaml:snakeyaml:latest.release")
-    implementation("io.github.classgraph:classgraph:latest.release")
-    implementation("org.eclipse.jgit:org.eclipse.jgit:latest.release")
 
     testImplementation(platform("org.junit:junit-bom:5.+"))
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.junit.jupiter:junit-jupiter-params")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.assertj:assertj-core:latest.release")
-
-    testImplementation("org.openrewrite:rewrite-java:${rewriteVersion}")
-    testImplementation("org.openrewrite:rewrite-test:${rewriteVersion}")
 
     testImplementation(gradleTestKit())
 

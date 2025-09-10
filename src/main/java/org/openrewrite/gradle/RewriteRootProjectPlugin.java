@@ -17,7 +17,6 @@ package org.openrewrite.gradle;
 
 import io.github.gradlenexus.publishplugin.NexusPublishExtension;
 import io.github.gradlenexus.publishplugin.NexusPublishPlugin;
-import io.github.gradlenexus.publishplugin.NexusRepository;
 import nebula.plugin.release.NetflixOssStrategies;
 import nebula.plugin.release.ReleasePlugin;
 import nebula.plugin.release.git.base.ReleasePluginExtension;
