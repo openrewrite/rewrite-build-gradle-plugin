@@ -78,5 +78,6 @@
         <cve>CVE-2014-3625</cve>
         <cve>CVE-2014-1904</cve>
         <cve>CVE-2024-22259</cve>
+        <cve>CVE-2025-41249</cve>
     </suppress>
 </suppressions>
