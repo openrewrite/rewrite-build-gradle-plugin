@@ -207,6 +207,98 @@ class RecipeDependenciesTypeTableTaskTest {
           .doesNotExist();
     }
 
+    @Test
+    void sourceSetTestDependencies() throws Exception {
+        createGradleBuildFiles("""
+          plugins {
+              id 'java'
+              id 'org.openrewrite.build.recipe-library-base'
+          }
+          repositories {
+              mavenCentral()
+          }
+          recipeDependencies {
+              parserClasspath 'com.google.guava:guava:30.1-jre'
+              testParserClasspath 'org.junit.jupiter:junit-jupiter-api:5.10.0'
+          }
+          """);
+
+        BuildResult result = GradleRunner.create()
+          .withProjectDir(projectDir)
+          .withArguments("createTestTypeTable", "--info", "--stacktrace")
+          .withPluginClasspath()
+          .withDebug(true)
+          .build();
+
+        assertEquals(SUCCESS, requireNonNull(result.task(":createTestTypeTable")).getOutcome());
+
+        // Assert type table created in test resources
+        File tsvFile = new File(projectDir, "src/test/resources/" + TypeTable.DEFAULT_RESOURCE_PATH);
+        assertThat(tsvFile)
+          .isFile()
+          .isReadable()
+          .isNotEmpty();
+
+        // Load classes from the type table
+        TypeTable table = createTypeTable(tsvFile, "junit-jupiter-api");
+        assertThat(table.load("junit-jupiter-api")).isDirectoryRecursivelyContaining("glob:**/Test.class");
+    }
+
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    @Test
+    void customSourceSetDependencies() throws Exception {
+        createGradleBuildFiles("""
+          plugins {
+              id 'java'
+              id 'org.openrewrite.build.recipe-library-base'
+          }
+
+          sourceSets {
+              functionalTest {
+                  java {
+                      srcDir 'src/functionalTest/java'
+                  }
+                  resources {
+                      srcDir 'src/functionalTest/resources'
+                  }
+              }
+          }
+
+          repositories {
+              mavenCentral()
+          }
+
+          recipeDependencies {
+              parserClasspath 'com.google.guava:guava:30.1-jre'
+              parserClasspath 'functionalTest', 'org.assertj:assertj-core:3.24.2'
+          }
+          """);
+
+        // Create the custom source set directories
+        new File(projectDir, "src/functionalTest/java").mkdirs();
+        new File(projectDir, "src/functionalTest/resources").mkdirs();
+
+        BuildResult result = GradleRunner.create()
+          .withProjectDir(projectDir)
+          .withArguments("createFunctionalTestTypeTable", "--info", "--stacktrace")
+          .withPluginClasspath()
+          .withDebug(true)
+          .build();
+
+        assertEquals(SUCCESS, requireNonNull(result.task(":createFunctionalTestTypeTable")).getOutcome());
+
+        // Assert type table created in functionalTest resources
+        File tsvFile = new File(projectDir, "src/functionalTest/resources/" + TypeTable.DEFAULT_RESOURCE_PATH);
+        assertThat(tsvFile)
+          .isFile()
+          .isReadable()
+          .isNotEmpty();
+
+        // Load classes from the type table
+        TypeTable table = createTypeTable(tsvFile, "assertj-core");
+        assertThat(table.load("assertj-core")).isDirectoryRecursivelyContaining("glob:**/Assertions.class");
+    }
+
     private void createGradleBuildFiles(String buildFileContent) throws IOException {
         Files.writeString(settingsFile.toPath(), "rootProject.name = 'my-project'");
         Files.writeString(buildFile.toPath(), buildFileContent);
@@ -228,7 +320,7 @@ class RecipeDependenciesTypeTableTaskTest {
           .withDebug(true);
     }
 
-    private static @Nullable TypeTable createTypeTable(File tsvFile, String guava) throws Exception {
+    private static TypeTable createTypeTable(File tsvFile, String guava) throws Exception {
         Constructor<?> constructor = Class.forName("org.openrewrite.java.internal.parser.TypeTable")
           .getDeclaredConstructor(ExecutionContext.class, URL.class, Collection.class);
         constructor.setAccessible(true);

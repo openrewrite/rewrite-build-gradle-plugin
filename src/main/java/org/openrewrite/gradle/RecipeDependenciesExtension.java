@@ -31,7 +31,7 @@ public class RecipeDependenciesExtension {
     private final ConfigurationContainer configurationContainer;
     private final DependencyHandler dependencyHandler;
 
-    private final Set<String> dependencies = new HashSet<>();
+    private final Map<String, Set<String>> dependenciesBySourceSet = new HashMap<>();
 
     @Inject
     public RecipeDependenciesExtension(ConfigurationContainer configurationContainer,
@@ -42,11 +42,46 @@ public class RecipeDependenciesExtension {
 
     @SuppressWarnings("unused")
     public void parserClasspath(String dependencyNotation) {
-        dependencies.add(dependencyNotation);
+        addDependencyForSourceSet("main", dependencyNotation);
+    }
+
+    @SuppressWarnings("unused")
+    public void testParserClasspath(String dependencyNotation) {
+        addDependencyForSourceSet("test", dependencyNotation);
+    }
+
+    @SuppressWarnings("unused")
+    public void integrationTestParserClasspath(String dependencyNotation) {
+        addDependencyForSourceSet("integrationTest", dependencyNotation);
+    }
+
+    /**
+     * Add a dependency to the parser classpath for a specific source set.
+     * This is useful for custom source sets not covered by the convenience methods above.
+     *
+     * @param sourceSetName the name of the source set (e.g., "customTest", "functionalTest")
+     * @param dependencyNotation the dependency notation (e.g., "org.example:library:1.0.0")
+     */
+    @SuppressWarnings("unused")
+    public void parserClasspath(String sourceSetName, String dependencyNotation) {
+        addDependencyForSourceSet(sourceSetName, dependencyNotation);
+    }
+
+    void addDependencyForSourceSet(String sourceSetName, String dependencyNotation) {
+        dependenciesBySourceSet.computeIfAbsent(sourceSetName, k -> new HashSet<>()).add(dependencyNotation);
     }
 
     Map<Dependency, File> getResolved() {
+        return getResolvedForSourceSet("main");
+    }
+
+    Map<Dependency, File> getResolvedForSourceSet(String sourceSetName) {
         Map<Dependency, File> resolved = new HashMap<>();
+        Set<String> dependencies = dependenciesBySourceSet.get(sourceSetName);
+
+        if (dependencies == null) {
+            return resolved;
+        }
 
         for (String dependencyNotation : dependencies) {
             Dependency dependency = dependencyHandler.create(dependencyNotation);
