@@ -17,6 +17,9 @@ package org.openrewrite.gradle;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.api.plugins.JavaPluginExtension;
+import org.gradle.api.tasks.TaskProvider;
 
 public class RewriteLanguageLibraryPlugin implements Plugin<Project> {
 
@@ -27,8 +30,54 @@ public class RewriteLanguageLibraryPlugin implements Plugin<Project> {
         project.getPlugins().apply(RewriteLicensePlugin.class);
         project.getPlugins().apply(RewriteMetadataPlugin.class);
         project.getPlugins().apply(RewriteBuildInputLoggingPlugin.class);
+
         project.getExtensions().create("recipeDependencies", RecipeDependenciesExtension.class);
-        project.getTasks().register("createTypeTable", RecipeDependenciesTypeTableTask.class);
+
+        // Register base task for backward compatibility
+        project.getTasks().register("createTypeTable", RecipeDependenciesTypeTableTask.class, task -> {
+            task.getSourceSetName().convention("main");
+        });
+
+        // Configure source set specific tasks when Java plugin is applied
+        project.getPlugins().withType(JavaPlugin.class, javaPlugin -> {
+            JavaPluginExtension javaExt = project.getExtensions().getByType(JavaPluginExtension.class);
+
+            javaExt.getSourceSets().all(sourceSet -> {
+                String sourceSetName = sourceSet.getName();
+
+                // Register task for each source set
+                String taskName = sourceSetName.equals("main") ? "createTypeTable" :
+                        "create" + capitalize(sourceSetName) + "TypeTable";
+
+                if (!sourceSetName.equals("main")) {
+                    TaskProvider<RecipeDependenciesTypeTableTask> taskProvider = project.getTasks().register(taskName, RecipeDependenciesTypeTableTask.class, task -> {
+                        task.getSourceSetName().convention(sourceSetName);
+                        task.getTargetDir().convention(
+                            project.getLayout().getProjectDirectory().dir("src/" + sourceSetName + "/resources")
+                        );
+                    });
+
+                    // Wire up with processResources task
+                    String processResourcesTaskName = sourceSet.getProcessResourcesTaskName();
+                    project.getTasks().named(processResourcesTaskName).configure(processTask ->
+                        processTask.dependsOn(taskProvider)
+                    );
+                } else {
+                    // Wire up main task with processResources
+                    project.getTasks().named("processResources").configure(processTask ->
+                        processTask.dependsOn("createTypeTable")
+                    );
+                }
+            });
+        });
+
         project.getPlugins().apply(RewritePublishPlugin.class);
+    }
+
+    private static String capitalize(String str) {
+        if (str.isEmpty()) {
+            return str;
+        }
+        return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
 }

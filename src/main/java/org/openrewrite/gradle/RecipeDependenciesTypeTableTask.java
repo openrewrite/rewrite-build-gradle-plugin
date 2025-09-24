@@ -21,7 +21,10 @@ import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.SourceDirectorySet;
 import org.gradle.api.plugins.JavaPluginExtension;
+import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.OutputDirectory;
+import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskAction;
 import org.openrewrite.java.internal.parser.TypeTable;
 
@@ -36,14 +39,23 @@ import static java.util.Objects.requireNonNull;
 public abstract class RecipeDependenciesTypeTableTask extends DefaultTask {
 
     /**
+     * The name of the source set to process dependencies for.
+     * <p>
+     * Defaults to "main".
+     */
+    @Input
+    public abstract Property<String> getSourceSetName();
+
+    /**
      * The target directory where the type table file will be written.
      * <p>
-     * Defaults to {@code src/main/resources} in the project directory.
+     * Defaults to the resources directory of the configured source set.
      */
     @OutputDirectory
     public abstract DirectoryProperty getTargetDir();
 
     public RecipeDependenciesTypeTableTask() {
+        getSourceSetName().convention("main");
         getTargetDir().convention(
                 getProject().getLayout().getProjectDirectory().dir("src/main/resources")
         );
@@ -65,8 +77,9 @@ public abstract class RecipeDependenciesTypeTableTask extends DefaultTask {
         File tsvFile = createTsvFile(matchedDir);
 
         RecipeDependenciesExtension extension = getProject().getExtensions().getByType(RecipeDependenciesExtension.class);
+        String sourceSet = getSourceSetName().get();
         try (TypeTable.Writer writer = TypeTable.newWriter(Files.newOutputStream(tsvFile.toPath()))) {
-            for (Map.Entry<Dependency, File> dependency : extension.getResolved().entrySet()) {
+            for (Map.Entry<Dependency, File> dependency : extension.getResolvedForSourceSet(sourceSet).entrySet()) {
                 String group = requireNonNull(dependency.getKey().getGroup(), "group");
                 String artifact = dependency.getKey().getName();
                 // Determine actual version; e.g. 5.+ might resolve to 5.3.39
@@ -82,17 +95,18 @@ public abstract class RecipeDependenciesTypeTableTask extends DefaultTask {
     /**
      * Finds the directory that matches the target directory specified in the task.
      * <p>
-     * It checks against the main source set resources directories.
+     * It checks against the configured source set's resources directories.
      *
      * @return The matching directory.
-     * @throws GradleException if the target directory is not found in the main source set resources directories.
+     * @throws GradleException if the target directory is not found in the source set resources directories.
      */
     private File findMatchingDir() {
         File targetDirFile = getTargetDir().get().getAsFile();
+        String sourceSetName = getSourceSetName().get();
 
         SourceDirectorySet resources = getProject().getExtensions().getByType(JavaPluginExtension.class)
                 .getSourceSets()
-                .getByName("main")
+                .getByName(sourceSetName)
                 .getResources();
 
         Set<File> resourcesDirs = resources.getSourceDirectories().getFiles();
@@ -101,7 +115,7 @@ public abstract class RecipeDependenciesTypeTableTask extends DefaultTask {
                 .filter(dir -> dir.getAbsolutePath().equals(targetDirFile.getAbsolutePath()))
                 .findFirst()
                 .orElseThrow(() -> new GradleException("Provided target directory '" + targetDirFile.getAbsolutePath() +
-                        "' is not found in main source set resources directories. " +
+                        "' is not found in " + sourceSetName + " source set resources directories. " +
                         "Available directories: " + resourcesDirs));
     }
 
