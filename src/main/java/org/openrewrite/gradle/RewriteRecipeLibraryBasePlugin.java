@@ -51,23 +51,12 @@ public class RewriteRecipeLibraryBasePlugin implements Plugin<Project> {
                         "create" + capitalize(sourceSetName) + "TypeTable";
 
                 if (!sourceSetName.equals("main")) {
-                    TaskProvider<RecipeDependenciesTypeTableTask> taskProvider = project.getTasks().register(taskName, RecipeDependenciesTypeTableTask.class, task -> {
+                    project.getTasks().register(taskName, RecipeDependenciesTypeTableTask.class, task -> {
                         task.getSourceSetName().convention(sourceSetName);
                         task.getTargetDir().convention(
                             project.getLayout().getProjectDirectory().dir("src/" + sourceSetName + "/resources")
                         );
                     });
-
-                    // Wire up with processResources task
-                    String processResourcesTaskName = sourceSet.getProcessResourcesTaskName();
-                    project.getTasks().named(processResourcesTaskName).configure(processTask ->
-                        processTask.dependsOn(taskProvider)
-                    );
-                } else {
-                    // Wire up main task with processResources
-                    project.getTasks().named("processResources").configure(processTask ->
-                        processTask.dependsOn("createTypeTable")
-                    );
                 }
             });
         });
