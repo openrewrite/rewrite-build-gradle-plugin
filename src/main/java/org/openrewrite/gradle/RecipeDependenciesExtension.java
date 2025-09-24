@@ -50,11 +50,6 @@ public class RecipeDependenciesExtension {
         addDependencyForSourceSet("test", dependencyNotation);
     }
 
-    @SuppressWarnings("unused")
-    public void integrationTestParserClasspath(String dependencyNotation) {
-        addDependencyForSourceSet("integrationTest", dependencyNotation);
-    }
-
     /**
      * Add a dependency to the parser classpath for a specific source set.
      * This is useful for custom source sets not covered by the convenience methods above.
