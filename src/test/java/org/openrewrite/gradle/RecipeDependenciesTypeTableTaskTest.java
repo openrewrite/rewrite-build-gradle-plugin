@@ -17,7 +17,7 @@ package org.openrewrite.gradle;
 
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.GradleRunner;
-import org.jspecify.annotations.Nullable;
+import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -299,7 +299,7 @@ class RecipeDependenciesTypeTableTaskTest {
         assertThat(table.load("assertj-core")).isDirectoryRecursivelyContaining("glob:**/Assertions.class");
     }
 
-    private void createGradleBuildFiles(String buildFileContent) throws IOException {
+    private void createGradleBuildFiles(@Language("gradle") String buildFileContent) throws IOException {
         Files.writeString(settingsFile.toPath(), "rootProject.name = 'my-project'");
         Files.writeString(buildFile.toPath(), buildFileContent);
     }
