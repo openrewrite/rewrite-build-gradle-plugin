@@ -19,7 +19,6 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginExtension;
-import org.gradle.api.tasks.TaskProvider;
 
 public class RewriteLanguageLibraryPlugin implements Plugin<Project> {
 
@@ -46,10 +45,10 @@ public class RewriteLanguageLibraryPlugin implements Plugin<Project> {
                 String sourceSetName = sourceSet.getName();
 
                 // Register task for each source set
-                String taskName = sourceSetName.equals("main") ? "createTypeTable" :
+                String taskName = "main".equals(sourceSetName) ? "createTypeTable" :
                         "create" + capitalize(sourceSetName) + "TypeTable";
 
-                if (!sourceSetName.equals("main")) {
+                if (!"main".equals(sourceSetName)) {
                     project.getTasks().register(taskName, RecipeDependenciesTypeTableTask.class, task -> {
                         task.getSourceSetName().convention(sourceSetName);
                         task.getTargetDir().convention(
