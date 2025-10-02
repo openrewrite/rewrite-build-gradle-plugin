@@ -49,6 +49,9 @@ public class RewriteDependencyCheckPlugin implements Plugin<Project> {
             ext.setFailBuildOnCVSS(failBuildOnCVSS);
             ext.setFormat(format);
             ext.getNvd().setApiKey(System.getenv("NVD_API_KEY"));
+            ext.getAnalyzers().setCentralEnabled(Boolean.valueOf(System.getenv("CENTRAL_ANALYZER_ENABLED")));
+            ext.getAnalyzers().getOssIndex().setUsername(System.getenv("OSSINDEX_USERNAME"));
+            ext.getAnalyzers().getOssIndex().setPassword(System.getenv("OSSINDEX_PASSWORD"));
 
         });
 
