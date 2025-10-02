@@ -27,6 +27,9 @@ configure<org.owasp.dependencycheck.gradle.extension.DependencyCheckExtension> {
     failBuildOnCVSS = System.getenv("FAIL_BUILD_ON_CVSS")?.toFloatOrNull() ?: 9.0F
     format = System.getenv("DEPENDENCY_CHECK_FORMAT") ?: "HTML"
     nvd.apiKey = System.getenv("NVD_API_KEY")
+    analyzers.centralEnabled = System.getenv("CENTRAL_ANALYZER_ENABLED").toBoolean()
+    analyzers.ossIndex.username = System.getenv("OSSINDEX_USERNAME")
+    analyzers.ossIndex.password = System.getenv("OSSINDEX_PASSWORD")
     suppressionFile = "suppressions.xml"
 }
 
