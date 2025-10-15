@@ -188,7 +188,13 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok:latest.release")
 
     implementation("org.apache.ivy:ivy:2.5.2")
-    implementation("gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:latest.release")
+    implementation("org.apache.maven:maven-plugin-api:3.9.6")
+    implementation("gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:latest.release") {
+        exclude(group = "org.springframework", module = "spring-core")
+        exclude(group = "org.springframework", module = "spring-asm")
+    }
+    // Provide a newer Spring version to replace the excluded 3.1.3
+    implementation("org.springframework:spring-core:6.2.11")
     implementation("com.github.jk1:gradle-license-report:1.16")
     implementation("org.owasp:dependency-check-gradle:latest.release")
     implementation("com.netflix.nebula.contacts:com.netflix.nebula.contacts.gradle.plugin:latest.release")
@@ -224,10 +230,6 @@ dependencies {
         implementation("org.jdom:jdom2:2.0.6.1") {
             because("CVE-2021-33813")
         }
-// NoClassDefFoundError: org/apache/maven/plugin/MojoFailureException
-//        implementation("com.mycila:license-maven-plugin:4.3") {
-//            because("license-gradle-plugin pulling in older version of this which had outdated spring dependencies")
-//        }
         implementation("org.codehaus.plexus:plexus-xml:4.0.3") {
             because("CVE-2022-4244, CVE-2022-4245")
         }
