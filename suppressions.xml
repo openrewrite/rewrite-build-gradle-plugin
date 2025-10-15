@@ -9,22 +9,4 @@
         <packageUrl regex="true">^pkg:maven/com\.squareup\.okio/okio@.*$</packageUrl>
         <cve>CVE-2023-3635</cve>
     </suppress>
-    <suppress>
-        <notes><![CDATA[
-            file name: rewrite-gradle-8.45.5.jar: develocity-gradle-plugin-3.19.1.jar
-            Reason: False positive. We are using the latest gradle-enterprise-gradle-plugin version.
-   ]]></notes>
-        <sha1>ed546b9ab76b8fe583fe4d8bb3b2d0daa1276a64</sha1>
-        <cve>CVE-2019-15052</cve>
-        <cve>CVE-2023-35947</cve>
-        <cve>CVE-2021-29428</cve>
-        <cve>CVE-2020-11979</cve>
-        <cve>CVE-2021-32751</cve>
-        <cve>CVE-2023-44387</cve>
-        <cve>CVE-2019-11065</cve>
-        <cve>CVE-2019-16370</cve>
-        <cve>CVE-2021-29429</cve>
-        <cve>CVE-2023-35946</cve>
-        <cve>CVE-2023-42445</cve>
-    </suppress>
 </suppressions>
