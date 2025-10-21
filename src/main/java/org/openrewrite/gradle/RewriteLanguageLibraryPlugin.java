@@ -35,6 +35,10 @@ public class RewriteLanguageLibraryPlugin implements Plugin<Project> {
         // Register base task for backward compatibility
         project.getTasks().register("createTypeTable", RecipeDependenciesTypeTableTask.class, task -> {
             task.getSourceSetName().convention("main");
+            RecipeDependenciesExtension extension = project.getExtensions().getByType(RecipeDependenciesExtension.class);
+            task.getRecipeDependenciesClasspath().from(
+                project.provider(() -> extension.getResolvedForSourceSet("main").values())
+            );
         });
 
         // Configure source set specific tasks when Java plugin is applied
@@ -53,6 +57,10 @@ public class RewriteLanguageLibraryPlugin implements Plugin<Project> {
                         task.getSourceSetName().convention(sourceSetName);
                         task.getTargetDir().convention(
                             project.getLayout().getProjectDirectory().dir("src/" + sourceSetName + "/resources")
+                        );
+                        RecipeDependenciesExtension extension = project.getExtensions().getByType(RecipeDependenciesExtension.class);
+                        task.getRecipeDependenciesClasspath().from(
+                            project.provider(() -> extension.getResolvedForSourceSet(sourceSetName).values())
                         );
                     });
                 }

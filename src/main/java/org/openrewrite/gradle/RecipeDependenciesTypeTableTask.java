@@ -18,10 +18,12 @@ package org.openrewrite.gradle;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.SourceDirectorySet;
 import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
@@ -52,6 +54,15 @@ public abstract class RecipeDependenciesTypeTableTask extends DefaultTask {
      */
     @OutputDirectory
     public abstract DirectoryProperty getTargetDir();
+
+    /**
+     * The classpath of recipe dependencies to track for changes.
+     * <p>
+     * When the classpath changes (dependencies added/removed, versions changed,
+     * or resolved artifacts modified), the task will be re-executed.
+     */
+    @Classpath
+    public abstract ConfigurableFileCollection getRecipeDependenciesClasspath();
 
     public RecipeDependenciesTypeTableTask() {
         getSourceSetName().convention("main");
