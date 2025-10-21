@@ -35,6 +35,7 @@ public class RewriteRecipeLibraryBasePlugin implements Plugin<Project> {
         // Register base tasks for backward compatibility
         project.getTasks().register("createTypeTable", RecipeDependenciesTypeTableTask.class, task -> {
             task.getSourceSetName().convention("main");
+            task.getBuildFile().set(project.getBuildFile());
         });
         project.getTasks().register("downloadRecipeDependencies", RecipeDependenciesDownloadTask.class);
 
@@ -55,6 +56,7 @@ public class RewriteRecipeLibraryBasePlugin implements Plugin<Project> {
                         task.getTargetDir().convention(
                             project.getLayout().getProjectDirectory().dir("src/" + sourceSetName + "/resources")
                         );
+                        task.getBuildFile().set(project.getBuildFile());
                     });
                 }
             });
