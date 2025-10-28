@@ -4,8 +4,8 @@ import nl.javadude.gradle.plugins.license.LicenseExtension
 import java.util.*
 
 plugins {
-    id("com.netflix.nebula.release") version "20.2.0" // pinned pending Gradle 9.x
-    id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
+    id("com.netflix.nebula.release") version "latest.release"
+    id("io.github.gradle-nexus.publish-plugin") version "latest.release"
     id("org.owasp.dependencycheck") version "latest.release"
     id("com.netflix.nebula.maven-resolved-dependencies") version "latest.release"
     id("com.netflix.nebula.maven-apache-license") version "latest.release"
@@ -22,8 +22,8 @@ configure<nebula.plugin.release.git.base.ReleasePluginExtension> {
 
 configure<org.owasp.dependencycheck.gradle.extension.DependencyCheckExtension> {
     analyzers.assemblyEnabled = false
-    analyzers.nodeAuditEnabled = false
-    analyzers.nodeEnabled = false
+    analyzers.nodeAudit { enabled = false }
+    analyzers.nodePackage { enabled = false }
     failBuildOnCVSS = System.getenv("FAIL_BUILD_ON_CVSS")?.toFloatOrNull() ?: 9.0F
     format = System.getenv("DEPENDENCY_CHECK_FORMAT") ?: "HTML"
     nvd.apiKey = System.getenv("NVD_API_KEY")
