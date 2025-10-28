@@ -17,6 +17,7 @@ package org.openrewrite.gradle;
 
 import io.github.gradlenexus.publishplugin.NexusPublishExtension;
 import io.github.gradlenexus.publishplugin.NexusPublishPlugin;
+import nebula.plugin.info.scm.ScmInfoPlugin;
 import nebula.plugin.release.NetflixOssStrategies;
 import nebula.plugin.release.ReleasePlugin;
 import nebula.plugin.release.git.base.ReleasePluginExtension;
@@ -30,6 +31,7 @@ public class RewriteRootProjectPlugin implements Plugin<Project> {
     @Override
     public void apply(Project project) {
         project.getPlugins().apply(ReleasePlugin.class);
+        project.getPlugins().apply(ScmInfoPlugin.class);
         project.getPlugins().apply(NexusPublishPlugin.class);
 
         project.getExtensions().configure(NexusPublishExtension.class, ext ->
