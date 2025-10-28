@@ -171,15 +171,15 @@ configurations.all {
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(21))
+        languageVersion.set(JavaLanguageVersion.of(25))
     }
 }
 
 tasks.named<JavaCompile>("compileJava") {
-    options.release.set(17)
+    options.release.set(25)
 }
 
-val rewriteVersion = "8.61.3"
+val rewriteVersion = "latest.release"
 
 dependencies {
     implementation("org.openrewrite:rewrite-java:${rewriteVersion}")
