@@ -57,8 +57,8 @@ public class RewriteJavaPlugin implements Plugin<Project> {
             config.getResolutionStrategy().cacheDynamicVersionsFor(0, TimeUnit.SECONDS);
         });
 
-        project.getExtensions().configure(JavaPluginExtension.class, java -> java.toolchain(toolchain -> toolchain.getLanguageVersion()
-                .set(JavaLanguageVersion.of(25))));
+        project.getExtensions().configure(JavaPluginExtension.class, java ->
+                java.toolchain(toolchain -> toolchain.getLanguageVersion().set(JavaLanguageVersion.of(21))));
 
         project.getConfigurations().all(config -> config.resolutionStrategy(strategy ->
                 strategy.cacheDynamicVersionsFor(0, "seconds")));

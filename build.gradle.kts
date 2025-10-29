@@ -169,12 +169,6 @@ configurations.all {
     }
 }
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(21))
-    }
-}
-
 tasks.named<JavaCompile>("compileJava") {
     options.release.set(21)
 }
