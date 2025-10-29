@@ -94,6 +94,7 @@ public class RewriteJavaPlugin implements Plugin<Project> {
         deps.add("testImplementation", "org.junit.jupiter:junit-jupiter-api");
         deps.add("testImplementation", "org.junit.jupiter:junit-jupiter-params");
         deps.add("testRuntimeOnly", "org.junit.jupiter:junit-jupiter-engine");
+        deps.add("testRuntimeOnly", "org.junit.platform:junit-platform-launcher");
 
         deps.add("testImplementation", "org.assertj:assertj-core:latest.release");
     }
