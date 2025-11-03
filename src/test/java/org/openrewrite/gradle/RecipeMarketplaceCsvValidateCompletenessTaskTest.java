@@ -194,7 +194,8 @@ class RecipeMarketplaceCsvValidateCompletenessTaskTest {
     }
 
     private void createSimpleRecipeProject() throws IOException {
-        createGradleBuildFiles("""
+        Files.writeString(settingsFile.toPath(), "rootProject.name = 'test-recipe-project'");
+        Files.writeString(buildFile.toPath(), """
                 plugins {
                     id 'java'
                     id 'org.openrewrite.build.recipe-library-base'
@@ -217,26 +218,7 @@ class RecipeMarketplaceCsvValidateCompletenessTaskTest {
     }
 
     private void createProjectWithTwoRecipes() throws IOException {
-        createGradleBuildFiles("""
-                plugins {
-                    id 'java'
-                    id 'org.openrewrite.build.recipe-library-base'
-                    id 'org.openrewrite.build.publish'
-                }
-
-                group = 'org.example'
-                version = '1.0.0'
-
-                repositories {
-                    mavenCentral()
-                }
-
-                dependencies {
-                    // Plugin provides rewrite dependencies
-                }
-                """);
-
-        createRecipeClass("TestRecipe", "Test Recipe", "A test recipe.");
+        createSimpleRecipeProject();
         createRecipeClass("AnotherRecipe", "Another Recipe", "Another test recipe.");
     }
 
@@ -269,12 +251,9 @@ class RecipeMarketplaceCsvValidateCompletenessTaskTest {
     private void createCsvMatchingJar() throws IOException {
         csvFile.getParentFile().mkdirs();
         Files.writeString(csvFile.toPath(),
-                "name,displayName,description\n" +
-                        "org.example.TestRecipe,Test Recipe,A test recipe.\n");
-    }
-
-    private void createGradleBuildFiles(@Language("gradle") String buildFileContent) throws IOException {
-        Files.writeString(settingsFile.toPath(), "rootProject.name = 'test-recipe-project'");
-        Files.writeString(buildFile.toPath(), buildFileContent);
+          """
+            name,displayName,description
+            org.example.TestRecipe,Test Recipe,A test recipe.
+            """);
     }
 }

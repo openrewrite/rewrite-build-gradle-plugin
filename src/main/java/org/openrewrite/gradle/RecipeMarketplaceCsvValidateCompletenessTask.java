@@ -67,28 +67,27 @@ public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends Defau
 
     @TaskAction
     void validate() {
-        File csvFile = getCsvFile().get().getAsFile();
+        Path csvPath = getCsvFile().get().getAsFile().toPath();
 
-        if (!csvFile.exists()) {
-            getLogger().lifecycle("No recipes.csv found at {}, skipping validation", csvFile.getAbsolutePath());
+        if (!Files.exists(csvPath)) {
+            getLogger().lifecycle("No recipes.csv found at {}, skipping validation", csvPath.toAbsolutePath());
             return;
         }
 
         // Get the jar task output
         Jar jarTask = (Jar) getProject().getTasks().getByName("jar");
-        File recipeJarFile = jarTask.getArchiveFile().get().getAsFile();
-        Path recipeJarPath = recipeJarFile.toPath();
+        Path recipeJarPath = jarTask.getArchiveFile().get().getAsFile().toPath();
 
         if (!Files.exists(recipeJarPath)) {
             throw new GradleException("Recipe JAR does not exist: " + recipeJarPath + ". Make sure the jar task has run.");
         }
 
-        getLogger().info("Validating recipes.csv completeness at: {}", csvFile.getAbsolutePath());
+        getLogger().info("Validating recipes.csv completeness at: {}", csvPath.toAbsolutePath());
         getLogger().info("Against recipe JAR: {}", recipeJarPath);
 
         // Read the CSV
         RecipeMarketplaceReader reader = new RecipeMarketplaceReader();
-        RecipeMarketplace csvMarketplace = reader.fromCsv(csvFile.toPath());
+        RecipeMarketplace csvMarketplace = reader.fromCsv(csvPath);
 
         // Get runtime classpath (dependencies only, excluding the recipe JAR itself)
         JavaPluginExtension javaExtension = getProject().getExtensions().getByType(JavaPluginExtension.class);
