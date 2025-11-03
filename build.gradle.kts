@@ -143,6 +143,7 @@ gradlePlugin {
 }
 
 repositories {
+    mavenLocal()
     gradlePluginPortal()
     mavenCentral()
 }
@@ -179,10 +180,12 @@ tasks.named<JavaCompile>("compileJava") {
     options.release.set(25)
 }
 
-val rewriteVersion = "latest.release"
+val rewriteVersion = if (hasProperty("releasing")) "latest.release" else "latest.integration"
 
 dependencies {
     implementation("org.openrewrite:rewrite-java:${rewriteVersion}")
+    implementation("org.openrewrite:rewrite-core:${rewriteVersion}")
+    implementation("org.openrewrite:rewrite-maven:${rewriteVersion}")
 
     compileOnly("org.projectlombok:lombok:latest.release")
     annotationProcessor("org.projectlombok:lombok:latest.release")
@@ -237,7 +240,6 @@ dependencies {
 }
 
 project.rootProject.tasks.getByName("postRelease").dependsOn(project.tasks.getByName("publishPlugins"))
-
 
 tasks.withType<Test> {
     useJUnitPlatform()
