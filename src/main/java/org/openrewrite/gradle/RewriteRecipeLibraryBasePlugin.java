@@ -29,6 +29,7 @@ public class RewriteRecipeLibraryBasePlugin implements Plugin<Project> {
                 "latest.release" : "latest.integration");
 
         project.getPlugins().apply(RewriteJavaPlugin.class);
+        project.getPlugins().apply(RewriteRecipeMarketplacePlugin.class);
 
         project.getExtensions().create("recipeDependencies", RecipeDependenciesExtension.class);
 
@@ -42,31 +43,8 @@ public class RewriteRecipeLibraryBasePlugin implements Plugin<Project> {
         });
         project.getTasks().register("downloadRecipeDependencies", RecipeDependenciesDownloadTask.class);
 
-        // Register recipe marketplace CSV tasks
-        project.getTasks().register("recipeCsvGenerate", RecipeMarketplaceCsvGenerateTask.class, task -> {
-            task.dependsOn("jar");
-        });
-
-        project.getTasks().register("recipeCsvValidateContent", RecipeMarketplaceCsvValidateContentTask.class);
-
-        project.getTasks().register("recipeCsvValidateCompleteness", RecipeMarketplaceCsvValidateCompletenessTask.class, task -> {
-            task.dependsOn("jar");
-        });
-
-        // Create a composite task that runs both validations
-        project.getTasks().register("recipeCsvValidate", task -> {
-            task.setGroup("OpenRewrite");
-            task.setDescription("Validates recipes.csv for both content and completeness");
-            task.dependsOn("recipeCsvValidateContent", "recipeCsvValidateCompleteness");
-        });
-
         // Configure source set specific tasks when Java plugin is applied
         project.getPlugins().withType(JavaPlugin.class, javaPlugin -> {
-            // Add CSV validation to the check phase
-            project.getTasks().named("check").configure(check -> {
-                check.dependsOn("recipeCsvValidate");
-            });
-
             JavaPluginExtension javaExt = project.getExtensions().getByType(JavaPluginExtension.class);
 
             javaExt.getSourceSets().all(sourceSet -> {
