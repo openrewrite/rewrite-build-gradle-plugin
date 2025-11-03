@@ -57,8 +57,8 @@ public class RewriteJavaPlugin implements Plugin<Project> {
             config.getResolutionStrategy().cacheDynamicVersionsFor(0, TimeUnit.SECONDS);
         });
 
-        project.getExtensions().configure(JavaPluginExtension.class, java -> java.toolchain(toolchain -> toolchain.getLanguageVersion()
-                .set(JavaLanguageVersion.of(25))));
+        project.getExtensions().configure(JavaPluginExtension.class, java ->
+                java.toolchain(toolchain -> toolchain.getLanguageVersion().set(JavaLanguageVersion.of(21))));
 
         project.getConfigurations().all(config -> config.resolutionStrategy(strategy ->
                 strategy.cacheDynamicVersionsFor(0, "seconds")));
@@ -90,10 +90,11 @@ public class RewriteJavaPlugin implements Plugin<Project> {
         deps.add("implementation", "org.jetbrains:annotations:latest.release");
         deps.add("compileOnly", "com.google.code.findbugs:jsr305:latest.release");
 
-        deps.add("testImplementation", deps.platform("org.junit:junit-bom:5.13.3"));
+        deps.add("testImplementation", deps.platform("org.junit:junit-bom:5.14.0"));
         deps.add("testImplementation", "org.junit.jupiter:junit-jupiter-api");
         deps.add("testImplementation", "org.junit.jupiter:junit-jupiter-params");
         deps.add("testRuntimeOnly", "org.junit.jupiter:junit-jupiter-engine");
+        deps.add("testRuntimeOnly", "org.junit.platform:junit-platform-launcher");
 
         deps.add("testImplementation", "org.assertj:assertj-core:latest.release");
     }

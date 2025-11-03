@@ -177,14 +177,8 @@ configurations.all {
     }
 }
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(25))
-    }
-}
-
 tasks.named<JavaCompile>("compileJava") {
-    options.release.set(25)
+    options.release.set(21)
 }
 
 val rewriteVersion = if (hasProperty("releasing")) "latest.release" else "latest.integration"
@@ -208,7 +202,7 @@ dependencies {
     implementation("com.github.jk1:gradle-license-report:1.16")
     implementation("org.owasp:dependency-check-gradle:latest.release")
     implementation("com.netflix.nebula.contacts:com.netflix.nebula.contacts.gradle.plugin:latest.release")
-    implementation("com.netflix.nebula:gradle-info-plugin:latest.release")
+    implementation("com.netflix.nebula.info:com.netflix.nebula.info.gradle.plugin:latest.release")
     implementation("com.netflix.nebula.release:com.netflix.nebula.release.gradle.plugin:latest.release")
     implementation("com.netflix.nebula:nebula-publishing-plugin:latest.release")
     implementation("com.netflix.nebula:nebula-project-plugin:latest.release")
