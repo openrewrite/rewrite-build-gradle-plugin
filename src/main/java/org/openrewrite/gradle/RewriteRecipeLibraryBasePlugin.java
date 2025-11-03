@@ -29,6 +29,7 @@ public class RewriteRecipeLibraryBasePlugin implements Plugin<Project> {
                 "latest.release" : "latest.integration");
 
         project.getPlugins().apply(RewriteJavaPlugin.class);
+        project.getPlugins().apply(RewriteRecipeMarketplacePlugin.class);
 
         project.getExtensions().create("recipeDependencies", RecipeDependenciesExtension.class);
 

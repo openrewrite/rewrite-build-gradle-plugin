@@ -63,6 +63,13 @@ gradlePlugin {
             implementationClass = "org.openrewrite.gradle.RewriteRecipeLibraryBasePlugin"
             tags = listOf("rewrite", "refactoring")
         }
+        create("build-recipe-marketplace") {
+            id = "org.openrewrite.build.recipe-marketplace"
+            displayName = "Rewrite recipe marketplace"
+            description = "Provides tasks for generating and validating recipes.csv for the recipe marketplace"
+            implementationClass = "org.openrewrite.gradle.RewriteRecipeMarketplacePlugin"
+            tags = listOf("rewrite", "refactoring")
+        }
         create("build-recipe-repositories") {
             id = "org.openrewrite.build.recipe-repositories"
             displayName = "Rewrite recipe repositories"
@@ -143,6 +150,7 @@ gradlePlugin {
 }
 
 repositories {
+    mavenLocal()
     gradlePluginPortal()
     mavenCentral()
 }
@@ -173,10 +181,12 @@ tasks.named<JavaCompile>("compileJava") {
     options.release.set(21)
 }
 
-val rewriteVersion = "latest.release"
+val rewriteVersion = if (hasProperty("releasing")) "latest.release" else "latest.integration"
 
 dependencies {
     implementation("org.openrewrite:rewrite-java:${rewriteVersion}")
+    implementation("org.openrewrite:rewrite-core:${rewriteVersion}")
+    implementation("org.openrewrite:rewrite-maven:${rewriteVersion}")
 
     compileOnly("org.projectlombok:lombok:latest.release")
     annotationProcessor("org.projectlombok:lombok:latest.release")
@@ -231,7 +241,6 @@ dependencies {
 }
 
 project.rootProject.tasks.getByName("postRelease").dependsOn(project.tasks.getByName("publishPlugins"))
-
 
 tasks.withType<Test> {
     useJUnitPlatform()
