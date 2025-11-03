@@ -53,11 +53,11 @@ class RecipeMarketplaceCsvValidateCompletenessTaskTest {
         createCsvMatchingJar();
 
         BuildResult result = GradleRunner.create()
-                .withProjectDir(projectDir)
-                .withArguments("recipeCsvValidateCompleteness", "--info", "--stacktrace")
-                .withPluginClasspath()
-                .withDebug(true)
-                .build();
+          .withProjectDir(projectDir)
+          .withArguments("recipeCsvValidateCompleteness", "--info", "--stacktrace")
+          .withPluginClasspath()
+          .withDebug(true)
+          .build();
 
         assertEquals(SUCCESS, requireNonNull(result.task(":jar")).getOutcome());
         assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome());
@@ -70,23 +70,23 @@ class RecipeMarketplaceCsvValidateCompletenessTaskTest {
         csvFile.getParentFile().mkdirs();
         // CSV contains a recipe that doesn't exist in the JAR
         Files.writeString(csvFile.toPath(),
-                "name,displayName,description\n" +
-                        "org.example.TestRecipe,Test Recipe,A test recipe.\n" +
-                        "org.example.PhantomRecipe,Phantom Recipe,This recipe does not exist.\n");
+          "name,displayName,description\n" +
+            "org.example.TestRecipe,Test Recipe,A test recipe.\n" +
+            "org.example.PhantomRecipe,Phantom Recipe,This recipe does not exist.\n");
 
         BuildResult result = GradleRunner.create()
-                .withProjectDir(projectDir)
-                .withArguments("recipeCsvValidateCompleteness", "--info", "--stacktrace")
-                .withPluginClasspath()
-                .withDebug(true)
-                .buildAndFail();
+          .withProjectDir(projectDir)
+          .withArguments("recipeCsvValidateCompleteness", "--info", "--stacktrace")
+          .withPluginClasspath()
+          .withDebug(true)
+          .buildAndFail();
 
         assertEquals(FAILED, requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome());
         assertThat(result.getOutput())
-                .contains("Recipe marketplace CSV completeness validation failed")
-                .contains("Recipe listed in CSV does not exist in JAR")
-                .contains("org.example.PhantomRecipe")
-                .contains("phantom recipe");
+          .contains("Recipe marketplace CSV completeness validation failed")
+          .contains("Recipe listed in CSV does not exist in JAR")
+          .contains("org.example.PhantomRecipe")
+          .contains("phantom recipe");
     }
 
     @Test
@@ -95,22 +95,22 @@ class RecipeMarketplaceCsvValidateCompletenessTaskTest {
         csvFile.getParentFile().mkdirs();
         // CSV only contains one recipe, but JAR has two
         Files.writeString(csvFile.toPath(),
-                "name,displayName,description\n" +
-                        "org.example.TestRecipe,Test Recipe,A test recipe.\n");
+          "name,displayName,description\n" +
+            "org.example.TestRecipe,Test Recipe,A test recipe.\n");
 
         BuildResult result = GradleRunner.create()
-                .withProjectDir(projectDir)
-                .withArguments("recipeCsvValidateCompleteness", "--info", "--stacktrace")
-                .withPluginClasspath()
-                .withDebug(true)
-                .buildAndFail();
+          .withProjectDir(projectDir)
+          .withArguments("recipeCsvValidateCompleteness", "--info", "--stacktrace")
+          .withPluginClasspath()
+          .withDebug(true)
+          .buildAndFail();
 
         assertEquals(FAILED, requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome());
         assertThat(result.getOutput())
-                .contains("Recipe marketplace CSV completeness validation failed")
-                .contains("Recipe exists in JAR but is not listed in CSV")
-                .contains("org.example.AnotherRecipe")
-                .contains("missing from CSV");
+          .contains("Recipe marketplace CSV completeness validation failed")
+          .contains("Recipe exists in JAR but is not listed in CSV")
+          .contains("org.example.AnotherRecipe")
+          .contains("missing from CSV");
     }
 
     @Test
@@ -119,22 +119,22 @@ class RecipeMarketplaceCsvValidateCompletenessTaskTest {
         csvFile.getParentFile().mkdirs();
         // CSV has one phantom recipe and is missing one real recipe
         Files.writeString(csvFile.toPath(),
-                "name,displayName,description\n" +
-                        "org.example.TestRecipe,Test Recipe,A test recipe.\n" +
-                        "org.example.PhantomRecipe,Phantom Recipe,Does not exist.\n");
+          "name,displayName,description\n" +
+            "org.example.TestRecipe,Test Recipe,A test recipe.\n" +
+            "org.example.PhantomRecipe,Phantom Recipe,Does not exist.\n");
 
         BuildResult result = GradleRunner.create()
-                .withProjectDir(projectDir)
-                .withArguments("recipeCsvValidateCompleteness", "--info", "--stacktrace")
-                .withPluginClasspath()
-                .withDebug(true)
-                .buildAndFail();
+          .withProjectDir(projectDir)
+          .withArguments("recipeCsvValidateCompleteness", "--info", "--stacktrace")
+          .withPluginClasspath()
+          .withDebug(true)
+          .buildAndFail();
 
         assertEquals(FAILED, requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome());
         assertThat(result.getOutput())
-                .contains("Recipe marketplace CSV completeness validation failed")
-                .contains("org.example.PhantomRecipe")
-                .contains("org.example.AnotherRecipe");
+          .contains("Recipe marketplace CSV completeness validation failed")
+          .contains("org.example.PhantomRecipe")
+          .contains("org.example.AnotherRecipe");
     }
 
     @Test
@@ -142,11 +142,11 @@ class RecipeMarketplaceCsvValidateCompletenessTaskTest {
         createSimpleRecipeProject();
 
         BuildResult result = GradleRunner.create()
-                .withProjectDir(projectDir)
-                .withArguments("recipeCsvValidateCompleteness", "--info", "--stacktrace")
-                .withPluginClasspath()
-                .withDebug(true)
-                .build();
+          .withProjectDir(projectDir)
+          .withArguments("recipeCsvValidateCompleteness", "--info", "--stacktrace")
+          .withPluginClasspath()
+          .withDebug(true)
+          .build();
 
         assertEquals(SUCCESS, requireNonNull(result.task(":jar")).getOutcome());
         assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome());
@@ -159,16 +159,16 @@ class RecipeMarketplaceCsvValidateCompletenessTaskTest {
         csvFile.getParentFile().mkdirs();
         // Recipe appears in multiple categories - should be treated as single recipe
         Files.writeString(csvFile.toPath(),
-                "name,displayName,description,category1\n" +
-                        "org.example.TestRecipe,Test Recipe,A test recipe.,Java\n" +
-                        "org.example.TestRecipe,Test Recipe,A test recipe.,Cleanup\n");
+          "name,displayName,description,category1\n" +
+            "org.example.TestRecipe,Test Recipe,A test recipe.,Java\n" +
+            "org.example.TestRecipe,Test Recipe,A test recipe.,Cleanup\n");
 
         BuildResult result = GradleRunner.create()
-                .withProjectDir(projectDir)
-                .withArguments("recipeCsvValidateCompleteness", "--info", "--stacktrace")
-                .withPluginClasspath()
-                .withDebug(true)
-                .build();
+          .withProjectDir(projectDir)
+          .withArguments("recipeCsvValidateCompleteness", "--info", "--stacktrace")
+          .withPluginClasspath()
+          .withDebug(true)
+          .build();
 
         assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome());
         assertThat(result.getOutput()).contains("Recipe marketplace CSV completeness validation passed");
@@ -179,15 +179,15 @@ class RecipeMarketplaceCsvValidateCompletenessTaskTest {
         createSimpleRecipeProject();
         csvFile.getParentFile().mkdirs();
         Files.writeString(csvFile.toPath(),
-                "name,displayName,description,category1,category2\n" +
-                        "org.example.TestRecipe,Test Recipe,A test recipe.,Example,Cleanup\n");
+          "name,displayName,description,category1,category2\n" +
+            "org.example.TestRecipe,Test Recipe,A test recipe.,Example,Cleanup\n");
 
         BuildResult result = GradleRunner.create()
-                .withProjectDir(projectDir)
-                .withArguments("recipeCsvValidateCompleteness", "--info", "--stacktrace")
-                .withPluginClasspath()
-                .withDebug(true)
-                .build();
+          .withProjectDir(projectDir)
+          .withArguments("recipeCsvValidateCompleteness", "--info", "--stacktrace")
+          .withPluginClasspath()
+          .withDebug(true)
+          .build();
 
         assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome());
         assertThat(result.getOutput()).contains("Recipe marketplace CSV completeness validation passed");
@@ -196,23 +196,23 @@ class RecipeMarketplaceCsvValidateCompletenessTaskTest {
     private void createSimpleRecipeProject() throws IOException {
         Files.writeString(settingsFile.toPath(), "rootProject.name = 'test-recipe-project'");
         Files.writeString(buildFile.toPath(), """
-                plugins {
-                    id 'java'
-                    id 'org.openrewrite.build.recipe-library-base'
-                    id 'org.openrewrite.build.publish'
-                }
-
-                group = 'org.example'
-                version = '1.0.0'
-
-                repositories {
-                    mavenCentral()
-                }
-
-                dependencies {
-                    // Plugin provides rewrite dependencies
-                }
-                """);
+          plugins {
+              id 'java'
+              id 'org.openrewrite.build.recipe-library-base'
+              id 'org.openrewrite.build.publish'
+          }
+          
+          group = 'org.example'
+          version = '1.0.0'
+          
+          repositories {
+              mavenCentral()
+          }
+          
+          dependencies {
+              // Plugin provides rewrite dependencies
+          }
+          """);
 
         createRecipeClass("TestRecipe", "Test Recipe", "A test recipe.");
     }
@@ -230,15 +230,15 @@ class RecipeMarketplaceCsvValidateCompletenessTaskTest {
 
         @Language("yaml")
         String recipeYml = """
-                ---
-                type: specs.openrewrite.org/v1beta/recipe
-                name: org.example.%s
-                displayName: %s
-                description: %s
-                recipeList:
-                  - org.openrewrite.text.ChangeText:
-                      toText: "Hello"
-                """.formatted(className, displayName, description);
+          ---
+          type: specs.openrewrite.org/v1beta/recipe
+          name: org.example.%s
+          displayName: %s
+          description: %s
+          recipeList:
+            - org.openrewrite.text.ChangeText:
+                toText: "Hello"
+          """.formatted(className, displayName, description);
 
         if (rewriteYml.exists()) {
             // Append to existing file

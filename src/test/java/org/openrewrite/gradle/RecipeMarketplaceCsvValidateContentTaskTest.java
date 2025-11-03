@@ -53,11 +53,11 @@ class RecipeMarketplaceCsvValidateContentTaskTest {
         createValidCsv();
 
         BuildResult result = GradleRunner.create()
-                .withProjectDir(projectDir)
-                .withArguments("recipeCsvValidateContent", "--info", "--stacktrace")
-                .withPluginClasspath()
-                .withDebug(true)
-                .build();
+          .withProjectDir(projectDir)
+          .withArguments("recipeCsvValidateContent", "--info", "--stacktrace")
+          .withPluginClasspath()
+          .withDebug(true)
+          .build();
 
         assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome());
         assertThat(result.getOutput()).contains("Recipe marketplace CSV content validation passed");
@@ -68,21 +68,23 @@ class RecipeMarketplaceCsvValidateContentTaskTest {
         createGradleBuildFiles();
         csvFile.getParentFile().mkdirs();
         Files.writeString(csvFile.toPath(),
-                "name,displayName,description\n" +
-                        "org.example.TestRecipe,test recipe,A test recipe.\n");
+          """
+            name,displayName,description
+            org.example.TestRecipe,test recipe,A test recipe.
+            """);
 
         BuildResult result = GradleRunner.create()
-                .withProjectDir(projectDir)
-                .withArguments("recipeCsvValidateContent", "--info", "--stacktrace")
-                .withPluginClasspath()
-                .withDebug(true)
-                .buildAndFail();
+          .withProjectDir(projectDir)
+          .withArguments("recipeCsvValidateContent", "--info", "--stacktrace")
+          .withPluginClasspath()
+          .withDebug(true)
+          .buildAndFail();
 
         assertEquals(FAILED, requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome());
         assertThat(result.getOutput())
-                .contains("Recipe marketplace CSV content validation failed")
-                .contains("Display name must start with an uppercase letter")
-                .contains("test recipe");
+          .contains("Recipe marketplace CSV content validation failed")
+          .contains("Display name must start with an uppercase letter")
+          .contains("test recipe");
     }
 
     @Test
@@ -90,21 +92,23 @@ class RecipeMarketplaceCsvValidateContentTaskTest {
         createGradleBuildFiles();
         csvFile.getParentFile().mkdirs();
         Files.writeString(csvFile.toPath(),
-                "name,displayName,description\n" +
-                        "org.example.TestRecipe,Test Recipe.,A test recipe.\n");
+          """
+            name,displayName,description
+            org.example.TestRecipe,Test Recipe.,A test recipe.
+            """);
 
         BuildResult result = GradleRunner.create()
-                .withProjectDir(projectDir)
-                .withArguments("recipeCsvValidateContent", "--info", "--stacktrace")
-                .withPluginClasspath()
-                .withDebug(true)
-                .buildAndFail();
+          .withProjectDir(projectDir)
+          .withArguments("recipeCsvValidateContent", "--info", "--stacktrace")
+          .withPluginClasspath()
+          .withDebug(true)
+          .buildAndFail();
 
         assertEquals(FAILED, requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome());
         assertThat(result.getOutput())
-                .contains("Recipe marketplace CSV content validation failed")
-                .contains("Display name must not end with a period")
-                .contains("Test Recipe.");
+          .contains("Recipe marketplace CSV content validation failed")
+          .contains("Display name must not end with a period")
+          .contains("Test Recipe.");
     }
 
     @Test
@@ -112,21 +116,23 @@ class RecipeMarketplaceCsvValidateContentTaskTest {
         createGradleBuildFiles();
         csvFile.getParentFile().mkdirs();
         Files.writeString(csvFile.toPath(),
-                "name,displayName,description\n" +
-                        "org.example.TestRecipe,Test Recipe,A test recipe\n");
+          """
+            name,displayName,description
+            org.example.TestRecipe,Test Recipe,A test recipe
+            """);
 
         BuildResult result = GradleRunner.create()
-                .withProjectDir(projectDir)
-                .withArguments("recipeCsvValidateContent", "--info", "--stacktrace")
-                .withPluginClasspath()
-                .withDebug(true)
-                .buildAndFail();
+          .withProjectDir(projectDir)
+          .withArguments("recipeCsvValidateContent", "--info", "--stacktrace")
+          .withPluginClasspath()
+          .withDebug(true)
+          .buildAndFail();
 
         assertEquals(FAILED, requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome());
         assertThat(result.getOutput())
-                .contains("Recipe marketplace CSV content validation failed")
-                .contains("Description must end with a period")
-                .contains("A test recipe");
+          .contains("Recipe marketplace CSV content validation failed")
+          .contains("Description must end with a period")
+          .contains("A test recipe");
     }
 
     @Test
@@ -134,23 +140,25 @@ class RecipeMarketplaceCsvValidateContentTaskTest {
         createGradleBuildFiles();
         csvFile.getParentFile().mkdirs();
         Files.writeString(csvFile.toPath(),
-                "name,displayName,description\n" +
-                        "org.example.Recipe1,test recipe,No period\n" +
-                        "org.example.Recipe2,Test Recipe.,Also wrong.\n");
+          """
+            name,displayName,description
+            org.example.Recipe1,test recipe,No period
+            org.example.Recipe2,Test Recipe.,Also wrong.
+            """);
 
         BuildResult result = GradleRunner.create()
-                .withProjectDir(projectDir)
-                .withArguments("recipeCsvValidateContent", "--info", "--stacktrace")
-                .withPluginClasspath()
-                .withDebug(true)
-                .buildAndFail();
+          .withProjectDir(projectDir)
+          .withArguments("recipeCsvValidateContent", "--info", "--stacktrace")
+          .withPluginClasspath()
+          .withDebug(true)
+          .buildAndFail();
 
         assertEquals(FAILED, requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome());
         assertThat(result.getOutput())
-                .contains("Recipe marketplace CSV content validation failed")
-                .contains("Display name must start with an uppercase letter")
-                .contains("Display name must not end with a period")
-                .contains("Description must end with a period");
+          .contains("Recipe marketplace CSV content validation failed")
+          .contains("Display name must start with an uppercase letter")
+          .contains("Display name must not end with a period")
+          .contains("Description must end with a period");
     }
 
     @Test
@@ -158,11 +166,11 @@ class RecipeMarketplaceCsvValidateContentTaskTest {
         createGradleBuildFiles();
 
         BuildResult result = GradleRunner.create()
-                .withProjectDir(projectDir)
-                .withArguments("recipeCsvValidateContent", "--info", "--stacktrace")
-                .withPluginClasspath()
-                .withDebug(true)
-                .build();
+          .withProjectDir(projectDir)
+          .withArguments("recipeCsvValidateContent", "--info", "--stacktrace")
+          .withPluginClasspath()
+          .withDebug(true)
+          .build();
 
         assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome());
         assertThat(result.getOutput()).contains("No recipes.csv found");
@@ -174,15 +182,17 @@ class RecipeMarketplaceCsvValidateContentTaskTest {
         csvFile.getParentFile().mkdirs();
         // Empty descriptions are allowed
         Files.writeString(csvFile.toPath(),
-                "name,displayName,description\n" +
-                        "org.example.TestRecipe,Test Recipe,\n");
+          """
+            name,displayName,description
+            org.example.TestRecipe,Test Recipe,
+            """);
 
         BuildResult result = GradleRunner.create()
-                .withProjectDir(projectDir)
-                .withArguments("recipeCsvValidateContent", "--info", "--stacktrace")
-                .withPluginClasspath()
-                .withDebug(true)
-                .build();
+          .withProjectDir(projectDir)
+          .withArguments("recipeCsvValidateContent", "--info", "--stacktrace")
+          .withPluginClasspath()
+          .withDebug(true)
+          .build();
 
         assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome());
         assertThat(result.getOutput()).contains("Recipe marketplace CSV content validation passed");
@@ -196,15 +206,17 @@ class RecipeMarketplaceCsvValidateContentTaskTest {
         // where it expects descriptions to end with periods but display names to not end with periods.
         // For now, we'll just test with a CSV that has no categories to avoid this issue.
         Files.writeString(csvFile.toPath(),
-                "name,displayName,description\n" +
-                        "org.example.TestRecipe,Test Recipe,A test recipe.\n");
+          """
+            name,displayName,description
+            org.example.TestRecipe,Test Recipe,A test recipe.
+            """);
 
         BuildResult result = GradleRunner.create()
-                .withProjectDir(projectDir)
-                .withArguments("recipeCsvValidateContent", "--info", "--stacktrace")
-                .withPluginClasspath()
-                .withDebug(true)
-                .build();
+          .withProjectDir(projectDir)
+          .withArguments("recipeCsvValidateContent", "--info", "--stacktrace")
+          .withPluginClasspath()
+          .withDebug(true)
+          .build();
 
         assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome());
         assertThat(result.getOutput()).contains("Recipe marketplace CSV content validation passed");
@@ -214,28 +226,30 @@ class RecipeMarketplaceCsvValidateContentTaskTest {
         Files.writeString(settingsFile.toPath(), "rootProject.name = 'test-project'");
         @Language("gradle")
         String buildFileContent = """
-                plugins {
-                    id 'org.openrewrite.build.recipe-library-base'
-                }
+          plugins {
+              id 'org.openrewrite.build.recipe-library-base'
+          }
 
-                group = 'org.example'
-                version = '1.0.0'
+          group = 'org.example'
+          version = '1.0.0'
 
-                repositories {
-                    mavenCentral()
-                }
+          repositories {
+              mavenCentral()
+          }
 
-                dependencies {
-                    // Plugin provides rewrite dependencies
-                }
-                """;
+          dependencies {
+              // Plugin provides rewrite dependencies
+          }
+          """;
         Files.writeString(buildFile.toPath(), buildFileContent);
     }
 
     private void createValidCsv() throws IOException {
         csvFile.getParentFile().mkdirs();
         Files.writeString(csvFile.toPath(),
-                "name,displayName,description\n" +
-                        "org.example.TestRecipe,Test Recipe,A test recipe.\n");
+          """
+            name,displayName,description
+            org.example.TestRecipe,Test Recipe,A test recipe.
+            """);
     }
 }

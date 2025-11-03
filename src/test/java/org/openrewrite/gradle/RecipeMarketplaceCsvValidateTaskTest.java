@@ -53,19 +53,19 @@ class RecipeMarketplaceCsvValidateTaskTest {
         createValidCsv();
 
         BuildResult result = GradleRunner.create()
-                .withProjectDir(projectDir)
-                .withArguments("recipeCsvValidate", "--info", "--stacktrace")
-                .withPluginClasspath()
-                .withDebug(true)
-                .build();
+          .withProjectDir(projectDir)
+          .withArguments("recipeCsvValidate", "--info", "--stacktrace")
+          .withPluginClasspath()
+          .withDebug(true)
+          .build();
 
         assertEquals(SUCCESS, requireNonNull(result.task(":jar")).getOutcome());
         assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome());
         assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome());
         assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvValidate")).getOutcome());
         assertThat(result.getOutput())
-                .contains("Recipe marketplace CSV content validation passed")
-                .contains("Recipe marketplace CSV completeness validation passed");
+          .contains("Recipe marketplace CSV content validation passed")
+          .contains("Recipe marketplace CSV completeness validation passed");
     }
 
     @Test
@@ -74,20 +74,20 @@ class RecipeMarketplaceCsvValidateTaskTest {
         csvFile.getParentFile().mkdirs();
         // Invalid: display name doesn't start with uppercase
         Files.writeString(csvFile.toPath(),
-                "name,displayName,description\n" +
-                        "org.example.TestRecipe,test recipe,A test recipe.\n");
+          "name,displayName,description\n" +
+            "org.example.TestRecipe,test recipe,A test recipe.\n");
 
         BuildResult result = GradleRunner.create()
-                .withProjectDir(projectDir)
-                .withArguments("recipeCsvValidate", "--info", "--stacktrace")
-                .withPluginClasspath()
-                .withDebug(true)
-                .buildAndFail();
+          .withProjectDir(projectDir)
+          .withArguments("recipeCsvValidate", "--info", "--stacktrace")
+          .withPluginClasspath()
+          .withDebug(true)
+          .buildAndFail();
 
         assertEquals(FAILED, requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome());
         assertThat(result.getOutput())
-                .contains("Recipe marketplace CSV content validation failed")
-                .contains("Display name must start with an uppercase letter");
+          .contains("Recipe marketplace CSV content validation failed")
+          .contains("Display name must start with an uppercase letter");
     }
 
     @Test
@@ -96,22 +96,22 @@ class RecipeMarketplaceCsvValidateTaskTest {
         csvFile.getParentFile().mkdirs();
         // Valid content but incomplete: phantom recipe
         Files.writeString(csvFile.toPath(),
-                "name,displayName,description\n" +
-                        "org.example.TestRecipe,Test Recipe,A test recipe.\n" +
-                        "org.example.PhantomRecipe,Phantom Recipe,Does not exist.\n");
+          "name,displayName,description\n" +
+            "org.example.TestRecipe,Test Recipe,A test recipe.\n" +
+            "org.example.PhantomRecipe,Phantom Recipe,Does not exist.\n");
 
         BuildResult result = GradleRunner.create()
-                .withProjectDir(projectDir)
-                .withArguments("recipeCsvValidate", "--info", "--stacktrace")
-                .withPluginClasspath()
-                .withDebug(true)
-                .buildAndFail();
+          .withProjectDir(projectDir)
+          .withArguments("recipeCsvValidate", "--info", "--stacktrace")
+          .withPluginClasspath()
+          .withDebug(true)
+          .buildAndFail();
 
         // When build fails, intermediate tasks might not be in the result
         // Check the output for validation messages instead
         assertThat(result.getOutput())
-                .contains("Recipe marketplace CSV completeness validation failed")
-                .contains("org.example.PhantomRecipe");
+          .contains("Recipe marketplace CSV completeness validation failed")
+          .contains("org.example.PhantomRecipe");
 
         // The recipeCsvValidate task should have failed
         var validateTask = result.task(":recipeCsvValidate");
@@ -125,11 +125,11 @@ class RecipeMarketplaceCsvValidateTaskTest {
         createSimpleRecipeProject();
 
         BuildResult result = GradleRunner.create()
-                .withProjectDir(projectDir)
-                .withArguments("recipeCsvValidate", "--info", "--stacktrace")
-                .withPluginClasspath()
-                .withDebug(true)
-                .build();
+          .withProjectDir(projectDir)
+          .withArguments("recipeCsvValidate", "--info", "--stacktrace")
+          .withPluginClasspath()
+          .withDebug(true)
+          .build();
 
         assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome());
         assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome());
@@ -140,36 +140,36 @@ class RecipeMarketplaceCsvValidateTaskTest {
     @Test
     void canBeUsedInCheckTask() throws Exception {
         createGradleBuildFiles("""
-                plugins {
-                    id 'java'
-                    id 'org.openrewrite.build.recipe-library-base'
-                    id 'org.openrewrite.build.publish'
-                }
+          plugins {
+              id 'java'
+              id 'org.openrewrite.build.recipe-library-base'
+              id 'org.openrewrite.build.publish'
+          }
 
-                group = 'org.example'
-                version = '1.0.0'
+          group = 'org.example'
+          version = '1.0.0'
 
-                repositories {
-                    mavenCentral()
-                }
+          repositories {
+              mavenCentral()
+          }
 
-                dependencies {
-                    // Plugin provides rewrite dependencies
-                }
+          dependencies {
+              // Plugin provides rewrite dependencies
+          }
 
-                // Add CSV validation to check task
-                check.dependsOn recipeCsvValidate
-                """);
+          // Add CSV validation to check task
+          check.dependsOn recipeCsvValidate
+          """);
 
         createRecipeClass();
         createValidCsv();
 
         BuildResult result = GradleRunner.create()
-                .withProjectDir(projectDir)
-                .withArguments("check", "--info", "--stacktrace")
-                .withPluginClasspath()
-                .withDebug(true)
-                .build();
+          .withProjectDir(projectDir)
+          .withArguments("check", "--info", "--stacktrace")
+          .withPluginClasspath()
+          .withDebug(true)
+          .build();
 
         assertEquals(SUCCESS, requireNonNull(result.task(":check")).getOutcome());
         assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvValidate")).getOutcome());
@@ -177,23 +177,23 @@ class RecipeMarketplaceCsvValidateTaskTest {
 
     private void createSimpleRecipeProject() throws IOException {
         createGradleBuildFiles("""
-                plugins {
-                    id 'java'
-                    id 'org.openrewrite.build.recipe-library-base'
-                    id 'org.openrewrite.build.publish'
-                }
+          plugins {
+              id 'java'
+              id 'org.openrewrite.build.recipe-library-base'
+              id 'org.openrewrite.build.publish'
+          }
 
-                group = 'org.example'
-                version = '1.0.0'
+          group = 'org.example'
+          version = '1.0.0'
 
-                repositories {
-                    mavenCentral()
-                }
+          repositories {
+              mavenCentral()
+          }
 
-                dependencies {
-                    // Plugin provides rewrite dependencies
-                }
-                """);
+          dependencies {
+              // Plugin provides rewrite dependencies
+          }
+          """);
 
         createRecipeClass();
     }
@@ -205,15 +205,15 @@ class RecipeMarketplaceCsvValidateTaskTest {
 
         @Language("yaml")
         String rewriteYml = """
-                ---
-                type: specs.openrewrite.org/v1beta/recipe
-                name: org.example.TestRecipe
-                displayName: Test Recipe
-                description: A test recipe.
-                recipeList:
-                  - org.openrewrite.text.ChangeText:
-                      toText: "Hello"
-                """;
+          ---
+          type: specs.openrewrite.org/v1beta/recipe
+          name: org.example.TestRecipe
+          displayName: Test Recipe
+          description: A test recipe.
+          recipeList:
+            - org.openrewrite.text.ChangeText:
+                toText: "Hello"
+          """;
 
         Files.writeString(new File(rewriteDir, "rewrite.yml").toPath(), rewriteYml);
     }
@@ -221,8 +221,8 @@ class RecipeMarketplaceCsvValidateTaskTest {
     private void createValidCsv() throws IOException {
         csvFile.getParentFile().mkdirs();
         Files.writeString(csvFile.toPath(),
-                "name,displayName,description\n" +
-                        "org.example.TestRecipe,Test Recipe,A test recipe.\n");
+          "name,displayName,description\n" +
+            "org.example.TestRecipe,Test Recipe,A test recipe.\n");
     }
 
     private void createGradleBuildFiles(@Language("gradle") String buildFileContent) throws IOException {
