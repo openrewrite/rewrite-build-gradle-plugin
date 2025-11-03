@@ -35,7 +35,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 
 public abstract class RecipeMarketplaceCsvGenerateTask extends DefaultTask {
 
@@ -66,9 +67,7 @@ public abstract class RecipeMarketplaceCsvGenerateTask extends DefaultTask {
     void generate() throws IOException {
         // Get the jar task output
         Jar jarTask = (Jar) getProject().getTasks().getByName("jar");
-        File recipeJarFile = jarTask.getArchiveFile().get().getAsFile();
-        Path recipeJarPath = recipeJarFile.toPath();
-
+        Path recipeJarPath = jarTask.getArchiveFile().get().getAsFile().toPath();
         if (!Files.exists(recipeJarPath)) {
             throw new GradleException("Recipe JAR does not exist: " + recipeJarPath + ". Make sure the jar task has run.");
         }
@@ -93,7 +92,7 @@ public abstract class RecipeMarketplaceCsvGenerateTask extends DefaultTask {
                 .stream()
                 .map(File::toPath)
                 .filter(path -> !path.equals(recipeJarPath)) // Exclude the recipe JAR itself
-                .collect(Collectors.toList());
+                .collect(toList());
 
         getLogger().info("Generating recipe marketplace from JAR: {}", recipeJarPath);
         getLogger().info("Using GAV coordinates: {}:{}:{}",
@@ -109,13 +108,13 @@ public abstract class RecipeMarketplaceCsvGenerateTask extends DefaultTask {
         RecipeMarketplace generated = generator.generate();
 
         // Check if existing CSV exists and merge if present
-        File outputFile = getOutputFile().get().getAsFile();
+        Path outputPath = getOutputFile().get().getAsFile().toPath();
         RecipeMarketplace marketplace = generated;
 
-        if (outputFile.exists()) {
+        if (Files.exists(outputPath)) {
             getLogger().info("Found existing recipes.csv, merging...");
             RecipeMarketplaceReader reader = new RecipeMarketplaceReader();
-            RecipeMarketplace existing = reader.fromCsv(outputFile.toPath());
+            RecipeMarketplace existing = reader.fromCsv(outputPath);
 
             // Merge generated marketplace into existing one
             // This ensures existing data is preserved and updated with generated data
@@ -130,10 +129,10 @@ public abstract class RecipeMarketplaceCsvGenerateTask extends DefaultTask {
         String csv = writer.toCsv(marketplace);
 
         // Ensure parent directory exists
-        Files.createDirectories(outputFile.getParentFile().toPath());
+        Files.createDirectories(outputPath.getParent());
 
         // Write to file
-        Files.writeString(outputFile.toPath(), csv);
-        getLogger().lifecycle("Generated recipes.csv at: {}", outputFile.getAbsolutePath());
+        Files.writeString(outputPath, csv);
+        getLogger().lifecycle("Generated recipes.csv at: {}", outputPath.toAbsolutePath());
     }
 }

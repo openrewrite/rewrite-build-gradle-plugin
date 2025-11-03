@@ -61,13 +61,10 @@ class RecipeMarketplaceCsvGenerateTaskTest {
         assertEquals(SUCCESS, requireNonNull(result.task(":jar")).getOutcome());
         assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvGenerate")).getOutcome());
 
-        // Assert recipes.csv was created
-        File csvFile = new File(projectDir, "src/main/resources/META-INF/rewrite/recipes.csv");
-        assertThat(csvFile).exists().isFile();
-
         // Read and verify CSV content
-        String csvContent = Files.readString(csvFile.toPath());
-        assertThat(csvContent)
+        File csvFile = new File(projectDir, "src/main/resources/META-INF/rewrite/recipes.csv");
+        assertThat(csvFile)
+          .content()
           .contains("name")
           .contains("org.example.TestRecipe");
     }
@@ -96,8 +93,8 @@ class RecipeMarketplaceCsvGenerateTaskTest {
         assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvGenerate")).getOutcome());
 
         // Assert merged CSV contains both generated and existing recipes
-        String csvContent = Files.readString(csvFile.toPath());
-        assertThat(csvContent)
+        assertThat(csvFile)
+          .content()
           .contains("org.example.TestRecipe")
           .contains("org.example.CustomRecipe")
           .contains("Custom Recipe");
@@ -126,8 +123,8 @@ class RecipeMarketplaceCsvGenerateTaskTest {
         assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvGenerate")).getOutcome());
 
         // Assert both the manual and generated entries are present (merge is additive)
-        String csvContent = Files.readString(csvFile.toPath());
-        assertThat(csvContent)
+        assertThat(csvFile)
+          .content()
           .contains("org.example.TestRecipe")
           .contains("Old Display Name") // Manual entry preserved
           .contains("Test recipe"); // Generated entry added
@@ -192,8 +189,8 @@ class RecipeMarketplaceCsvGenerateTaskTest {
 
         // Assert parent directories were created
         File csvFile = new File(projectDir, "src/main/resources/META-INF/rewrite/recipes.csv");
-        assertThat(csvFile).exists().isFile();
         assertThat(csvFile.getParentFile()).exists().isDirectory();
+        assertThat(csvFile).exists().isFile();
     }
 
     private void createSimpleRecipeProject() throws IOException {
