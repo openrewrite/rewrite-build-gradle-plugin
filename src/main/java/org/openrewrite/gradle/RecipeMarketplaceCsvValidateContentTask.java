@@ -25,7 +25,8 @@ import org.openrewrite.marketplace.RecipeMarketplace;
 import org.openrewrite.marketplace.RecipeMarketplaceContentValidator;
 import org.openrewrite.marketplace.RecipeMarketplaceReader;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 public abstract class RecipeMarketplaceCsvValidateContentTask extends DefaultTask {
@@ -58,18 +59,18 @@ public abstract class RecipeMarketplaceCsvValidateContentTask extends DefaultTas
 
     @TaskAction
     void validate() {
-        File csvFile = getCsvFile().get().getAsFile();
+        Path csvPath = getCsvFile().get().getAsFile().toPath();
 
-        if (!csvFile.exists()) {
-            getLogger().lifecycle("No recipes.csv found at {}, skipping validation", csvFile.getAbsolutePath());
+        if (!Files.exists(csvPath)) {
+            getLogger().lifecycle("No recipes.csv found at {}, skipping validation", csvPath.toAbsolutePath());
             return;
         }
 
-        getLogger().info("Validating recipes.csv content at: {}", csvFile.getAbsolutePath());
+        getLogger().info("Validating recipes.csv content at: {}", csvPath.toAbsolutePath());
 
         // Read the CSV
         RecipeMarketplaceReader reader = new RecipeMarketplaceReader();
-        RecipeMarketplace marketplace = reader.fromCsv(csvFile.toPath());
+        RecipeMarketplace marketplace = reader.fromCsv(csvPath);
 
         // Validate content
         RecipeMarketplaceContentValidator validator = new RecipeMarketplaceContentValidator();
