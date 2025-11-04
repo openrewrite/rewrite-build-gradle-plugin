@@ -178,7 +178,7 @@ configurations.all {
 }
 
 tasks.named<JavaCompile>("compileJava") {
-    options.release.set(21)
+    options.release.set(17)
 }
 
 val rewriteVersion = if (hasProperty("releasing")) "latest.release" else "latest.integration"
