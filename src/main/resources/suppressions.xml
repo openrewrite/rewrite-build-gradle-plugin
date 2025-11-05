@@ -24,13 +24,6 @@
         <packageUrl regex="true">^pkg:maven/org\.openrewrite\.recipe/rewrite-openapi@.*$</packageUrl>
         <cve>CVE-2022-24863</cve>
     </suppress>
-    <suppress until="2025-08-31Z">
-        <notes><![CDATA[
-           file name: protobuf-java-3.25.5.jar
-         ]]></notes>
-        <packageUrl regex="true">^pkg:maven/com\.google\.protobuf/protobuf-java@.*$</packageUrl>
-        <cve>CVE-2024-7254</cve>
-    </suppress>
     <suppress until="2025-11-01Z">
         <notes><![CDATA[
    file name: rewrite-logging-frameworks-2.19.0-SNAPSHOT.jar: log4j-1.2.17.jar
