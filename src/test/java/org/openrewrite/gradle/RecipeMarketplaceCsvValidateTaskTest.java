@@ -74,8 +74,10 @@ class RecipeMarketplaceCsvValidateTaskTest {
         csvFile.getParentFile().mkdirs();
         // Invalid: display name doesn't start with uppercase
         Files.writeString(csvFile.toPath(),
-          "name,displayName,description\n" +
-            "org.example.TestRecipe,test recipe,A test recipe.\n");
+          """
+          name,displayName,description
+          org.example.TestRecipe,test recipe,A test recipe.
+          """);
 
         BuildResult result = GradleRunner.create()
           .withProjectDir(projectDir)
@@ -96,9 +98,11 @@ class RecipeMarketplaceCsvValidateTaskTest {
         csvFile.getParentFile().mkdirs();
         // Valid content but incomplete: phantom recipe
         Files.writeString(csvFile.toPath(),
-          "name,displayName,description\n" +
-            "org.example.TestRecipe,Test Recipe,A test recipe.\n" +
-            "org.example.PhantomRecipe,Phantom Recipe,Does not exist.\n");
+          """
+          name,displayName,description
+          org.example.TestRecipe,Test Recipe,A test recipe.
+          org.example.PhantomRecipe,Phantom Recipe,Does not exist.
+          """);
 
         BuildResult result = GradleRunner.create()
           .withProjectDir(projectDir)
@@ -221,8 +225,10 @@ class RecipeMarketplaceCsvValidateTaskTest {
     private void createValidCsv() throws IOException {
         csvFile.getParentFile().mkdirs();
         Files.writeString(csvFile.toPath(),
-          "name,displayName,description\n" +
-            "org.example.TestRecipe,Test Recipe,A test recipe.\n");
+          """
+          name,displayName,description
+          org.example.TestRecipe,Test Recipe,A test recipe.
+          """);
     }
 
     private void createGradleBuildFiles(@Language("gradle") String buildFileContent) throws IOException {

@@ -70,9 +70,11 @@ class RecipeMarketplaceCsvValidateCompletenessTaskTest {
         csvFile.getParentFile().mkdirs();
         // CSV contains a recipe that doesn't exist in the JAR
         Files.writeString(csvFile.toPath(),
-          "name,displayName,description\n" +
-            "org.example.TestRecipe,Test Recipe,A test recipe.\n" +
-            "org.example.PhantomRecipe,Phantom Recipe,This recipe does not exist.\n");
+          """
+          name,displayName,description
+          org.example.TestRecipe,Test Recipe,A test recipe.
+          org.example.PhantomRecipe,Phantom Recipe,This recipe does not exist.
+          """);
 
         BuildResult result = GradleRunner.create()
           .withProjectDir(projectDir)
@@ -95,8 +97,10 @@ class RecipeMarketplaceCsvValidateCompletenessTaskTest {
         csvFile.getParentFile().mkdirs();
         // CSV only contains one recipe, but JAR has two
         Files.writeString(csvFile.toPath(),
-          "name,displayName,description\n" +
-            "org.example.TestRecipe,Test Recipe,A test recipe.\n");
+          """
+          name,displayName,description
+          org.example.TestRecipe,Test Recipe,A test recipe.
+          """);
 
         BuildResult result = GradleRunner.create()
           .withProjectDir(projectDir)
@@ -119,9 +123,11 @@ class RecipeMarketplaceCsvValidateCompletenessTaskTest {
         csvFile.getParentFile().mkdirs();
         // CSV has one phantom recipe and is missing one real recipe
         Files.writeString(csvFile.toPath(),
-          "name,displayName,description\n" +
-            "org.example.TestRecipe,Test Recipe,A test recipe.\n" +
-            "org.example.PhantomRecipe,Phantom Recipe,Does not exist.\n");
+          """
+          name,displayName,description
+          org.example.TestRecipe,Test Recipe,A test recipe.
+          org.example.PhantomRecipe,Phantom Recipe,Does not exist.
+          """);
 
         BuildResult result = GradleRunner.create()
           .withProjectDir(projectDir)
@@ -159,9 +165,11 @@ class RecipeMarketplaceCsvValidateCompletenessTaskTest {
         csvFile.getParentFile().mkdirs();
         // Recipe appears in multiple categories - should be treated as single recipe
         Files.writeString(csvFile.toPath(),
-          "name,displayName,description,category1\n" +
-            "org.example.TestRecipe,Test Recipe,A test recipe.,Java\n" +
-            "org.example.TestRecipe,Test Recipe,A test recipe.,Cleanup\n");
+          """
+          name,displayName,description,category1
+          org.example.TestRecipe,Test Recipe,A test recipe.,Java
+          org.example.TestRecipe,Test Recipe,A test recipe.,Cleanup
+          """);
 
         BuildResult result = GradleRunner.create()
           .withProjectDir(projectDir)
@@ -179,8 +187,10 @@ class RecipeMarketplaceCsvValidateCompletenessTaskTest {
         createSimpleRecipeProject();
         csvFile.getParentFile().mkdirs();
         Files.writeString(csvFile.toPath(),
-          "name,displayName,description,category1,category2\n" +
-            "org.example.TestRecipe,Test Recipe,A test recipe.,Example,Cleanup\n");
+          """
+          name,displayName,description,category1,category2
+          org.example.TestRecipe,Test Recipe,A test recipe.,Example,Cleanup
+          """);
 
         BuildResult result = GradleRunner.create()
           .withProjectDir(projectDir)

@@ -42,11 +42,10 @@ public class RewriteRecipeMarketplacePlugin implements Plugin<Project> {
         });
 
         // Configure check task when Java plugin is applied
-        project.getPlugins().withType(JavaPlugin.class, javaPlugin -> {
+        project.getPlugins().withType(JavaPlugin.class, javaPlugin ->
             // Add CSV validation to the check phase
             project.getTasks().named("check").configure(check -> {
                 check.dependsOn("recipeCsvValidate");
-            });
-        });
+            }));
     }
 }

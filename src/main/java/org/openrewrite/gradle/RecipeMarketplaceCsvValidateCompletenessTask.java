@@ -35,7 +35,8 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 
 public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends DefaultTask {
 
@@ -98,7 +99,7 @@ public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends Defau
                 .stream()
                 .map(File::toPath)
                 .filter(path -> !path.equals(recipeJarPath)) // Exclude the recipe JAR itself
-                .collect(Collectors.toList());
+                .collect(toList());
 
         // Load environment from JAR
         // We create a temporary GAV just for loading the environment
