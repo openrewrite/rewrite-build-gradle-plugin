@@ -39,4 +39,13 @@
         <cve>CVE-2023-26464</cve>
         <cve>CVE-2021-4104</cve>
     </suppress>
+    <suppress until="2025-12-01Z">
+        <notes><![CDATA[
+   file name: quarkus-update-recipes-1.0.19.jar
+       sev: HIGH
+         reason: False positive. Reference only. This is now showing up more widely as we've added rewrite-third-party as a dependency in places.
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/io\.quarkus/quarkus-update-recipes@.*$</packageUrl>
+        <cpe>cpe:/a:quarkus:quarkus</cpe>
+    </suppress>
 </suppressions>
