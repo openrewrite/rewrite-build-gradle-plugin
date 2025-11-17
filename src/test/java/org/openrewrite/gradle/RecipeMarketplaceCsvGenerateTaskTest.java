@@ -22,7 +22,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,18 +32,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@SuppressWarnings("ResultOfMethodCallIgnored")
 class RecipeMarketplaceCsvGenerateTaskTest {
     @TempDir
-    File projectDir;
+    Path projectDir;
 
-    private File settingsFile;
-    private File buildFile;
+    private Path settingsFile;
+    private Path buildFile;
+    private Path csvFile;
 
     @BeforeEach
     public void setup() {
-        settingsFile = new File(projectDir, "settings.gradle");
-        buildFile = new File(projectDir, "build.gradle");
+        settingsFile = projectDir.resolve("settings.gradle");
+        buildFile = projectDir.resolve("build.gradle");
+        csvFile = Path.of(projectDir.toString(), "src", "main", "resources", "META-INF", "rewrite", "recipes.csv");
     }
 
     @Test
@@ -52,7 +52,7 @@ class RecipeMarketplaceCsvGenerateTaskTest {
         createSimpleRecipeProject();
 
         BuildResult result = GradleRunner.create()
-          .withProjectDir(projectDir)
+          .withProjectDir(projectDir.toFile())
           .withArguments("recipeCsvGenerate", "--info", "--stacktrace")
           .withPluginClasspath()
           .withDebug(true)
@@ -62,7 +62,6 @@ class RecipeMarketplaceCsvGenerateTaskTest {
         assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvGenerate")).getOutcome());
 
         // Read and verify CSV content
-        File csvFile = new File(projectDir, "src/main/resources/META-INF/rewrite/recipes.csv");
         assertThat(csvFile)
           .content()
           .contains("name")
@@ -74,17 +73,16 @@ class RecipeMarketplaceCsvGenerateTaskTest {
         createSimpleRecipeProject();
 
         // Create existing recipes.csv with custom entry
-        File csvFile = new File(projectDir, "src/main/resources/META-INF/rewrite/recipes.csv");
-        csvFile.getParentFile().mkdirs();
-        Files.writeString(csvFile.toPath(),
+        Files.createDirectories(csvFile.getParent());
+        Files.writeString(csvFile,
           //language=csv
           """
-            name,displayName,category1
-            org.example.CustomRecipe,Custom Recipe,Custom
+            name,displayName,packageName,ecosystem,category1
+            org.example.CustomRecipe,Custom Recipe,org.example:example-custom,Maven,Custom
             """);
 
         BuildResult result = GradleRunner.create()
-          .withProjectDir(projectDir)
+          .withProjectDir(projectDir.toFile())
           .withArguments("recipeCsvGenerate", "--info", "--stacktrace")
           .withPluginClasspath()
           .withDebug(true)
@@ -105,16 +103,15 @@ class RecipeMarketplaceCsvGenerateTaskTest {
         createSimpleRecipeProject();
 
         // Create existing recipes.csv with same recipe but in different category
-        File csvFile = new File(projectDir, "src/main/resources/META-INF/rewrite/recipes.csv");
-        csvFile.getParentFile().mkdirs();
-        Files.writeString(csvFile.toPath(),
+        Files.createDirectories(csvFile.getParent());
+        Files.writeString(csvFile,
           """
-            name,displayName,category1
-            org.example.TestRecipe,Old Display Name,Old Category
+            ecosystem,packageName,name,displayName,category1
+            maven,org.example:test-recipe-project,org.example.TestRecipe,Old Display Name,Old Category
             """);
 
         BuildResult result = GradleRunner.create()
-          .withProjectDir(projectDir)
+          .withProjectDir(projectDir.toFile())
           .withArguments("recipeCsvGenerate", "--info", "--stacktrace")
           .withPluginClasspath()
           .withDebug(true)
@@ -154,7 +151,7 @@ class RecipeMarketplaceCsvGenerateTaskTest {
         createSimpleRecipeClass();
 
         BuildResult result = GradleRunner.create()
-          .withProjectDir(projectDir)
+          .withProjectDir(projectDir.toFile())
           .withArguments("recipeCsvGenerate", "--info", "--stacktrace")
           .withPluginClasspath()
           .withDebug(true)
@@ -173,13 +170,13 @@ class RecipeMarketplaceCsvGenerateTaskTest {
         createSimpleRecipeProject();
 
         // Delete the resources directory if it exists
-        File resourcesDir = new File(projectDir, "src/main/resources");
-        if (resourcesDir.exists()) {
-            deleteDirectory(resourcesDir.toPath());
+        Path resourcesDir = Path.of(projectDir.toString(), "src", "main", "resources");
+        if (Files.exists(resourcesDir)) {
+            deleteDirectory(resourcesDir);
         }
 
         BuildResult result = GradleRunner.create()
-          .withProjectDir(projectDir)
+          .withProjectDir(projectDir.toFile())
           .withArguments("recipeCsvGenerate", "--info", "--stacktrace")
           .withPluginClasspath()
           .withDebug(true)
@@ -188,9 +185,8 @@ class RecipeMarketplaceCsvGenerateTaskTest {
         assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvGenerate")).getOutcome());
 
         // Assert parent directories were created
-        File csvFile = new File(projectDir, "src/main/resources/META-INF/rewrite/recipes.csv");
-        assertThat(csvFile.getParentFile()).exists().isDirectory();
-        assertThat(csvFile).exists().isFile();
+        assertThat(csvFile.getParent()).exists().isDirectory();
+        assertThat(csvFile).exists().isNotEmptyFile();
     }
 
     private void createSimpleRecipeProject() throws IOException {
@@ -216,11 +212,10 @@ class RecipeMarketplaceCsvGenerateTaskTest {
         createSimpleRecipeClass();
     }
 
-    @SuppressWarnings("NullableProblems")
     private void createSimpleRecipeClass() throws IOException {
         // Use a declarative YAML recipe instead of Java class for simpler testing
-        File rewriteDir = new File(projectDir, "src/main/resources/META-INF/rewrite");
-        rewriteDir.mkdirs();
+        Path rewriteDir = Path.of(projectDir.toString(), "src", "main", "resources", "META-INF", "rewrite");
+        Files.createDirectories(rewriteDir);
 
         @Language("yaml")
         String rewriteYml = """
@@ -234,12 +229,12 @@ class RecipeMarketplaceCsvGenerateTaskTest {
                 toText: "Hello World"
           """;
 
-        Files.writeString(new File(rewriteDir, "rewrite.yml").toPath(), rewriteYml);
+        Files.writeString(rewriteDir.resolve("rewrite.yml"), rewriteYml);
     }
 
     private void createGradleBuildFiles(@Language("gradle") String buildFileContent) throws IOException {
-        Files.writeString(settingsFile.toPath(), "rootProject.name = 'test-recipe-project'");
-        Files.writeString(buildFile.toPath(), buildFileContent);
+        Files.writeString(settingsFile, "rootProject.name = 'test-recipe-project'");
+        Files.writeString(buildFile, buildFileContent);
     }
 
     private void deleteDirectory(Path path) throws IOException {
