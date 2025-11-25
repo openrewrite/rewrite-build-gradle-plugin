@@ -22,9 +22,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,17 +34,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class RecipeMarketplaceCsvValidateTaskTest {
     @TempDir
-    File projectDir;
+    Path projectDir;
 
-    private File settingsFile;
-    private File buildFile;
-    private File csvFile;
+    private Path settingsFile;
+    private Path buildFile;
+    private Path csvFile;
 
     @BeforeEach
     public void setup() {
-        settingsFile = new File(projectDir, "settings.gradle");
-        buildFile = new File(projectDir, "build.gradle");
-        csvFile = new File(projectDir, "src/main/resources/META-INF/rewrite/recipes.csv");
+        settingsFile = projectDir.resolve("settings.gradle");
+        buildFile = projectDir.resolve("build.gradle");
+        csvFile = Path.of(projectDir.toString(), "src", "main", "resources", "META-INF", "rewrite", "recipes.csv");
     }
 
     @Test
@@ -53,7 +53,7 @@ class RecipeMarketplaceCsvValidateTaskTest {
         createValidCsv();
 
         BuildResult result = GradleRunner.create()
-          .withProjectDir(projectDir)
+          .withProjectDir(projectDir.toFile())
           .withArguments("recipeCsvValidate", "--info", "--stacktrace")
           .withPluginClasspath()
           .withDebug(true)
@@ -71,16 +71,17 @@ class RecipeMarketplaceCsvValidateTaskTest {
     @Test
     void failsWhenContentValidationFails() throws Exception {
         createSimpleRecipeProject();
-        csvFile.getParentFile().mkdirs();
+
         // Invalid: display name doesn't start with uppercase
-        Files.writeString(csvFile.toPath(),
+        Files.createDirectories(csvFile.getParent());
+        Files.writeString(csvFile,
           """
-          name,displayName,description
-          org.example.TestRecipe,test recipe,A test recipe.
+          ecosystem,packageName,name,displayName,description
+          maven,org.example:test-project-recipe,org.example.TestRecipe,test recipe,A test recipe.
           """);
 
         BuildResult result = GradleRunner.create()
-          .withProjectDir(projectDir)
+          .withProjectDir(projectDir.toFile())
           .withArguments("recipeCsvValidate", "--info", "--stacktrace")
           .withPluginClasspath()
           .withDebug(true)
@@ -89,23 +90,24 @@ class RecipeMarketplaceCsvValidateTaskTest {
         assertEquals(FAILED, requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome());
         assertThat(result.getOutput())
           .contains("Recipe marketplace CSV content validation failed")
-          .contains("Display name must start with an uppercase letter");
+          .contains("Display name 'test recipe' must be sentence cased");
     }
 
     @Test
     void failsWhenCompletenessValidationFails() throws Exception {
         createSimpleRecipeProject();
-        csvFile.getParentFile().mkdirs();
+
         // Valid content but incomplete: phantom recipe
-        Files.writeString(csvFile.toPath(),
+        Files.createDirectories(csvFile.getParent());
+        Files.writeString(csvFile,
           """
-          name,displayName,description
-          org.example.TestRecipe,Test Recipe,A test recipe.
-          org.example.PhantomRecipe,Phantom Recipe,Does not exist.
+          ecosystem,packageName,name,displayName,description
+          maven,org.example:test-project-recipe,org.example.TestRecipe,Test Recipe,A test recipe.
+          maven,org.example:test-project-recipe,org.example.PhantomRecipe,Phantom Recipe,Does not exist.
           """);
 
         BuildResult result = GradleRunner.create()
-          .withProjectDir(projectDir)
+          .withProjectDir(projectDir.toFile())
           .withArguments("recipeCsvValidate", "--info", "--stacktrace")
           .withPluginClasspath()
           .withDebug(true)
@@ -129,7 +131,7 @@ class RecipeMarketplaceCsvValidateTaskTest {
         createSimpleRecipeProject();
 
         BuildResult result = GradleRunner.create()
-          .withProjectDir(projectDir)
+          .withProjectDir(projectDir.toFile())
           .withArguments("recipeCsvValidate", "--info", "--stacktrace")
           .withPluginClasspath()
           .withDebug(true)
@@ -169,7 +171,7 @@ class RecipeMarketplaceCsvValidateTaskTest {
         createValidCsv();
 
         BuildResult result = GradleRunner.create()
-          .withProjectDir(projectDir)
+          .withProjectDir(projectDir.toFile())
           .withArguments("check", "--info", "--stacktrace")
           .withPluginClasspath()
           .withDebug(true)
@@ -204,8 +206,8 @@ class RecipeMarketplaceCsvValidateTaskTest {
 
     private void createRecipeClass() throws IOException {
         // Use declarative YAML recipe for simpler testing
-        File rewriteDir = new File(projectDir, "src/main/resources/META-INF/rewrite");
-        rewriteDir.mkdirs();
+        Path rewriteDir = Path.of(projectDir.toString(), "src", "main", "resources", "META-INF", "rewrite");
+        Files.createDirectories(rewriteDir);
 
         @Language("yaml")
         String rewriteYml = """
@@ -219,20 +221,20 @@ class RecipeMarketplaceCsvValidateTaskTest {
                 toText: "Hello"
           """;
 
-        Files.writeString(new File(rewriteDir, "rewrite.yml").toPath(), rewriteYml);
+        Files.writeString(rewriteDir.resolve("rewrite.yml"), rewriteYml);
     }
 
     private void createValidCsv() throws IOException {
-        csvFile.getParentFile().mkdirs();
-        Files.writeString(csvFile.toPath(),
+        Files.createDirectories(csvFile.getParent());
+        Files.writeString(csvFile,
           """
-          name,displayName,description
-          org.example.TestRecipe,Test Recipe,A test recipe.
+          ecosystem,packageName,name,displayName,description
+          maven,org.example:test-project-recipe,org.example.TestRecipe,Test Recipe,A test recipe.
           """);
     }
 
     private void createGradleBuildFiles(@Language("gradle") String buildFileContent) throws IOException {
-        Files.writeString(settingsFile.toPath(), "rootProject.name = 'test-recipe-project'");
-        Files.writeString(buildFile.toPath(), buildFileContent);
+        Files.writeString(settingsFile, "rootProject.name = 'test-recipe-project'");
+        Files.writeString(buildFile, buildFileContent);
     }
 }
