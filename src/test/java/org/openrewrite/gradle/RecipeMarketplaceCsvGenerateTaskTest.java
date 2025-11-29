@@ -31,7 +31,6 @@ import java.util.stream.Stream;
 import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
 class RecipeMarketplaceCsvGenerateTaskTest {
@@ -42,7 +41,7 @@ class RecipeMarketplaceCsvGenerateTaskTest {
     private File buildFile;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         settingsFile = new File(projectDir, "settings.gradle");
         buildFile = new File(projectDir, "build.gradle");
     }
@@ -58,8 +57,8 @@ class RecipeMarketplaceCsvGenerateTaskTest {
           .withDebug(true)
           .build();
 
-        assertEquals(SUCCESS, requireNonNull(result.task(":jar")).getOutcome());
-        assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvGenerate")).getOutcome());
+        assertThat(requireNonNull(result.task(":jar")).getOutcome()).isEqualTo(SUCCESS);
+        assertThat(requireNonNull(result.task(":recipeCsvGenerate")).getOutcome()).isEqualTo(SUCCESS);
 
         // Read and verify CSV content
         File csvFile = new File(projectDir, "src/main/resources/META-INF/rewrite/recipes.csv");
@@ -90,7 +89,7 @@ class RecipeMarketplaceCsvGenerateTaskTest {
           .withDebug(true)
           .build();
 
-        assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvGenerate")).getOutcome());
+        assertThat(requireNonNull(result.task(":recipeCsvGenerate")).getOutcome()).isEqualTo(SUCCESS);
 
         // Assert merged CSV contains both generated and existing recipes
         assertThat(csvFile)
@@ -120,7 +119,7 @@ class RecipeMarketplaceCsvGenerateTaskTest {
           .withDebug(true)
           .build();
 
-        assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvGenerate")).getOutcome());
+        assertThat(requireNonNull(result.task(":recipeCsvGenerate")).getOutcome()).isEqualTo(SUCCESS);
 
         // Assert both the manual and generated entries are present (merge is additive)
         assertThat(csvFile)
@@ -160,7 +159,7 @@ class RecipeMarketplaceCsvGenerateTaskTest {
           .withDebug(true)
           .build();
 
-        assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvGenerate")).getOutcome());
+        assertThat(requireNonNull(result.task(":recipeCsvGenerate")).getOutcome()).isEqualTo(SUCCESS);
 
         // Verify the GAV from nebula publication was used
         assertThat(result.getOutput())
@@ -185,7 +184,7 @@ class RecipeMarketplaceCsvGenerateTaskTest {
           .withDebug(true)
           .build();
 
-        assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvGenerate")).getOutcome());
+        assertThat(requireNonNull(result.task(":recipeCsvGenerate")).getOutcome()).isEqualTo(SUCCESS);
 
         // Assert parent directories were created
         File csvFile = new File(projectDir, "src/main/resources/META-INF/rewrite/recipes.csv");

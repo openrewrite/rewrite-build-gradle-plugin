@@ -28,7 +28,6 @@ import java.nio.file.Files;
 import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class RewriteRecipeLibraryPluginTest {
     @TempDir
@@ -38,7 +37,7 @@ class RewriteRecipeLibraryPluginTest {
     private File buildFile;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         settingsFile = new File(projectDir, "settings.gradle");
         buildFile = new File(projectDir, "build.gradle");
     }
@@ -73,7 +72,7 @@ class RewriteRecipeLibraryPluginTest {
                 .withDebug(true)
                 .build();
 
-        assertEquals(SUCCESS, requireNonNull(result.task(":downloadRecipeDependencies")).getOutcome());
+        assertThat(requireNonNull(result.task(":downloadRecipeDependencies")).getOutcome()).isEqualTo(SUCCESS);
         String[] list = cp.list();
         assertThat(list).isNotNull();
         assertThat(list.length).isEqualTo(2);
@@ -117,7 +116,7 @@ class RewriteRecipeLibraryPluginTest {
                 .withDebug(true)
                 .build();
 
-        assertEquals(SUCCESS, requireNonNull(result.task(":downloadRecipeDependencies")).getOutcome());
+        assertThat(requireNonNull(result.task(":downloadRecipeDependencies")).getOutcome()).isEqualTo(SUCCESS);
 
         assertThat(cp.list()).containsExactlyInAnyOrder("guava-30.1-jre.jar", "guava-31.1-jre.jar");
     }

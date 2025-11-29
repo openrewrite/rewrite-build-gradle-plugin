@@ -26,8 +26,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 
 import static java.util.Objects.requireNonNull;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class RewriteJava8TextBlocksTest {
     @TempDir
@@ -37,13 +37,13 @@ class RewriteJava8TextBlocksTest {
     private File buildFile;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         settingsFile = new File(testProjectDir, "settings.gradle");
         buildFile = new File(testProjectDir, "build.gradle");
     }
 
     @Test
-    public void modifiedBytecodesToBeJava8Compatible() throws Exception {
+    void modifiedBytecodesToBeJava8Compatible() throws Exception {
         writeFile(settingsFile, "rootProject.name = 'my-project'");
         String buildFileContent = """
                 plugins {
@@ -69,7 +69,7 @@ class RewriteJava8TextBlocksTest {
                 .withDebug(true)
                 .build();
 
-        assertEquals(SUCCESS, requireNonNull(result.task(":compileJava")).getOutcome());
+        assertThat(requireNonNull(result.task(":compileJava")).getOutcome()).isEqualTo(SUCCESS);
     }
 
     private void writeFile(File destination, String content) throws IOException {
