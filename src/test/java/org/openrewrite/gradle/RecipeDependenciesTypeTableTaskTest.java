@@ -37,7 +37,6 @@ import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.gradle.testkit.runner.TaskOutcome.FAILED;
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class RecipeDependenciesTypeTableTaskTest {
     @TempDir
@@ -47,7 +46,7 @@ class RecipeDependenciesTypeTableTaskTest {
     private File buildFile;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         settingsFile = new File(projectDir, "settings.gradle");
         buildFile = new File(projectDir, "build.gradle");
     }
@@ -68,7 +67,7 @@ class RecipeDependenciesTypeTableTaskTest {
           """);
 
         BuildResult result = runTypeTableTaskAndSucceed();
-        assertEquals(SUCCESS, requireNonNull(result.task(":createTypeTable")).getOutcome());
+        assertThat(requireNonNull(result.task(":createTypeTable")).getOutcome()).isEqualTo(SUCCESS);
 
         // Assert type table created
         File tsvFile = new File(projectDir, "src/main/resources/" + TypeTable.DEFAULT_RESOURCE_PATH);
@@ -97,7 +96,7 @@ class RecipeDependenciesTypeTableTaskTest {
           """);
 
         BuildResult result = runTypeTableTaskAndSucceed();
-        assertEquals(SUCCESS, requireNonNull(result.task(":createTypeTable")).getOutcome());
+        assertThat(requireNonNull(result.task(":createTypeTable")).getOutcome()).isEqualTo(SUCCESS);
 
         // Assert type table created
         File tsvFile = new File(projectDir, "src/main/resources/" + TypeTable.DEFAULT_RESOURCE_PATH);
@@ -132,7 +131,7 @@ class RecipeDependenciesTypeTableTaskTest {
           """);
 
         BuildResult result = runTypeTableTaskAndSucceed();
-        assertEquals(SUCCESS, requireNonNull(result.task(":createTypeTable")).getOutcome());
+        assertThat(requireNonNull(result.task(":createTypeTable")).getOutcome()).isEqualTo(SUCCESS);
 
         // Assert type table created
         File tsvFile = new File(projectDir, "src/main/resources/" + TypeTable.DEFAULT_RESOURCE_PATH);
@@ -168,7 +167,7 @@ class RecipeDependenciesTypeTableTaskTest {
           """);
 
         BuildResult result = runTypeTableTaskAndSucceed();
-        assertEquals(SUCCESS, requireNonNull(result.task(":createTypeTable")).getOutcome());
+        assertThat(requireNonNull(result.task(":createTypeTable")).getOutcome()).isEqualTo(SUCCESS);
 
         // Assert type table created
         File tsvFile = new File(projectDir, "very/custom/" + TypeTable.DEFAULT_RESOURCE_PATH);
@@ -200,7 +199,7 @@ class RecipeDependenciesTypeTableTaskTest {
           """);
 
         BuildResult result = runTypeTableTaskAndFail();
-        assertEquals(FAILED, requireNonNull(result.task(":createTypeTable")).getOutcome());
+        assertThat(requireNonNull(result.task(":createTypeTable")).getOutcome()).isEqualTo(FAILED);
 
         File tsvFile = new File(projectDir, "very/custom/" + TypeTable.DEFAULT_RESOURCE_PATH);
         assertThat(tsvFile)
@@ -230,7 +229,7 @@ class RecipeDependenciesTypeTableTaskTest {
           .withDebug(true)
           .build();
 
-        assertEquals(SUCCESS, requireNonNull(result.task(":createTestTypeTable")).getOutcome());
+        assertThat(requireNonNull(result.task(":createTestTypeTable")).getOutcome()).isEqualTo(SUCCESS);
 
         // Assert type table created in test resources
         File tsvFile = new File(projectDir, "src/test/resources/" + TypeTable.DEFAULT_RESOURCE_PATH);
@@ -285,7 +284,7 @@ class RecipeDependenciesTypeTableTaskTest {
           .withDebug(true)
           .build();
 
-        assertEquals(SUCCESS, requireNonNull(result.task(":createFunctionalTestTypeTable")).getOutcome());
+        assertThat(requireNonNull(result.task(":createFunctionalTestTypeTable")).getOutcome()).isEqualTo(SUCCESS);
 
         // Assert type table created in functionalTest resources
         File tsvFile = new File(projectDir, "src/functionalTest/resources/" + TypeTable.DEFAULT_RESOURCE_PATH);

@@ -30,7 +30,6 @@ import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.gradle.testkit.runner.TaskOutcome.FAILED;
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class RecipeMarketplaceCsvValidateContentTaskTest {
     @TempDir
@@ -41,7 +40,7 @@ class RecipeMarketplaceCsvValidateContentTaskTest {
     private File csvFile;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         settingsFile = new File(projectDir, "settings.gradle");
         buildFile = new File(projectDir, "build.gradle");
         csvFile = new File(projectDir, "src/main/resources/META-INF/rewrite/recipes.csv");
@@ -59,7 +58,7 @@ class RecipeMarketplaceCsvValidateContentTaskTest {
           .withDebug(true)
           .build();
 
-        assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome());
+        assertThat(requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome()).isEqualTo(SUCCESS);
         assertThat(result.getOutput()).contains("Recipe marketplace CSV content validation passed");
     }
 
@@ -80,7 +79,7 @@ class RecipeMarketplaceCsvValidateContentTaskTest {
           .withDebug(true)
           .buildAndFail();
 
-        assertEquals(FAILED, requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome());
+        assertThat(requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome()).isEqualTo(FAILED);
         assertThat(result.getOutput())
           .contains("Recipe marketplace CSV content validation failed")
           .contains("Display name must start with an uppercase letter")
@@ -104,7 +103,7 @@ class RecipeMarketplaceCsvValidateContentTaskTest {
           .withDebug(true)
           .buildAndFail();
 
-        assertEquals(FAILED, requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome());
+        assertThat(requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome()).isEqualTo(FAILED);
         assertThat(result.getOutput())
           .contains("Recipe marketplace CSV content validation failed")
           .contains("Display name must not end with a period")
@@ -128,7 +127,7 @@ class RecipeMarketplaceCsvValidateContentTaskTest {
           .withDebug(true)
           .buildAndFail();
 
-        assertEquals(FAILED, requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome());
+        assertThat(requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome()).isEqualTo(FAILED);
         assertThat(result.getOutput())
           .contains("Recipe marketplace CSV content validation failed")
           .contains("Description must end with a period")
@@ -153,7 +152,7 @@ class RecipeMarketplaceCsvValidateContentTaskTest {
           .withDebug(true)
           .buildAndFail();
 
-        assertEquals(FAILED, requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome());
+        assertThat(requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome()).isEqualTo(FAILED);
         assertThat(result.getOutput())
           .contains("Recipe marketplace CSV content validation failed")
           .contains("Display name must start with an uppercase letter")
@@ -172,7 +171,7 @@ class RecipeMarketplaceCsvValidateContentTaskTest {
           .withDebug(true)
           .build();
 
-        assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome());
+        assertThat(requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome()).isEqualTo(SUCCESS);
         assertThat(result.getOutput()).contains("No recipes.csv found");
     }
 
@@ -194,7 +193,7 @@ class RecipeMarketplaceCsvValidateContentTaskTest {
           .withDebug(true)
           .build();
 
-        assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome());
+        assertThat(requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome()).isEqualTo(SUCCESS);
         assertThat(result.getOutput()).contains("Recipe marketplace CSV content validation passed");
     }
 
@@ -218,7 +217,7 @@ class RecipeMarketplaceCsvValidateContentTaskTest {
           .withDebug(true)
           .build();
 
-        assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome());
+        assertThat(requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome()).isEqualTo(SUCCESS);
         assertThat(result.getOutput()).contains("Recipe marketplace CSV content validation passed");
     }
 
