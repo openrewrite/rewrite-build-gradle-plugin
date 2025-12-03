@@ -23,18 +23,20 @@ import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.jvm.tasks.Jar;
 import org.openrewrite.Validated;
+import org.openrewrite.config.ClasspathScanningLoader;
 import org.openrewrite.config.Environment;
 import org.openrewrite.marketplace.RecipeMarketplace;
 import org.openrewrite.marketplace.RecipeMarketplaceCompletenessValidator;
 import org.openrewrite.marketplace.RecipeMarketplaceReader;
+import org.openrewrite.maven.marketplace.MavenRecipeMarketplaceGenerator;
 import org.openrewrite.maven.marketplace.RecipeClassLoader;
-import org.openrewrite.maven.marketplace.ResolvedMavenRecipeBundle;
 import org.openrewrite.maven.tree.ResolvedGroupArtifactVersion;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Properties;
 
 import static java.util.stream.Collectors.toList;
 
@@ -101,23 +103,9 @@ public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends Defau
                 .filter(path -> !path.equals(recipeJarPath)) // Exclude the recipe JAR itself
                 .collect(toList());
 
-        // Load environment from JAR
-        // We create a temporary GAV just for loading the environment
-        ResolvedGroupArtifactVersion tempGav = new ResolvedGroupArtifactVersion(
-                null,
-                "temp",
-                "temp",
-                "1.0.0",
-                null
-        );
-        ResolvedMavenRecipeBundle bundle = new ResolvedMavenRecipeBundle(
-                tempGav,
-                recipeJarPath,
-                classpath,
-                RecipeClassLoader::new,
-                null
-        );
-        Environment jarEnvironment = bundle.getEnvironment();
+        Environment jarEnvironment = Environment.builder()
+                .load(new ClasspathScanningLoader(new Properties(), new RecipeClassLoader(recipeJarPath, classpath)))
+                .build();
 
         // Validate completeness
         RecipeMarketplaceCompletenessValidator validator = new RecipeMarketplaceCompletenessValidator();
