@@ -25,8 +25,8 @@ import java.io.File;
 import java.nio.file.Files;
 
 import static java.util.Objects.requireNonNull;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.gradle.testkit.runner.TaskOutcome.NO_SOURCE;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class RewriteJavaPluginTest {
     @TempDir
@@ -36,13 +36,13 @@ class RewriteJavaPluginTest {
     private File buildFile;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         settingsFile = new File(testProjectDir, "settings.gradle");
         buildFile = new File(testProjectDir, "build.gradle");
     }
 
     @Test
-    public void testRetry() throws Exception {
+    void retry() throws Exception {
         Files.writeString(settingsFile.toPath(), "rootProject.name = 'my-project'");
         Files.writeString(buildFile.toPath(),
                 //language=gradle
@@ -58,6 +58,6 @@ class RewriteJavaPluginTest {
                 .withPluginClasspath()
                 .build();
 
-        assertEquals(NO_SOURCE, requireNonNull(result.task(":test")).getOutcome());
+        assertThat(requireNonNull(result.task(":test")).getOutcome()).isEqualTo(NO_SOURCE);
     }
 }

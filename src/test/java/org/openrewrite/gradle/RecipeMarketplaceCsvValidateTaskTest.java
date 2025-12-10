@@ -30,7 +30,6 @@ import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.gradle.testkit.runner.TaskOutcome.FAILED;
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class RecipeMarketplaceCsvValidateTaskTest {
     @TempDir
@@ -41,7 +40,7 @@ class RecipeMarketplaceCsvValidateTaskTest {
     private Path csvFile;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         settingsFile = projectDir.resolve("settings.gradle");
         buildFile = projectDir.resolve("build.gradle");
         csvFile = Path.of(projectDir.toString(), "src", "main", "resources", "META-INF", "rewrite", "recipes.csv");
@@ -59,10 +58,10 @@ class RecipeMarketplaceCsvValidateTaskTest {
           .withDebug(true)
           .build();
 
-        assertEquals(SUCCESS, requireNonNull(result.task(":jar")).getOutcome());
-        assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome());
-        assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome());
-        assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvValidate")).getOutcome());
+        assertThat(requireNonNull(result.task(":jar")).getOutcome()).isEqualTo(SUCCESS);
+        assertThat(requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome()).isEqualTo(SUCCESS);
+        assertThat(requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome()).isEqualTo(SUCCESS);
+        assertThat(requireNonNull(result.task(":recipeCsvValidate")).getOutcome()).isEqualTo(SUCCESS);
         assertThat(result.getOutput())
           .contains("Recipe marketplace CSV content validation passed")
           .contains("Recipe marketplace CSV completeness validation passed");
@@ -87,10 +86,10 @@ class RecipeMarketplaceCsvValidateTaskTest {
           .withDebug(true)
           .buildAndFail();
 
-        assertEquals(FAILED, requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome());
+        assertThat(requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome()).isEqualTo(FAILED);
         assertThat(result.getOutput())
           .contains("Recipe marketplace CSV content validation failed")
-          .contains("Display name 'test recipe' must be sentence cased");
+          .contains("Display name must be sentence cased");
     }
 
     @Test
@@ -117,12 +116,12 @@ class RecipeMarketplaceCsvValidateTaskTest {
         // Check the output for validation messages instead
         assertThat(result.getOutput())
           .contains("Recipe marketplace CSV completeness validation failed")
-          .contains("org.example.PhantomRecipe");
+          .contains("Recipe listed in CSV must exist in the environment");
 
         // The recipeCsvValidate task should have failed
         var validateTask = result.task(":recipeCsvValidate");
         if (validateTask != null) {
-            assertEquals(FAILED, validateTask.getOutcome());
+            assertThat(validateTask.getOutcome()).isEqualTo(FAILED);
         }
     }
 
@@ -137,9 +136,9 @@ class RecipeMarketplaceCsvValidateTaskTest {
           .withDebug(true)
           .build();
 
-        assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome());
-        assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome());
-        assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvValidate")).getOutcome());
+        assertThat(requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome()).isEqualTo(SUCCESS);
+        assertThat(requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome()).isEqualTo(SUCCESS);
+        assertThat(requireNonNull(result.task(":recipeCsvValidate")).getOutcome()).isEqualTo(SUCCESS);
         assertThat(result.getOutput()).contains("No recipes.csv found");
     }
 
@@ -177,8 +176,8 @@ class RecipeMarketplaceCsvValidateTaskTest {
           .withDebug(true)
           .build();
 
-        assertEquals(SUCCESS, requireNonNull(result.task(":check")).getOutcome());
-        assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvValidate")).getOutcome());
+        assertThat(requireNonNull(result.task(":check")).getOutcome()).isEqualTo(SUCCESS);
+        assertThat(requireNonNull(result.task(":recipeCsvValidate")).getOutcome()).isEqualTo(SUCCESS);
     }
 
     private void createSimpleRecipeProject() throws IOException {

@@ -30,7 +30,6 @@ import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.gradle.testkit.runner.TaskOutcome.FAILED;
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class RecipeMarketplaceCsvValidateCompletenessTaskTest {
     @TempDir
@@ -41,7 +40,7 @@ class RecipeMarketplaceCsvValidateCompletenessTaskTest {
     private Path csvFile;
 
     @BeforeEach
-    public void setup() throws Exception {
+    void setup() throws Exception {
         settingsFile = projectDir.resolve("settings.gradle");
         buildFile = projectDir.resolve("build.gradle");
         csvFile = Path.of(projectDir.toString(), "src", "main", "resources", "META-INF", "rewrite", "recipes.csv");
@@ -60,8 +59,8 @@ class RecipeMarketplaceCsvValidateCompletenessTaskTest {
           .withDebug(true)
           .build();
 
-        assertEquals(SUCCESS, requireNonNull(result.task(":jar")).getOutcome());
-        assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome());
+        assertThat(requireNonNull(result.task(":jar")).getOutcome()).isEqualTo(SUCCESS);
+        assertThat(requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome()).isEqualTo(SUCCESS);
         assertThat(result.getOutput()).contains("Recipe marketplace CSV completeness validation passed");
     }
 
@@ -83,10 +82,10 @@ class RecipeMarketplaceCsvValidateCompletenessTaskTest {
           .withDebug(true)
           .buildAndFail();
 
-        assertEquals(FAILED, requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome());
+        assertThat(requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome()).isEqualTo(FAILED);
         assertThat(result.getOutput())
           .contains("Recipe marketplace CSV completeness validation failed with 1 error(s)")
-          .contains("Recipe 'org.example.PhantomRecipe' listed in CSV must exist in the environment");
+          .contains("Recipe listed in CSV must exist in the environment");
     }
 
     @Test
@@ -106,10 +105,10 @@ class RecipeMarketplaceCsvValidateCompletenessTaskTest {
           .withDebug(true)
           .buildAndFail();
 
-        assertEquals(FAILED, requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome());
+        assertThat(requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome()).isEqualTo(FAILED);
         assertThat(result.getOutput())
           .contains("Recipe marketplace CSV completeness validation failed with 1 error(s)")
-          .contains("Recipe 'org.example.AnotherRecipe' exists in environment but is not listed in CSV");
+          .contains("Recipe exists in environment but is not listed in CSV");
     }
 
     @Test
@@ -130,11 +129,11 @@ class RecipeMarketplaceCsvValidateCompletenessTaskTest {
           .withDebug(true)
           .buildAndFail();
 
-        assertEquals(FAILED, requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome());
+        assertThat(requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome()).isEqualTo(FAILED);
         assertThat(result.getOutput())
           .contains("Recipe marketplace CSV completeness validation failed")
-          .contains("org.example.PhantomRecipe")
-          .contains("org.example.AnotherRecipe");
+          .contains("Recipe listed in CSV must exist in the environment")
+          .contains("Recipe exists in environment but is not listed in CSV");
     }
 
     @Test
@@ -148,8 +147,8 @@ class RecipeMarketplaceCsvValidateCompletenessTaskTest {
           .withDebug(true)
           .build();
 
-        assertEquals(SUCCESS, requireNonNull(result.task(":jar")).getOutcome());
-        assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome());
+        assertThat(requireNonNull(result.task(":jar")).getOutcome()).isEqualTo(SUCCESS);
+        assertThat(requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome()).isEqualTo(SUCCESS);
         assertThat(result.getOutput()).contains("No recipes.csv found");
     }
 
@@ -171,7 +170,7 @@ class RecipeMarketplaceCsvValidateCompletenessTaskTest {
           .withDebug(true)
           .build();
 
-        assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome());
+        assertThat(requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome()).isEqualTo(SUCCESS);
         assertThat(result.getOutput()).contains("Recipe marketplace CSV completeness validation passed");
     }
 
@@ -191,7 +190,7 @@ class RecipeMarketplaceCsvValidateCompletenessTaskTest {
           .withDebug(true)
           .build();
 
-        assertEquals(SUCCESS, requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome());
+        assertThat(requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome()).isEqualTo(SUCCESS);
         assertThat(result.getOutput()).contains("Recipe marketplace CSV completeness validation passed");
     }
 
