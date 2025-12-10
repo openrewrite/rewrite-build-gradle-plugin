@@ -118,7 +118,7 @@ public abstract class RecipeMarketplaceCsvGenerateTask extends DefaultTask {
 
             // Merge generated marketplace into existing one
             // This ensures existing data is preserved and updated with generated data
-            existing.merge(generated);
+            existing.getRoot().merge(generated.getRoot());
             marketplace = existing;
         } else {
             getLogger().info("No existing recipes.csv found, creating new file");
