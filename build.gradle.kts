@@ -63,6 +63,13 @@ gradlePlugin {
             implementationClass = "org.openrewrite.gradle.RewriteRecipeLibraryBasePlugin"
             tags = listOf("rewrite", "refactoring")
         }
+        create("build-recipe-marketplace") {
+            id = "org.openrewrite.build.recipe-marketplace"
+            displayName = "Rewrite recipe marketplace"
+            description = "Provides tasks for generating and validating recipes.csv for the recipe marketplace"
+            implementationClass = "org.openrewrite.gradle.RewriteRecipeMarketplacePlugin"
+            tags = listOf("rewrite", "refactoring")
+        }
         create("build-recipe-repositories") {
             id = "org.openrewrite.build.recipe-repositories"
             displayName = "Rewrite recipe repositories"
