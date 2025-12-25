@@ -128,6 +128,13 @@ public abstract class RecipeMarketplaceCsvGenerateTask extends DefaultTask {
         RecipeMarketplaceWriter writer = new RecipeMarketplaceWriter();
         String csv = writer.toCsv(marketplace);
 
+        // Check if CSV has actual content (more than just header)
+        long lineCount = csv.lines().count();
+        if (lineCount <= 1) {
+            getLogger().lifecycle("No recipes found, skipping recipes.csv generation");
+            return;
+        }
+
         // Ensure parent directory exists
         Files.createDirectories(outputPath.getParent());
 

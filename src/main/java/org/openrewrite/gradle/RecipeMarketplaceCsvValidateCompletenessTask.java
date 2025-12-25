@@ -18,7 +18,6 @@ package org.openrewrite.gradle;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.RegularFileProperty;
-import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.jvm.tasks.Jar;
@@ -30,13 +29,11 @@ import org.openrewrite.marketplace.RecipeMarketplace;
 import org.openrewrite.marketplace.RecipeMarketplaceCompletenessValidator;
 import org.openrewrite.marketplace.RecipeMarketplaceReader;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
-
-import static java.util.stream.Collectors.toList;
 
 public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends DefaultTask {
 
@@ -90,20 +87,9 @@ public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends Defau
         RecipeMarketplaceReader reader = new RecipeMarketplaceReader();
         RecipeMarketplace csvMarketplace = reader.fromCsv(csvPath);
 
-        // Get runtime classpath (dependencies only, excluding the recipe JAR itself)
-        JavaPluginExtension javaExtension = getProject().getExtensions().getByType(JavaPluginExtension.class);
-        List<Path> classpath = javaExtension.getSourceSets()
-                .getByName("main")
-                .getRuntimeClasspath()
-                .getFiles()
-                .stream()
-                .map(File::toPath)
-                .filter(path -> !path.equals(recipeJarPath)) // Exclude the recipe JAR itself
-                .collect(toList());
-
-        // Load environment from JAR
+        // Load environment from JAR only (not dependencies)
         Environment jarEnvironment = Environment.builder()
-                .load(new ClasspathScanningLoader(new Properties(), new RecipeClassLoader(recipeJarPath, classpath)))
+                .load(new ClasspathScanningLoader(new Properties(), new RecipeClassLoader(recipeJarPath, Collections.emptyList())))
                 .build();
 
         // Validate completeness
@@ -113,12 +99,11 @@ public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends Defau
         if (validation.isInvalid()) {
             List<Validated.Invalid<RecipeMarketplace>> failures = validation.failures();
             StringBuilder errorMessage = new StringBuilder();
-            errorMessage.append("Recipe marketplace CSV completeness validation failed with ")
-                    .append(failures.size())
-                    .append(" error(s):\n");
+            errorMessage.append(failures.size())
+                    .append(" recipe(s) not listed in CSV:\n");
 
             for (Validated.Invalid<RecipeMarketplace> failure : failures) {
-                errorMessage.append("  - ").append(failure.getMessage()).append("\n");
+                errorMessage.append("  - ").append(failure.getProperty()).append("\n");
             }
 
             throw new GradleException(errorMessage.toString());

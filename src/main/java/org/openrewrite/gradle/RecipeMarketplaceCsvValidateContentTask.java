@@ -79,12 +79,11 @@ public abstract class RecipeMarketplaceCsvValidateContentTask extends DefaultTas
         if (validation.isInvalid()) {
             List<Validated.Invalid<RecipeMarketplace>> failures = validation.failures();
             StringBuilder errorMessage = new StringBuilder();
-            errorMessage.append("Recipe marketplace CSV content validation failed with ")
-                    .append(failures.size())
-                    .append(" error(s):\n");
+            errorMessage.append(failures.size())
+                    .append(" content error(s):\n");
 
             for (Validated.Invalid<RecipeMarketplace> failure : failures) {
-                errorMessage.append("  - ").append(failure.getMessage()).append("\n");
+                errorMessage.append("  - ").append(failure.getProperty()).append(": ").append(failure.getMessage()).append("\n");
             }
 
             throw new GradleException(errorMessage.toString());

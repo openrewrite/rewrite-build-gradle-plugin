@@ -87,7 +87,7 @@ class RecipeMarketplaceCsvValidateTaskTest {
 
         assertThat(requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome()).isEqualTo(FAILED);
         assertThat(result.getOutput())
-          .contains("Recipe marketplace CSV content validation failed")
+          .contains("content error(s):")
           .contains("Display name must be sentence cased");
     }
 
@@ -113,8 +113,8 @@ class RecipeMarketplaceCsvValidateTaskTest {
         // When build fails, intermediate tasks might not be in the result
         // Check the output for validation messages instead
         assertThat(result.getOutput())
-          .contains("Recipe marketplace CSV completeness validation failed")
-          .contains("Recipe listed in CSV must exist in the environment");
+          .contains("recipe(s) not listed in CSV")
+          .contains("org.example.PhantomRecipe");
 
         // The recipeCsvValidate task should have failed
         var validateTask = result.task(":recipeCsvValidate");

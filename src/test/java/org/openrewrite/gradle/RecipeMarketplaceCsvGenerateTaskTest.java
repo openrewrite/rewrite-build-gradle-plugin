@@ -169,10 +169,10 @@ class RecipeMarketplaceCsvGenerateTaskTest {
     void createsParentDirectoriesIfNeeded() throws Exception {
         createSimpleRecipeProject();
 
-        // Delete the resources directory if it exists
-        File resourcesDir = new File(projectDir, "src/main/resources");
-        if (resourcesDir.exists()) {
-            deleteDirectory(resourcesDir.toPath());
+        // Delete only the recipes.csv if it exists (keeping the recipe YAML)
+        File csvFile = new File(projectDir, "src/main/resources/META-INF/rewrite/recipes.csv");
+        if (csvFile.exists()) {
+            csvFile.delete();
         }
 
         BuildResult result = GradleRunner.create()
@@ -184,10 +184,41 @@ class RecipeMarketplaceCsvGenerateTaskTest {
 
         assertThat(requireNonNull(result.task(":recipeCsvGenerate")).getOutcome()).isEqualTo(SUCCESS);
 
-        // Assert parent directories were created
-        File csvFile = new File(projectDir, "src/main/resources/META-INF/rewrite/recipes.csv");
+        // Assert parent directories were created and CSV file exists
         assertThat(csvFile.getParentFile()).exists().isDirectory();
         assertThat(csvFile).exists().isFile();
+    }
+
+    @Test
+    void skipsGenerationWhenNoRecipes() throws Exception {
+        createGradleBuildFiles("""
+          plugins {
+              id 'java'
+              id 'org.openrewrite.build.recipe-library-base'
+              id 'org.openrewrite.build.publish'
+          }
+
+          group = 'org.example'
+          version = '1.0.0'
+
+          repositories {
+              mavenCentral()
+          }
+          """);
+
+        BuildResult result = GradleRunner.create()
+          .withProjectDir(projectDir)
+          .withArguments("recipeCsvGenerate", "--info", "--stacktrace")
+          .withPluginClasspath()
+          .withDebug(true)
+          .build();
+
+        assertThat(requireNonNull(result.task(":recipeCsvGenerate")).getOutcome()).isEqualTo(SUCCESS);
+        assertThat(result.getOutput()).contains("No recipes found, skipping recipes.csv generation");
+
+        // Assert CSV file was NOT created
+        File csvFile = new File(projectDir, "src/main/resources/META-INF/rewrite/recipes.csv");
+        assertThat(csvFile).doesNotExist();
     }
 
     private void createSimpleRecipeProject() throws IOException {

@@ -81,7 +81,7 @@ class RecipeMarketplaceCsvValidateContentTaskTest {
 
         assertThat(requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome()).isEqualTo(FAILED);
         assertThat(result.getOutput())
-          .contains("Recipe marketplace CSV content validation failed")
+          .contains("content error(s):")
           .contains("Display name must be sentence cased");
     }
 
@@ -104,7 +104,7 @@ class RecipeMarketplaceCsvValidateContentTaskTest {
 
         assertThat(requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome()).isEqualTo(FAILED);
         assertThat(result.getOutput())
-          .contains("Recipe marketplace CSV content validation failed")
+          .contains("content error(s):")
           .contains("Display name must not end with a period");
     }
 
@@ -127,7 +127,7 @@ class RecipeMarketplaceCsvValidateContentTaskTest {
 
         assertThat(requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome()).isEqualTo(FAILED);
         assertThat(result.getOutput())
-          .contains("Recipe marketplace CSV content validation failed")
+          .contains("content error(s):")
           .contains("Description must end with a period");
     }
 
@@ -151,7 +151,7 @@ class RecipeMarketplaceCsvValidateContentTaskTest {
 
         assertThat(requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome()).isEqualTo(FAILED);
         assertThat(result.getOutput())
-          .contains("Recipe marketplace CSV content validation failed")
+          .contains("content error(s):")
           .contains("Display name must be sentence cased")
           .contains("Display name must not end with a period")
           .contains("Description must end with a period");
