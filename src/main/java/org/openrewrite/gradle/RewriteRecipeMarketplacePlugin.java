@@ -26,6 +26,7 @@ public class RewriteRecipeMarketplacePlugin implements Plugin<Project> {
         // Register recipe marketplace CSV tasks
         project.getTasks().register("recipeCsvGenerate", RecipeMarketplaceCsvGenerateTask.class, task -> {
             task.dependsOn("jar");
+            task.finalizedBy("recipeCsvValidateContent");
         });
 
         project.getTasks().register("recipeCsvValidateContent", RecipeMarketplaceCsvValidateContentTask.class);
