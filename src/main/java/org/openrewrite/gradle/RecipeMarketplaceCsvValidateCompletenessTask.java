@@ -31,9 +31,10 @@ import org.openrewrite.marketplace.RecipeMarketplaceReader;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
+
+import static java.util.Collections.emptyList;
 
 public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends DefaultTask {
 
@@ -89,7 +90,7 @@ public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends Defau
 
         // Load environment from JAR only (not dependencies)
         Environment jarEnvironment = Environment.builder()
-                .load(new ClasspathScanningLoader(new Properties(), new RecipeClassLoader(recipeJarPath, Collections.emptyList())))
+                .load(new ClasspathScanningLoader(new Properties(), new RecipeClassLoader(recipeJarPath, emptyList())))
                 .build();
 
         // Validate completeness
