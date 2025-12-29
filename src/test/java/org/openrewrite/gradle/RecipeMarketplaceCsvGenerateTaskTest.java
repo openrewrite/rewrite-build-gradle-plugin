@@ -25,8 +25,6 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -268,20 +266,5 @@ class RecipeMarketplaceCsvGenerateTaskTest {
     private void createGradleBuildFiles(@Language("gradle") String buildFileContent) throws IOException {
         Files.writeString(settingsFile.toPath(), "rootProject.name = 'test-recipe-project'");
         Files.writeString(buildFile.toPath(), buildFileContent);
-    }
-
-    private void deleteDirectory(Path path) throws IOException {
-        if (Files.exists(path)) {
-            try (Stream<Path> walk = Files.walk(path)) {
-                walk.sorted((a, b) -> -a.compareTo(b))
-                  .forEach(p -> {
-                      try {
-                          Files.delete(p);
-                      } catch (IOException e) {
-                          // Ignore
-                      }
-                  });
-            }
-        }
     }
 }
