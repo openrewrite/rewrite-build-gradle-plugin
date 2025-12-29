@@ -31,9 +31,13 @@ import org.openrewrite.marketplace.RecipeMarketplaceReader;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+
+import static java.util.Collections.emptyList;
+import static java.util.Comparator.comparing;
+import static java.util.stream.Collectors.groupingBy;
 
 public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends DefaultTask {
 
@@ -89,7 +93,7 @@ public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends Defau
 
         // Load environment from JAR only (not dependencies)
         Environment jarEnvironment = Environment.builder()
-                .load(new ClasspathScanningLoader(new Properties(), new RecipeClassLoader(recipeJarPath, Collections.emptyList())))
+                .load(new ClasspathScanningLoader(new Properties(), new RecipeClassLoader(recipeJarPath, emptyList())))
                 .build();
 
         // Validate completeness
@@ -97,13 +101,19 @@ public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends Defau
         Validated<RecipeMarketplace> validation = validator.validate(csvMarketplace, jarEnvironment);
 
         if (validation.isInvalid()) {
-            List<Validated.Invalid<RecipeMarketplace>> failures = validation.failures();
-            StringBuilder errorMessage = new StringBuilder();
-            errorMessage.append(failures.size())
-                    .append(" recipe(s) not listed in CSV:\n");
+            Map<String, List<Validated.Invalid<RecipeMarketplace>>> byMessage = validation.failures().stream()
+                    .sorted(comparing(Validated.Invalid::getProperty))
+                    .collect(groupingBy(Validated.Invalid::getMessage));
 
-            for (Validated.Invalid<RecipeMarketplace> failure : failures) {
-                errorMessage.append("  - ").append(failure.getProperty()).append("\n");
+            StringBuilder errorMessage = new StringBuilder();
+            for (Map.Entry<String, List<Validated.Invalid<RecipeMarketplace>>> entry : byMessage.entrySet()) {
+                String message = entry.getKey();
+                List<Validated.Invalid<RecipeMarketplace>> props = entry.getValue();
+
+                errorMessage.append(message).append(" (").append(props.size()).append("):\n");
+                for (Validated.Invalid<RecipeMarketplace> failure : props) {
+                    errorMessage.append("  - ").append(failure.getProperty()).append("\n");
+                }
             }
 
             throw new GradleException(errorMessage.toString());
