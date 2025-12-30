@@ -188,6 +188,9 @@ dependencies {
     implementation("org.openrewrite:rewrite-core:${rewriteVersion}")
     implementation("org.openrewrite:rewrite-maven:${rewriteVersion}")
 
+    // For completeness task to have `AbstractRefasterJavaVisitor` on the classpath
+    runtimeOnly("org.openrewrite:rewrite-templating:${rewriteVersion}")
+
     compileOnly("org.projectlombok:lombok:latest.release")
     annotationProcessor("org.projectlombok:lombok:latest.release")
 
