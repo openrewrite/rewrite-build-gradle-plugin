@@ -25,7 +25,6 @@ import org.gradle.jvm.tasks.Jar;
 import org.openrewrite.Validated;
 import org.openrewrite.config.ClasspathScanningLoader;
 import org.openrewrite.config.Environment;
-import org.openrewrite.config.RecipeDescriptor;
 import org.openrewrite.marketplace.RecipeClassLoader;
 import org.openrewrite.marketplace.RecipeMarketplace;
 import org.openrewrite.marketplace.RecipeMarketplaceCompletenessValidator;
@@ -34,7 +33,6 @@ import org.openrewrite.marketplace.RecipeMarketplaceReader;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -136,17 +134,7 @@ public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends Defau
 
         // Load environment from JAR
         return Environment.builder()
-                .load(new ClasspathScanningLoader(new Properties(), new RecipeClassLoader(recipeJarPath, classpath)) {
-                    @Override
-                    public Collection<RecipeDescriptor> listRecipeDescriptors() {
-                        // Filter out recipes coming from dependencies; only keep those from the recipe JAR itself
-                        return super.listRecipeDescriptors()
-                                .stream()
-                                // toString to handle both `file:....jar` & `jar:file:....jar!/META-INF/rewrite/file.yml
-                                .filter(rd -> rd.getSource().toString().contains(recipeJarPath.toString()))
-                                .toList();
-                    }
-                })
+                .load(new ClasspathScanningLoader(new Properties(), recipeJarPath, new RecipeClassLoader(recipeJarPath, classpath)))
                 .build();
     }
 }
