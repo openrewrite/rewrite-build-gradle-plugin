@@ -92,7 +92,7 @@ public abstract class RecipeMarketplaceCsvGenerateTask extends DefaultTask {
                 .stream()
                 .map(File::toPath)
                 .filter(path -> !path.equals(recipeJarPath)) // Exclude the recipe JAR itself
-                .toList();
+                .collect(toList());
 
         getLogger().info("Generating recipe marketplace from JAR: {}", recipeJarPath);
         getLogger().info("Using GAV coordinates: {}:{}:{}",

@@ -37,6 +37,7 @@ import java.util.Map;
 
 import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toList;
 
 public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends DefaultTask {
 
@@ -128,7 +129,7 @@ public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends Defau
                 .stream()
                 .map(File::toPath)
                 .filter(path -> path.toString().endsWith(".jar")) // Exclude build output directories
-                .toList();
+                .collect(toList());
 
         // Load environment from JAR
         return Environment.builder().scanJar(recipeJarPath, classpath, new RecipeClassLoader(recipeJarPath, classpath)).build();
