@@ -18,26 +18,26 @@ package org.openrewrite.gradle;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.jvm.tasks.Jar;
 import org.openrewrite.Validated;
-import org.openrewrite.config.ClasspathScanningLoader;
 import org.openrewrite.config.Environment;
 import org.openrewrite.marketplace.RecipeClassLoader;
 import org.openrewrite.marketplace.RecipeMarketplace;
 import org.openrewrite.marketplace.RecipeMarketplaceCompletenessValidator;
 import org.openrewrite.marketplace.RecipeMarketplaceReader;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
-import static java.util.Collections.emptyList;
 import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toList;
 
 public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends DefaultTask {
 
@@ -87,18 +87,11 @@ public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends Defau
         getLogger().info("Validating recipes.csv completeness at: {}", csvPath.toAbsolutePath());
         getLogger().info("Against recipe JAR: {}", recipeJarPath);
 
-        // Read the CSV
-        RecipeMarketplaceReader reader = new RecipeMarketplaceReader();
-        RecipeMarketplace csvMarketplace = reader.fromCsv(csvPath);
-
-        // Load environment from JAR only (not dependencies)
-        Environment jarEnvironment = Environment.builder()
-                .load(new ClasspathScanningLoader(new Properties(), new RecipeClassLoader(recipeJarPath, emptyList())))
-                .build();
-
         // Validate completeness
         RecipeMarketplaceCompletenessValidator validator = new RecipeMarketplaceCompletenessValidator();
-        Validated<RecipeMarketplace> validation = validator.validate(csvMarketplace, jarEnvironment);
+        Validated<RecipeMarketplace> validation = validator.validate(
+                new RecipeMarketplaceReader().fromCsv(csvPath),
+                jarScanningEnvironment(recipeJarPath));
 
         if (validation.isInvalid()) {
             Map<String, List<Validated.Invalid<RecipeMarketplace>>> byMessage = validation.failures().stream()
@@ -120,5 +113,25 @@ public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends Defau
         }
 
         getLogger().lifecycle("Recipe marketplace CSV completeness validation passed");
+    }
+
+    /**
+     * Construct an Environment that only loads recipes directly from the given recipe JAR, not from its dependencies.
+     * This ensures that completeness validation is only done against recipes actually provided by the recipe JAR.
+     */
+    private Environment jarScanningEnvironment(Path recipeJarPath) {
+        // Get runtime classpath, as that contains classes needed to load recipes
+        JavaPluginExtension javaExtension = getProject().getExtensions().getByType(JavaPluginExtension.class);
+        List<Path> classpath = javaExtension.getSourceSets()
+                .getByName("main")
+                .getRuntimeClasspath()
+                .getFiles()
+                .stream()
+                .map(File::toPath)
+                .filter(path -> path.toString().endsWith(".jar")) // Exclude build output directories
+                .collect(toList());
+
+        // Load environment from JAR
+        return Environment.builder().scanJar(recipeJarPath, classpath, new RecipeClassLoader(recipeJarPath, classpath)).build();
     }
 }
