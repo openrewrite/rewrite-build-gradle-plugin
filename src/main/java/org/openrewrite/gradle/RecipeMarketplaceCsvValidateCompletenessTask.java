@@ -24,7 +24,6 @@ import org.gradle.api.tasks.TaskAction;
 import org.gradle.jvm.tasks.Jar;
 import org.openrewrite.Validated;
 import org.openrewrite.config.ClasspathScanningLoader;
-import org.openrewrite.config.Environment;
 import org.openrewrite.marketplace.RecipeClassLoader;
 import org.openrewrite.marketplace.RecipeMarketplace;
 import org.openrewrite.marketplace.RecipeMarketplaceCompletenessValidator;
@@ -35,7 +34,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.groupingBy;
@@ -92,7 +90,7 @@ public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends Defau
         RecipeMarketplaceCompletenessValidator validator = new RecipeMarketplaceCompletenessValidator();
         Validated<RecipeMarketplace> validation = validator.validate(
                 new RecipeMarketplaceReader().fromCsv(csvPath),
-                recipeJarEnvironment(recipeJarPath));
+                directRecipeScanner(recipeJarPath));
 
         if (validation.isInvalid()) {
             Map<String, List<Validated.Invalid<RecipeMarketplace>>> byMessage = validation.failures().stream()
@@ -120,7 +118,7 @@ public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends Defau
      * Construct an Environment that only loads recipes directly from the given recipe JAR, not from its dependencies.
      * This ensures that completeness validation is only done against recipes actually provided by the recipe JAR.
      */
-    private Environment recipeJarEnvironment(Path recipeJarPath) {
+    private ClasspathScanningLoader directRecipeScanner(Path recipeJarPath) {
         // Get runtime classpath, as that contains classes needed to load recipes
         JavaPluginExtension javaExtension = getProject().getExtensions().getByType(JavaPluginExtension.class);
         List<Path> classpath = javaExtension.getSourceSets()
@@ -133,8 +131,6 @@ public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends Defau
                 .toList();
 
         // Load environment from JAR
-        return Environment.builder()
-                .load(new ClasspathScanningLoader(new Properties(), recipeJarPath, new RecipeClassLoader(recipeJarPath, classpath)))
-                .build();
+        return ClasspathScanningLoader.onlyDirect(recipeJarPath, new RecipeClassLoader(recipeJarPath, classpath));
     }
 }
