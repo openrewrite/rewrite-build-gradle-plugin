@@ -90,7 +90,7 @@ public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends Defau
         RecipeMarketplaceCompletenessValidator validator = new RecipeMarketplaceCompletenessValidator();
         Validated<RecipeMarketplace> validation = validator.validate(
                 new RecipeMarketplaceReader().fromCsv(csvPath),
-                directRecipeScanner(recipeJarPath));
+                jarScanningEnvironment(recipeJarPath));
 
         if (validation.isInvalid()) {
             Map<String, List<Validated.Invalid<RecipeMarketplace>>> byMessage = validation.failures().stream()
@@ -118,7 +118,7 @@ public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends Defau
      * Construct an Environment that only loads recipes directly from the given recipe JAR, not from its dependencies.
      * This ensures that completeness validation is only done against recipes actually provided by the recipe JAR.
      */
-    private Environment directRecipeScanner(Path recipeJarPath) {
+    private Environment jarScanningEnvironment(Path recipeJarPath) {
         // Get runtime classpath, as that contains classes needed to load recipes
         JavaPluginExtension javaExtension = getProject().getExtensions().getByType(JavaPluginExtension.class);
         List<Path> classpath = javaExtension.getSourceSets()
