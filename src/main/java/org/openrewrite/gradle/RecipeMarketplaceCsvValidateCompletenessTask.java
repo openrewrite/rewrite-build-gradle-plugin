@@ -23,7 +23,7 @@ import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.jvm.tasks.Jar;
 import org.openrewrite.Validated;
-import org.openrewrite.config.ClasspathScanningLoader;
+import org.openrewrite.config.Environment;
 import org.openrewrite.marketplace.RecipeClassLoader;
 import org.openrewrite.marketplace.RecipeMarketplace;
 import org.openrewrite.marketplace.RecipeMarketplaceCompletenessValidator;
@@ -118,7 +118,7 @@ public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends Defau
      * Construct an Environment that only loads recipes directly from the given recipe JAR, not from its dependencies.
      * This ensures that completeness validation is only done against recipes actually provided by the recipe JAR.
      */
-    private ClasspathScanningLoader directRecipeScanner(Path recipeJarPath) {
+    private Environment directRecipeScanner(Path recipeJarPath) {
         // Get runtime classpath, as that contains classes needed to load recipes
         JavaPluginExtension javaExtension = getProject().getExtensions().getByType(JavaPluginExtension.class);
         List<Path> classpath = javaExtension.getSourceSets()
@@ -131,6 +131,6 @@ public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends Defau
                 .toList();
 
         // Load environment from JAR
-        return ClasspathScanningLoader.onlyDirect(recipeJarPath, new RecipeClassLoader(recipeJarPath, classpath));
+        return Environment.builder().scanJar(recipeJarPath, classpath, new RecipeClassLoader(recipeJarPath, classpath)).build();
     }
 }
