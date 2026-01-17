@@ -39,5 +39,6 @@ public class RewriteRecipeLibraryPlugin implements Plugin<Project> {
         project.getPlugins().apply(RewriteBuildInputLoggingPlugin.class);
         project.getPlugins().apply(RewritePublishPlugin.class);
         project.getPlugins().apply(PublishVerificationPlugin.class);
+        project.getPlugins().apply(RewriteBestPracticesPlugin.class);
     }
 }
