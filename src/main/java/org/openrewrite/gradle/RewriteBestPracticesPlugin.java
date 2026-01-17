@@ -36,11 +36,8 @@ public class RewriteBestPracticesPlugin implements Plugin<Project> {
         // Configure after plugin is applied
         project.getPlugins().withId(REWRITE_PLUGIN_ID, plugin -> {
             String version = project.hasProperty("releasing") ? "latest.release" : "latest.integration";
-            project.getDependencies().add("rewrite",
-                    "org.openrewrite.recipe:rewrite-rewrite:" + version);
-
-            project.getExtensions().configure(RewriteExtension.class, ext ->
-                    ext.activeRecipe(BEST_PRACTICES_RECIPE));
+            project.getDependencies().add("rewrite", "org.openrewrite.recipe:rewrite-rewrite:" + version);
+            project.getExtensions().configure(RewriteExtension.class, ext -> ext.activeRecipe(BEST_PRACTICES_RECIPE));
         });
     }
 }
