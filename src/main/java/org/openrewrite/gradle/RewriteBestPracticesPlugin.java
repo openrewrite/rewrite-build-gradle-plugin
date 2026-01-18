@@ -17,8 +17,6 @@ package org.openrewrite.gradle;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.artifacts.Dependency;
-import org.gradle.api.artifacts.ExternalModuleDependency;
 
 public class RewriteBestPracticesPlugin implements Plugin<Project> {
     private static final String REWRITE_PLUGIN_ID = "org.openrewrite.rewrite";
@@ -38,10 +36,7 @@ public class RewriteBestPracticesPlugin implements Plugin<Project> {
         // Configure after plugin is applied
         project.getPlugins().withId(REWRITE_PLUGIN_ID, plugin -> {
             String version = project.hasProperty("releasing") ? "latest.release" : "latest.integration";
-            Dependency dep = project.getDependencies().create("org.openrewrite.recipe:rewrite-rewrite:" + version);
-            // Exclude transitive dependencies to avoid classpath conflicts with project's own rewrite dependencies
-            ((ExternalModuleDependency) dep).setTransitive(false);
-            project.getDependencies().add("rewrite", dep);
+            project.getDependencies().add("rewrite", project.getDependencies().create("org.openrewrite.recipe:rewrite-rewrite:" + version));
             project.getExtensions().configure(RewriteExtension.class, ext -> ext.activeRecipe(BEST_PRACTICES_RECIPE));
         });
     }
