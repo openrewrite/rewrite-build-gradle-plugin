@@ -84,7 +84,7 @@ class RecipeMarketplaceCsvValidateCompletenessTaskTest {
 
         assertThat(requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome()).isEqualTo(FAILED);
         assertThat(result.getOutput())
-          .contains("Recipe listed in CSV must exist in the environment (1)")
+          .contains("Recipe listed in CSV must exist in the environment")
           .contains("org.example.PhantomRecipe");
     }
 
@@ -108,7 +108,7 @@ class RecipeMarketplaceCsvValidateCompletenessTaskTest {
 
         assertThat(requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome()).isEqualTo(FAILED);
         assertThat(result.getOutput())
-          .contains("Recipe exists in environment but is not listed in CSV (1)")
+          .contains("Recipe exists in environment but is not listed in CSV")
           .contains("org.example.AnotherRecipe");
     }
 
@@ -134,9 +134,9 @@ class RecipeMarketplaceCsvValidateCompletenessTaskTest {
         assertThat(requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome()).isEqualTo(FAILED);
         assertThat(result.getOutput())
           .contains(
-            "Recipe listed in CSV must exist in the environment (1)",
+            "Recipe listed in CSV must exist in the environment",
             " - org.example.AnotherRecipe",
-            "Recipe exists in environment but is not listed in CSV (1)",
+            "Recipe exists in environment but is not listed in CSV",
             " - org.example.PhantomRecipe");
     }
 

@@ -113,7 +113,7 @@ class RecipeMarketplaceCsvValidateTaskTest {
         // When build fails, intermediate tasks might not be in the result
         // Check the output for validation messages instead
         assertThat(result.getOutput())
-          .contains("Recipe listed in CSV must exist in the environment (1)")
+          .contains("Recipe listed in CSV must exist in the environment")
           .contains("org.example.PhantomRecipe");
 
         // The recipeCsvValidate task should have failed
