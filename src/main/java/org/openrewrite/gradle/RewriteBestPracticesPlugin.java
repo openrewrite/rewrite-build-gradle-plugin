@@ -24,16 +24,8 @@ public class RewriteBestPracticesPlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
-        // Configure repositories
-        if (!project.hasProperty("releasing")) {
-            project.getRepositories().mavenLocal();
-        }
-        project.getRepositories().mavenCentral();
+        project.getPluginManager().apply(RewritePlugin.class);
 
-        // Apply the OpenRewrite Gradle plugin
-        project.getPluginManager().apply(REWRITE_PLUGIN_ID);
-
-        // Configure after plugin is applied
         project.getPlugins().withId(REWRITE_PLUGIN_ID, plugin -> {
             String version = project.hasProperty("releasing") ? "latest.release" : "latest.integration";
             project.getDependencies().add("rewrite", project.getDependencies().create("org.openrewrite.recipe:rewrite-rewrite:" + version));

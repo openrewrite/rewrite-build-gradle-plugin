@@ -133,34 +133,4 @@ class RewriteBestPracticesPluginTest {
                 .contains("org.openrewrite.recipe:rewrite-rewrite:");
     }
 
-    @Test
-    void configuresRepositories() throws Exception {
-        Files.writeString(settingsFile.toPath(), SETTINGS_WITH_PLUGIN_MANAGEMENT);
-        //language=groovy
-        Files.writeString(buildFile.toPath(), """
-                plugins {
-                    id 'java'
-                    id 'org.openrewrite.build.best-practices'
-                }
-
-                tasks.register('printRepositories') {
-                    doLast {
-                        repositories.each {
-                            println "Repository: ${it.name}"
-                        }
-                    }
-                }
-                """);
-
-        BuildResult result = GradleRunner.create()
-                .withProjectDir(testProjectDir)
-                .withArguments("printRepositories")
-                .withPluginClasspath()
-                .withDebug(true)
-                .build();
-
-        String output = result.getOutput();
-        assertThat(output).contains("MavenLocal");
-        assertThat(output).contains("MavenRepo");
-    }
 }
