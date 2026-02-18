@@ -27,12 +27,16 @@ public class RewriteRecipeMarketplacePlugin implements Plugin<Project> {
         project.getTasks().register("recipeCsvGenerate", RecipeMarketplaceCsvGenerateTask.class, task -> {
             task.dependsOn("jar");
             task.finalizedBy("recipeCsvValidateContent");
+            task.getRuntimeClasspath().from(project.getConfigurations().getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME));
         });
 
         project.getTasks().register("recipeCsvValidateContent", RecipeMarketplaceCsvValidateContentTask.class);
 
         project.getTasks().register("recipeCsvValidateCompleteness", RecipeMarketplaceCsvValidateCompletenessTask.class,
-                task -> task.dependsOn("jar"));
+                task -> {
+                    task.dependsOn("jar");
+                    task.getRuntimeClasspath().from(project.getConfigurations().getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME));
+                });
 
         // Create a composite task that runs both validations
         project.getTasks().register("recipeCsvValidate", task -> {

@@ -17,10 +17,11 @@ package org.openrewrite.gradle;
 
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
+import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.RegularFileProperty;
-import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.maven.MavenPublication;
+import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.jvm.tasks.Jar;
@@ -39,6 +40,9 @@ import java.util.List;
 import static java.util.stream.Collectors.toList;
 
 public abstract class RecipeMarketplaceCsvGenerateTask extends DefaultTask {
+
+    @Classpath
+    public abstract ConfigurableFileCollection getRuntimeClasspath();
 
     /**
      * The output CSV file where the generated marketplace will be written.
@@ -84,10 +88,7 @@ public abstract class RecipeMarketplaceCsvGenerateTask extends DefaultTask {
         }
 
         // Get runtime classpath (dependencies only, excluding the recipe JAR itself)
-        JavaPluginExtension javaExtension = getProject().getExtensions().getByType(JavaPluginExtension.class);
-        List<Path> classpath = javaExtension.getSourceSets()
-                .getByName("main")
-                .getRuntimeClasspath()
+        List<Path> classpath = getRuntimeClasspath()
                 .getFiles()
                 .stream()
                 .map(File::toPath)

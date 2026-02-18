@@ -17,8 +17,9 @@ package org.openrewrite.gradle;
 
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
+import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.RegularFileProperty;
-import org.gradle.api.plugins.JavaPluginExtension;
+import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.jvm.tasks.Jar;
@@ -50,6 +51,9 @@ public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends Defau
      */
     @Internal
     public abstract RegularFileProperty getCsvFile();
+
+    @Classpath
+    public abstract ConfigurableFileCollection getRuntimeClasspath();
 
     public RecipeMarketplaceCsvValidateCompletenessTask() {
         getCsvFile().convention(
@@ -121,10 +125,7 @@ public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends Defau
      */
     private Environment jarScanningEnvironment(Path recipeJarPath) {
         // Get runtime classpath, as that contains classes needed to load recipes
-        JavaPluginExtension javaExtension = getProject().getExtensions().getByType(JavaPluginExtension.class);
-        List<Path> classpath = javaExtension.getSourceSets()
-                .getByName("main")
-                .getRuntimeClasspath()
+        List<Path> classpath = getRuntimeClasspath()
                 .getFiles()
                 .stream()
                 .map(File::toPath)
