@@ -146,6 +146,13 @@ gradlePlugin {
             implementationClass = "org.openrewrite.gradle.ModerneProprietaryLicensePlugin"
             tags = listOf("rewrite", "refactoring")
         }
+        create("build-best-practices") {
+            id = "org.openrewrite.build.best-practices"
+            displayName = "Rewrite best practices"
+            description = "Applies OpenRewrite best practices recipes to the project"
+            implementationClass = "org.openrewrite.gradle.RewriteBestPracticesPlugin"
+            tags = listOf("rewrite", "refactoring", "best-practices")
+        }
     }
 }
 
@@ -214,6 +221,9 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-core")
     implementation("com.fasterxml.jackson.core:jackson-databind")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml")
+
+    // Required for RewriteBestPracticesPlugin to apply the rewrite plugin
+    implementation("org.openrewrite:plugin:${rewriteVersion}")
 
     testImplementation(platform("org.junit:junit-bom:5.+"))
     testImplementation("org.junit.jupiter:junit-jupiter-api")
