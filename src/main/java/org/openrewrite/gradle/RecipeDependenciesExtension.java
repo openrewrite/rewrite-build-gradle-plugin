@@ -15,6 +15,7 @@
  */
 package org.openrewrite.gradle;
 
+import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.ExternalModuleDependency;
@@ -84,7 +85,13 @@ public class RecipeDependenciesExtension {
                 throw new IllegalArgumentException("Only external module dependencies are supported as recipe dependencies.");
             }
             ((ExternalModuleDependency) dependency).setTransitive(false);
-            for (File file : configurationContainer.detachedConfiguration(dependency).resolve()) {
+            Configuration config = configurationContainer.detachedConfiguration(dependency);
+            config.getResolutionStrategy().getComponentSelection().all(selection -> {
+                if (selection.getCandidate().getVersion().contains("SNAPSHOT")) {
+                    selection.reject("Snapshot versions are not allowed for parser classpath dependencies");
+                }
+            });
+            for (File file : config.resolve()) {
                 resolved.put(dependency, file);
             }
         }
