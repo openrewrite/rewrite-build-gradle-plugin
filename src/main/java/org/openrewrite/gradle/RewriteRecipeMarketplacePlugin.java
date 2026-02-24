@@ -18,6 +18,7 @@ package org.openrewrite.gradle;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.jvm.tasks.Jar;
 
 public class RewriteRecipeMarketplacePlugin implements Plugin<Project> {
 
@@ -27,6 +28,7 @@ public class RewriteRecipeMarketplacePlugin implements Plugin<Project> {
         project.getTasks().register("recipeCsvGenerate", RecipeMarketplaceCsvGenerateTask.class, task -> {
             task.dependsOn("jar");
             task.finalizedBy("recipeCsvValidateContent");
+            task.getRecipeJar().set(project.getTasks().named("jar", Jar.class).flatMap(Jar::getArchiveFile));
             task.getRuntimeClasspath().from(project.getConfigurations().getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME));
         });
 
