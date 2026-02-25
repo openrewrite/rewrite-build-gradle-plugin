@@ -41,12 +41,6 @@ public abstract class RecipeMarketplaceCsvValidateContentTask extends DefaultTas
     @Internal
     public abstract RegularFileProperty getCsvFile();
 
-    public RecipeMarketplaceCsvValidateContentTask() {
-        getCsvFile().convention(
-                getProject().getLayout().getProjectDirectory().file("src/main/resources/META-INF/rewrite/recipes.csv")
-        );
-    }
-
     @Override
     public String getDescription() {
         return "Validates the content formatting of recipes.csv (display names, descriptions)";

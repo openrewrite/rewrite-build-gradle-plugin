@@ -19,9 +19,7 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.RegularFileProperty;
-import org.gradle.api.tasks.Classpath;
-import org.gradle.api.tasks.Internal;
-import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.*;
 import org.gradle.jvm.tasks.Jar;
 import org.openrewrite.Validated;
 import org.openrewrite.config.Environment;
@@ -52,14 +50,12 @@ public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends Defau
     @Internal
     public abstract RegularFileProperty getCsvFile();
 
+    @InputFile
+    @PathSensitive(PathSensitivity.NONE)
+    public abstract RegularFileProperty getRecipeJar();
+
     @Classpath
     public abstract ConfigurableFileCollection getRuntimeClasspath();
-
-    public RecipeMarketplaceCsvValidateCompletenessTask() {
-        getCsvFile().convention(
-                getProject().getLayout().getProjectDirectory().file("src/main/resources/META-INF/rewrite/recipes.csv")
-        );
-    }
 
     @Override
     public String getDescription() {
@@ -80,9 +76,7 @@ public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends Defau
             return;
         }
 
-        // Get the jar task output
-        Jar jarTask = (Jar) getProject().getTasks().getByName("jar");
-        Path recipeJarPath = jarTask.getArchiveFile().get().getAsFile().toPath();
+        Path recipeJarPath = getRecipeJar().get().getAsFile().toPath();
 
         if (!Files.exists(recipeJarPath)) {
             throw new GradleException("Recipe JAR does not exist: " + recipeJarPath + ". Make sure the jar task has run.");
