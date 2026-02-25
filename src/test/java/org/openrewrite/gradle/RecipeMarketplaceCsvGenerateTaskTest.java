@@ -70,14 +70,14 @@ class RecipeMarketplaceCsvGenerateTaskTest {
     void mergesWithExistingRecipeCsv() throws Exception {
         createSimpleRecipeProject();
 
-        // Create existing recipes.csv with custom entry
+        // Create existing recipes.csv with an entry from a different package
         File csvFile = new File(projectDir, "src/main/resources/META-INF/rewrite/recipes.csv");
         csvFile.getParentFile().mkdirs();
         Files.writeString(csvFile.toPath(),
           //language=csv
           """
             ecosystem,packageName,name,displayName,category1
-            maven,org.example:test-recipe-project,org.example.CustomRecipe,Custom recipe,Custom
+            maven,org.example:other-project,org.example.CustomRecipe,Custom recipe,Custom
             """);
 
         BuildResult result = GradleRunner.create()
@@ -217,6 +217,46 @@ class RecipeMarketplaceCsvGenerateTaskTest {
         // Assert CSV file was NOT created
         File csvFile = new File(projectDir, "src/main/resources/META-INF/rewrite/recipes.csv");
         assertThat(csvFile).doesNotExist();
+    }
+
+    @Test
+    void renamedRecipeUpdatesRecipeCsv() throws Exception {
+        // given — a project with an initial recipe
+        createSimpleRecipeProject();
+
+        GradleRunner runner = GradleRunner.create()
+          .withProjectDir(projectDir)
+          .withPluginClasspath()
+          .withDebug(true);
+
+        // given — first build + generate has run
+        runner.withArguments("recipeCsvGenerate", "--info", "--stacktrace").build();
+
+        File csvFile = new File(projectDir, "src/main/resources/META-INF/rewrite/recipes.csv");
+        assertThat(csvFile).content().contains("org.example.TestRecipe");
+
+        // given — recipe is renamed
+        File rewriteYml = new File(projectDir, "src/main/resources/META-INF/rewrite/rewrite.yml");
+        Files.writeString(rewriteYml.toPath(), """
+          ---
+          type: specs.openrewrite.org/v1beta/recipe
+          name: org.example.RenamedRecipe
+          displayName: Renamed recipe
+          description: A renamed recipe.
+          recipeList:
+            - org.openrewrite.text.ChangeText:
+                toText: "Hello World"
+          """);
+
+        // when — second build + generate
+        BuildResult result = runner.withArguments("recipeCsvGenerate", "--info", "--stacktrace").build();
+
+        // then — CSV should contain only the renamed recipe, not the old one
+        assertThat(requireNonNull(result.task(":recipeCsvGenerate")).getOutcome()).isEqualTo(SUCCESS);
+        assertThat(csvFile)
+          .content()
+          .contains("org.example.RenamedRecipe")
+          .doesNotContain("org.example.TestRecipe");
     }
 
     private void createSimpleRecipeProject() throws IOException {

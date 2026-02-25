@@ -22,9 +22,11 @@ import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.maven.MavenPublication;
 import org.gradle.api.tasks.Classpath;
+import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.OutputFile;
+import org.gradle.api.tasks.PathSensitive;
+import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.api.tasks.TaskAction;
-import org.gradle.jvm.tasks.Jar;
 import org.openrewrite.marketplace.RecipeMarketplace;
 import org.openrewrite.marketplace.RecipeMarketplaceReader;
 import org.openrewrite.marketplace.RecipeMarketplaceWriter;
@@ -40,6 +42,10 @@ import java.util.List;
 import static java.util.stream.Collectors.toList;
 
 public abstract class RecipeMarketplaceCsvGenerateTask extends DefaultTask {
+
+    @InputFile
+    @PathSensitive(PathSensitivity.NONE)
+    public abstract RegularFileProperty getRecipeJar();
 
     @Classpath
     public abstract ConfigurableFileCollection getRuntimeClasspath();
@@ -69,9 +75,7 @@ public abstract class RecipeMarketplaceCsvGenerateTask extends DefaultTask {
 
     @TaskAction
     void generate() throws IOException {
-        // Get the jar task output
-        Jar jarTask = (Jar) getProject().getTasks().getByName("jar");
-        Path recipeJarPath = jarTask.getArchiveFile().get().getAsFile().toPath();
+        Path recipeJarPath = getRecipeJar().get().getAsFile().toPath();
         if (!Files.exists(recipeJarPath)) {
             throw new GradleException("Recipe JAR does not exist: " + recipeJarPath + ". Make sure the jar task has run.");
         }
@@ -117,8 +121,8 @@ public abstract class RecipeMarketplaceCsvGenerateTask extends DefaultTask {
             RecipeMarketplaceReader reader = new RecipeMarketplaceReader();
             RecipeMarketplace existing = reader.fromCsv(outputPath);
 
-            // Merge generated marketplace into existing one
-            // This ensures existing data is preserved and updated with generated data
+            String packageName = nebulaPublication.getGroupId() + ":" + nebulaPublication.getArtifactId();
+            existing.uninstall("maven", packageName);
             existing.getRoot().merge(generated.getRoot());
             marketplace = existing;
         } else {

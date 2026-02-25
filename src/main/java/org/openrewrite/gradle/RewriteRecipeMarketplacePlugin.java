@@ -15,9 +15,12 @@
  */
 package org.openrewrite.gradle;
 
+import com.github.jengelman.gradle.plugins.shadow.ShadowPlugin;
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.jvm.tasks.Jar;
 
 public class RewriteRecipeMarketplacePlugin implements Plugin<Project> {
 
@@ -25,10 +28,11 @@ public class RewriteRecipeMarketplacePlugin implements Plugin<Project> {
     public void apply(Project project) {
         // Register recipe marketplace CSV tasks
         project.getTasks().register("recipeCsvGenerate", RecipeMarketplaceCsvGenerateTask.class, task -> {
-            task.dependsOn("jar");
             task.finalizedBy("recipeCsvValidateContent");
             task.getRuntimeClasspath().from(project.getConfigurations().getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME));
         });
+
+        configureRecipeJarInput(project);
 
         project.getTasks().register("recipeCsvValidateContent", RecipeMarketplaceCsvValidateContentTask.class);
 
@@ -50,5 +54,21 @@ public class RewriteRecipeMarketplacePlugin implements Plugin<Project> {
             // Add CSV validation to the check phase
             project.getTasks().named("check").configure(check ->
                 check.dependsOn("recipeCsvValidate")));
+    }
+
+    private void configureRecipeJarInput(Project project) {
+        project.getPlugins().withType(ShadowPlugin.class, shadowPlugin ->
+                project.getTasks().named("recipeCsvGenerate", RecipeMarketplaceCsvGenerateTask.class, task -> {
+                    task.dependsOn("shadowJar");
+                    task.getRecipeJar().set(project.getTasks().named("shadowJar", ShadowJar.class).flatMap(ShadowJar::getArchiveFile));
+                }));
+
+        project.afterEvaluate(p ->
+                p.getTasks().named("recipeCsvGenerate", RecipeMarketplaceCsvGenerateTask.class, task -> {
+                    if (!task.getRecipeJar().isPresent()) {
+                        task.dependsOn("jar");
+                        task.getRecipeJar().set(p.getTasks().named("jar", Jar.class).flatMap(Jar::getArchiveFile));
+                    }
+                }));
     }
 }
