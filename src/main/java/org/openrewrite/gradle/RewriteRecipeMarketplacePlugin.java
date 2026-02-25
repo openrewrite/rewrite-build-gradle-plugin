@@ -15,60 +15,65 @@
  */
 package org.openrewrite.gradle;
 
+import com.github.jengelman.gradle.plugins.shadow.ShadowJavaPlugin;
 import com.github.jengelman.gradle.plugins.shadow.ShadowPlugin;
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.Task;
+import org.gradle.api.file.RegularFile;
 import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.api.tasks.TaskProvider;
 import org.gradle.jvm.tasks.Jar;
 
 public class RewriteRecipeMarketplacePlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
-        // Register recipe marketplace CSV tasks
-        project.getTasks().register("recipeCsvGenerate", RecipeMarketplaceCsvGenerateTask.class, task -> {
-            task.finalizedBy("recipeCsvValidateContent");
-            task.getRuntimeClasspath().from(project.getConfigurations().getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME));
+        RegularFile recipesCsvFile = project.getLayout().getProjectDirectory().file("src/main/resources/META-INF/rewrite/recipes.csv");
+
+        TaskProvider<RecipeMarketplaceCsvValidateContentTask> recipeCsvValidateContent = project.getTasks().register("recipeCsvValidateContent", RecipeMarketplaceCsvValidateContentTask.class, task -> {
+            task.getCsvFile().convention(recipesCsvFile);
         });
 
-        configureRecipeJarInput(project);
+        // Register recipe marketplace CSV tasks
+        project.getTasks().register("recipeCsvGenerate", RecipeMarketplaceCsvGenerateTask.class, task -> {
+            task.finalizedBy(recipeCsvValidateContent);
+            task.getGroupId().convention(project.provider(() -> project.getGroup().toString()));
+            task.getArtifactId().convention(project.provider(project::getName));
+            task.getVersion().convention(project.provider(() -> project.getVersion().toString()));
+            task.getRuntimeClasspath().from(project.getConfigurations().getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME));
+            if (project.getPlugins().hasPlugin(ShadowJavaPlugin.class)) {
+                task.getRecipeJar().convention(project.getTasks().named(ShadowJavaPlugin.SHADOW_JAR_TASK_NAME, ShadowJar.class).flatMap(Jar::getArchiveFile));
+            } else {
+                task.getRecipeJar().convention(project.getTasks().named(JavaPlugin.JAR_TASK_NAME, Jar.class).flatMap(Jar::getArchiveFile));
+            }
 
-        project.getTasks().register("recipeCsvValidateContent", RecipeMarketplaceCsvValidateContentTask.class);
+            task.getOutputFile().convention(recipesCsvFile);
+        });
 
-        project.getTasks().register("recipeCsvValidateCompleteness", RecipeMarketplaceCsvValidateCompletenessTask.class,
+        TaskProvider<RecipeMarketplaceCsvValidateCompletenessTask> recipeCsvValidateCompleteness = project.getTasks().register("recipeCsvValidateCompleteness", RecipeMarketplaceCsvValidateCompletenessTask.class,
                 task -> {
-                    task.dependsOn("jar");
                     task.getRuntimeClasspath().from(project.getConfigurations().getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME));
+                    if (project.getPlugins().hasPlugin(ShadowJavaPlugin.class)) {
+                        task.getRecipeJar().convention(project.getTasks().named(ShadowJavaPlugin.SHADOW_JAR_TASK_NAME, ShadowJar.class).flatMap(Jar::getArchiveFile));
+                    } else {
+                        task.getRecipeJar().convention(project.getTasks().named(JavaPlugin.JAR_TASK_NAME, Jar.class).flatMap(Jar::getArchiveFile));
+                    }
+
+                    task.getCsvFile().convention(recipesCsvFile);
                 });
 
         // Create a composite task that runs both validations
-        project.getTasks().register("recipeCsvValidate", task -> {
+        TaskProvider<Task> recipeCsvValidate = project.getTasks().register("recipeCsvValidate", task -> {
             task.setGroup("OpenRewrite");
             task.setDescription("Validates recipes.csv for both content and completeness");
-            task.dependsOn("recipeCsvValidateContent", "recipeCsvValidateCompleteness");
+            task.dependsOn(recipeCsvValidateContent, recipeCsvValidateCompleteness);
         });
 
         // Configure check task when Java plugin is applied
         project.getPlugins().withType(JavaPlugin.class, javaPlugin ->
             // Add CSV validation to the check phase
-            project.getTasks().named("check").configure(check ->
-                check.dependsOn("recipeCsvValidate")));
-    }
-
-    private void configureRecipeJarInput(Project project) {
-        project.getPlugins().withType(ShadowPlugin.class, shadowPlugin ->
-                project.getTasks().named("recipeCsvGenerate", RecipeMarketplaceCsvGenerateTask.class, task -> {
-                    task.dependsOn("shadowJar");
-                    task.getRecipeJar().set(project.getTasks().named("shadowJar", ShadowJar.class).flatMap(ShadowJar::getArchiveFile));
-                }));
-
-        project.afterEvaluate(p ->
-                p.getTasks().named("recipeCsvGenerate", RecipeMarketplaceCsvGenerateTask.class, task -> {
-                    if (!task.getRecipeJar().isPresent()) {
-                        task.dependsOn("jar");
-                        task.getRecipeJar().set(p.getTasks().named("jar", Jar.class).flatMap(Jar::getArchiveFile));
-                    }
-                }));
+            project.getTasks().named("check").configure(check -> check.dependsOn(recipeCsvValidate)));
     }
 }

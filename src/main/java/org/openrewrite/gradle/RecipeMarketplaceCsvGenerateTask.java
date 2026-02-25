@@ -19,14 +19,10 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.provider.Property;
 import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.maven.MavenPublication;
-import org.gradle.api.tasks.Classpath;
-import org.gradle.api.tasks.InputFile;
-import org.gradle.api.tasks.OutputFile;
-import org.gradle.api.tasks.PathSensitive;
-import org.gradle.api.tasks.PathSensitivity;
-import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.*;
 import org.openrewrite.marketplace.RecipeMarketplace;
 import org.openrewrite.marketplace.RecipeMarketplaceReader;
 import org.openrewrite.marketplace.RecipeMarketplaceWriter;
@@ -43,6 +39,15 @@ import static java.util.stream.Collectors.toList;
 
 public abstract class RecipeMarketplaceCsvGenerateTask extends DefaultTask {
 
+    @Input
+    public abstract Property<String> getGroupId();
+
+    @Input
+    public abstract Property<String> getArtifactId();
+
+    @Input
+    public abstract Property<String> getVersion();
+
     @InputFile
     @PathSensitive(PathSensitivity.NONE)
     public abstract RegularFileProperty getRecipeJar();
@@ -56,12 +61,6 @@ public abstract class RecipeMarketplaceCsvGenerateTask extends DefaultTask {
      */
     @OutputFile
     public abstract RegularFileProperty getOutputFile();
-
-    public RecipeMarketplaceCsvGenerateTask() {
-        getOutputFile().convention(
-                getProject().getLayout().getProjectDirectory().file("src/main/resources/META-INF/rewrite/recipes.csv")
-        );
-    }
 
     @Override
     public String getDescription() {
@@ -80,17 +79,6 @@ public abstract class RecipeMarketplaceCsvGenerateTask extends DefaultTask {
             throw new GradleException("Recipe JAR does not exist: " + recipeJarPath + ". Make sure the jar task has run.");
         }
 
-        // Get GAV from nebula publication
-        PublishingExtension publishing = getProject().getExtensions().findByType(PublishingExtension.class);
-        if (publishing == null) {
-            throw new GradleException("Publishing extension not found. Make sure the publishing plugin is applied.");
-        }
-
-        MavenPublication nebulaPublication = (MavenPublication) publishing.getPublications().findByName("nebula");
-        if (nebulaPublication == null) {
-            throw new GradleException("Nebula publication not found. Make sure the nebula publishing plugin is applied.");
-        }
-
         // Get runtime classpath (dependencies only, excluding the recipe JAR itself)
         List<Path> classpath = getRuntimeClasspath()
                 .getFiles()
@@ -99,14 +87,15 @@ public abstract class RecipeMarketplaceCsvGenerateTask extends DefaultTask {
                 .filter(path -> !path.equals(recipeJarPath)) // Exclude the recipe JAR itself
                 .collect(toList());
 
+        String groupId = getGroupId().get();
+        String artifactId = getArtifactId().get();
+        String version = getVersion().get();
+
         getLogger().info("Generating recipe marketplace from JAR: {}", recipeJarPath);
-        getLogger().info("Using GAV coordinates: {}:{}:{}",
-                nebulaPublication.getGroupId(),
-                nebulaPublication.getArtifactId(),
-                nebulaPublication.getVersion());
+        getLogger().info("Using GAV coordinates: {}:{}:{}", groupId, artifactId, version);
 
         MavenRecipeMarketplaceGenerator generator = new MavenRecipeMarketplaceGenerator(
-                new GroupArtifact(nebulaPublication.getGroupId(), nebulaPublication.getArtifactId()),
+                new GroupArtifact(groupId, artifactId),
                 recipeJarPath,
                 classpath
         );
@@ -121,7 +110,7 @@ public abstract class RecipeMarketplaceCsvGenerateTask extends DefaultTask {
             RecipeMarketplaceReader reader = new RecipeMarketplaceReader();
             RecipeMarketplace existing = reader.fromCsv(outputPath);
 
-            String packageName = nebulaPublication.getGroupId() + ":" + nebulaPublication.getArtifactId();
+            String packageName = groupId + ":" + artifactId;
             existing.uninstall("maven", packageName);
             existing.getRoot().merge(generated.getRoot());
             marketplace = existing;
