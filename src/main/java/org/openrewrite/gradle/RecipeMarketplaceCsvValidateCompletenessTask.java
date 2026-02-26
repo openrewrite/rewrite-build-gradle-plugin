@@ -20,7 +20,6 @@ import org.gradle.api.GradleException;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.tasks.*;
-import org.gradle.jvm.tasks.Jar;
 import org.openrewrite.Validated;
 import org.openrewrite.config.Environment;
 import org.openrewrite.marketplace.RecipeClassLoader;

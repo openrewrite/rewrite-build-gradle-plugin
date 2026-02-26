@@ -16,7 +16,6 @@
 package org.openrewrite.gradle;
 
 import com.github.jengelman.gradle.plugins.shadow.ShadowJavaPlugin;
-import com.github.jengelman.gradle.plugins.shadow.ShadowPlugin;
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
