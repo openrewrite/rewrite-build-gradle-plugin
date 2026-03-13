@@ -200,7 +200,9 @@ dependencies {
     // Provide a newer Spring version to replace the excluded 3.1.3
     implementation("org.springframework:spring-core:6.2.11")
     implementation("com.github.jk1:gradle-license-report:1.16")
-    implementation("org.owasp:dependency-check-gradle:latest.release")
+    implementation("org.owasp:dependency-check-gradle:latest.release") {
+        exclude(group = "org.apache.lucene", module = "lucene-facet") // Brings in a vulnerability
+    }
     implementation("com.netflix.nebula.contacts:com.netflix.nebula.contacts.gradle.plugin:latest.release")
     implementation("com.netflix.nebula.info:com.netflix.nebula.info.gradle.plugin:latest.release")
     implementation("com.netflix.nebula.release:com.netflix.nebula.release.gradle.plugin:latest.release")
