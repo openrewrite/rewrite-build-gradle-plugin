@@ -212,7 +212,7 @@ dependencies {
     implementation("com.gradleup.shadow:com.gradleup.shadow.gradle.plugin:9.0.0-beta7") // Latest supporting Java 8
 
     implementation("org.jspecify:jspecify:1.0.0")
-    implementation(platform("com.fasterxml.jackson:jackson-bom:2.17.2"))
+    implementation(platform("com.fasterxml.jackson:jackson-bom:2.21.1"))
     implementation("com.fasterxml.jackson.core:jackson-core")
     implementation("com.fasterxml.jackson.core:jackson-databind")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml")
