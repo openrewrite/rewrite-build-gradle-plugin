@@ -39,4 +39,26 @@
         <cve>CVE-2023-26464</cve>
         <cve>CVE-2021-4104</cve>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+            file name: openai4j-0.25.0.jar
+            sev: MEDIUM
+            reason: False positive. CVE-2025-43714 is about ChatGPT's web UI rendering SVG inline
+            (stored XSS in shared conversations). It has nothing to do with the openai4j Java client
+            library. The scanner is incorrectly associating the CVE with this client library.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/dev\.ai4j/openai4j@.*$</packageUrl>
+        <cve>CVE-2025-43714</cve>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
+            file name: rewrite-openapi-*.jar
+            sev: MEDIUM
+            reason: False positive. CVE-2024-25712 is about the Go http-swagger package (XSS via
+            httpSwagger.WrapHandler), not the Java rewrite-openapi library. The scanner is matching
+            on the "swagger"/"openapi" name in the artifact.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.openrewrite\.recipe/rewrite-openapi@.*$</packageUrl>
+        <cve>CVE-2024-25712</cve>
+    </suppress>
 </suppressions>
