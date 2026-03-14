@@ -9,4 +9,14 @@
         <packageUrl regex="true">^pkg:maven/com\.squareup\.okio/okio@.*$</packageUrl>
         <cve>CVE-2023-3635</cve>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+            file name: h2-2.4.240.jar
+            sev: MEDIUM
+            reason: False positive. CVE-2018-14335 applies to H2 1.4.197 only. The backup function
+            file read vulnerability was fixed in 1.4.198. Version 2.4.240 is not affected.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/com\.h2database/h2@2\..*$</packageUrl>
+        <cve>CVE-2018-14335</cve>
+    </suppress>
 </suppressions>
