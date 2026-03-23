@@ -43,7 +43,7 @@ public class RewriteJavaPlugin implements Plugin<Project> {
         project.getPlugins().apply(RewriteDependencyCheckPlugin.class);
 
         RewriteJavaExtension ext = project.getExtensions().create("rewriteJava", RewriteJavaExtension.class);
-        ext.getJacksonVersion().convention("2.17.2");
+        ext.getJacksonVersion().convention("2.21.2");
 
         project.getPlugins().apply(JavaLibraryPlugin.class);
 
