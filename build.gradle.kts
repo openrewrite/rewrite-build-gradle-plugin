@@ -192,7 +192,7 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok:latest.release")
 
     implementation("org.apache.ivy:ivy:2.5.2")
-    implementation("org.apache.maven:maven-plugin-api:3.9.6")
+    implementation("org.apache.maven:maven-plugin-api:3.9.14")
     implementation("gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:latest.release") {
         exclude(group = "org.springframework", module = "spring-core")
         exclude(group = "org.springframework", module = "spring-asm")
@@ -237,6 +237,9 @@ dependencies {
             because("CVE-2021-33813")
         }
         implementation("org.codehaus.plexus:plexus-xml:4.0.3") {
+            because("CVE-2022-4244, CVE-2022-4245")
+        }
+        implementation("org.codehaus.plexus:plexus-utils:4.0.3") {
             because("CVE-2022-4244, CVE-2022-4245")
         }
     }
