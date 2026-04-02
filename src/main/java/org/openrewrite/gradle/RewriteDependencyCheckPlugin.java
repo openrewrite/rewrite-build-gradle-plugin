@@ -80,13 +80,18 @@ public class RewriteDependencyCheckPlugin implements Plugin<Project> {
             throw new UncheckedIOException("Failed to copy suppressions.xml", e);
         }
 
+        File rootSuppressionsFile = new File(project.getRootProject().getProjectDir(), "suppressions.xml");
+
         project.getExtensions().configure(DependencyCheckExtension.class, ext -> {
             List<String> suppressionFiles = new ArrayList<>();
             suppressionFiles.add(sharedSuppressionsFile.getAbsolutePath());
             project.getLogger().info("Adding shared suppressions file: {}", sharedSuppressionsFile.getAbsolutePath());
-            if (projectSuppressionsFile.exists()) {
-                project.getLogger().info("Adding project suppressions file: {}",
-                        projectSuppressionsFile.getAbsolutePath());
+            if (rootSuppressionsFile.exists()) {
+                project.getLogger().info("Adding root project suppressions file: {}", rootSuppressionsFile.getAbsolutePath());
+                suppressionFiles.add(rootSuppressionsFile.getAbsolutePath());
+            }
+            if (projectSuppressionsFile.exists() && !projectSuppressionsFile.equals(rootSuppressionsFile)) {
+                project.getLogger().info("Adding project suppressions file: {}", projectSuppressionsFile.getAbsolutePath());
                 suppressionFiles.add(projectSuppressionsFile.getAbsolutePath());
             }
             ext.setSuppressionFiles(suppressionFiles);
