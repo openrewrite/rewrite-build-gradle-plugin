@@ -34,7 +34,7 @@
         <cve>CVE-2023-26464</cve>
         <cve>CVE-2021-4104</cve>
     </suppress>
-    <suppress>
+    <suppress until="2026-05-01Z">
         <notes><![CDATA[
             file name: openai4j-0.25.0.jar
             sev: MEDIUM
@@ -45,7 +45,7 @@
         <packageUrl regex="true">^pkg:maven/dev\.ai4j/openai4j@.*$</packageUrl>
         <cve>CVE-2025-43714</cve>
     </suppress>
-    <suppress>
+    <suppress until="2026-05-01Z">
         <notes><![CDATA[
             file name: rewrite-openapi-*.jar
             sev: MEDIUM
