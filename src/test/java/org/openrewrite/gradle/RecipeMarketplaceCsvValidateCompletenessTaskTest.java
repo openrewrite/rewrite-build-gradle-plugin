@@ -255,6 +255,29 @@ class RecipeMarketplaceCsvValidateCompletenessTaskTest {
         }
     }
 
+    @Test
+    void passesWhenCsvContainsCrossPackageRecipe() throws Exception {
+        createSimpleRecipeProject();
+        csvFile.getParentFile().mkdirs();
+        // CSV contains a recipe from this project AND one from a different package (a dependency)
+        Files.writeString(csvFile.toPath(),
+          """
+          ecosystem,packageName,name,displayName,description
+          maven,org.example:test-recipe-project,org.example.TestRecipe,Test recipe,A test recipe.
+          maven,org.openrewrite:rewrite-java,org.openrewrite.java.SomeDependencyRecipe,Dependency recipe,A recipe from a dependency JAR.
+          """);
+
+        BuildResult result = GradleRunner.create()
+          .withProjectDir(projectDir)
+          .withArguments("recipeCsvValidateCompleteness", "--info", "--stacktrace")
+          .withPluginClasspath()
+          .withDebug(true)
+          .build();
+
+        assertThat(requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome()).isEqualTo(SUCCESS);
+        assertThat(result.getOutput()).contains("Recipe marketplace CSV completeness validation passed");
+    }
+
     private void createCsvMatchingJar() throws IOException {
         csvFile.getParentFile().mkdirs();
         Files.writeString(csvFile.toPath(),

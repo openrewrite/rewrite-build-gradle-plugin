@@ -60,6 +60,8 @@ public class RewriteRecipeMarketplacePlugin implements Plugin<Project> {
                         task.getRecipeJar().convention(project.getTasks().named(JavaPlugin.JAR_TASK_NAME, Jar.class).flatMap(Jar::getArchiveFile));
                     }
 
+                    task.getProjectPackageName().convention(project.provider(() ->
+                            project.getGroup() + ":" + project.getName()));
                     task.getCsvFile().convention(recipesCsvFile);
                 });
 

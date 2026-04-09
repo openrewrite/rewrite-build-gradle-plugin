@@ -49,6 +49,9 @@ public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends Defau
     @Internal
     public abstract RegularFileProperty getCsvFile();
 
+    @Input
+    public abstract org.gradle.api.provider.Property<String> getProjectPackageName();
+
     @InputFile
     @PathSensitive(PathSensitivity.NONE)
     public abstract RegularFileProperty getRecipeJar();
@@ -84,11 +87,13 @@ public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends Defau
         getLogger().info("Validating recipes.csv completeness at: {}", csvPath.toAbsolutePath());
         getLogger().info("Against recipe JAR: {}", recipeJarPath);
 
-        // Validate completeness
+        // Validate completeness, passing the project's package name so that
+        // cross-package recipes (from dependency JARs) are excluded from the phantom check
         RecipeMarketplaceCompletenessValidator validator = new RecipeMarketplaceCompletenessValidator();
         Validated<RecipeMarketplace> validation = validator.validate(
                 new RecipeMarketplaceReader().fromCsv(csvPath),
-                jarScanningEnvironment(recipeJarPath));
+                jarScanningEnvironment(recipeJarPath),
+                getProjectPackageName().getOrNull());
 
         if (validation.isInvalid()) {
             Map<String, List<Validated.Invalid<RecipeMarketplace>>> byMessage = validation.failures().stream()
