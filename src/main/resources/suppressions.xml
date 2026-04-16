@@ -56,4 +56,22 @@
         <packageUrl regex="true">^pkg:maven/org\.openrewrite\.recipe/rewrite-openapi@.*$</packageUrl>
         <cve>CVE-2024-25712</cve>
     </suppress>
+    <suppress until="2026-05-01Z">
+        <notes><![CDATA[
+            False positive. CVE-2026-39883 is for the Go opentelemetry-go SDK (PATH hijacking
+            of the kenv command on BSD). The Java io.opentelemetry packages are unaffected.
+            Added: 2026-04-16
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/io\.opentelemetry/opentelemetry-.*@.*$</packageUrl>
+        <cve>CVE-2026-39883</cve>
+    </suppress>
+    <suppress until="2026-05-01Z">
+        <notes><![CDATA[
+            False positive. CVE-2026-39882 is for Go OTLP HTTP exporters (unbounded response
+            body reading). The Java io.opentelemetry packages are unaffected.
+            Added: 2026-04-16
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/io\.opentelemetry/opentelemetry-.*@.*$</packageUrl>
+        <cve>CVE-2026-39882</cve>
+    </suppress>
 </suppressions>
