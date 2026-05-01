@@ -4,4 +4,3 @@ out/
 !*/src/**/build
 .gradle/
 .idea/
-.claude/settings.local.json
