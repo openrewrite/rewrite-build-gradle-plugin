@@ -18,6 +18,7 @@ package org.openrewrite.gradle;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.GradleRunner;
 import org.intellij.lang.annotations.Language;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -30,14 +31,18 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
+import java.util.jar.JarFile;
 
 import static java.util.Collections.singletonList;
 import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Fail.fail;
 import static org.gradle.testkit.runner.TaskOutcome.FAILED;
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS;
 
+@SuppressWarnings("GroovyAssignabilityCheck")
 class RecipeDependenciesTypeTableTaskTest {
     @TempDir
     File projectDir;
@@ -78,7 +83,7 @@ class RecipeDependenciesTypeTableTaskTest {
 
         // Load classes from the type table
         TypeTable table = createTypeTable(tsvFile, "guava");
-        assertThat(table.load("guava")).isDirectoryRecursivelyContaining("glob:**/Optional.class");
+        assertJarContainsClass(table.load("guava"), "Optional.class");
     }
 
     @Test
@@ -107,7 +112,7 @@ class RecipeDependenciesTypeTableTaskTest {
 
         // Load more specific `5.3` version from type table, which should not contain `5.+`
         TypeTable table = createTypeTable(tsvFile, "spring-core-5.3");
-        assertThat(table.load("spring-core-5.3")).isDirectoryRecursivelyContaining("glob:**/Order.class");
+        assertJarContainsClass(table.load("spring-core-5.3"), "Order.class");
     }
 
     @Test
@@ -142,7 +147,7 @@ class RecipeDependenciesTypeTableTaskTest {
 
         // Load classes from the type table
         TypeTable table = createTypeTable(tsvFile, "guava");
-        assertThat(table.load("guava")).isDirectoryRecursivelyContaining("glob:**/Optional.class");
+        assertJarContainsClass(table.load("guava"), "Optional.class");
     }
 
     @Test
@@ -178,7 +183,7 @@ class RecipeDependenciesTypeTableTaskTest {
 
         // Load classes from the type table
         TypeTable table = createTypeTable(tsvFile, "guava");
-        assertThat(table.load("guava")).isDirectoryRecursivelyContaining("glob:**/Optional.class");
+        assertJarContainsClass(table.load("guava"), "Optional.class");
     }
 
     @Test
@@ -240,7 +245,7 @@ class RecipeDependenciesTypeTableTaskTest {
 
         // Load classes from the type table
         TypeTable table = createTypeTable(tsvFile, "junit-jupiter-api");
-        assertThat(table.load("junit-jupiter-api")).isDirectoryRecursivelyContaining("glob:**/Test.class");
+        assertJarContainsClass(table.load("junit-jupiter-api"), "Test.class");
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
@@ -295,7 +300,7 @@ class RecipeDependenciesTypeTableTaskTest {
 
         // Load classes from the type table
         TypeTable table = createTypeTable(tsvFile, "assertj-core");
-        assertThat(table.load("assertj-core")).isDirectoryRecursivelyContaining("glob:**/Assertions.class");
+        assertJarContainsClass(table.load("assertj-core"), "Assertions.class");
     }
 
     private void createGradleBuildFiles(@Language("gradle") String buildFileContent) throws IOException {
@@ -324,5 +329,19 @@ class RecipeDependenciesTypeTableTaskTest {
           .getDeclaredConstructor(ExecutionContext.class, URL.class, Collection.class);
         constructor.setAccessible(true);
         return (TypeTable) constructor.newInstance(new InMemoryExecutionContext(), tsvFile.toURI().toURL(), singletonList(guava));
+    }
+
+    private static void assertJarContainsClass(@Nullable Path jarPath, String classFileName) throws IOException {
+        if(jarPath == null) {
+            fail("Expected non-null path");
+            return;
+        }
+        assertThat(jarPath).isRegularFile();
+        try (JarFile jar = new JarFile(jarPath.toFile())) {
+            boolean found = jar.stream().anyMatch(entry -> entry.getName().endsWith("/" + classFileName));
+            assertThat(found)
+              .as("JAR %s should contain an entry ending with /%s", jarPath, classFileName)
+              .isTrue();
+        }
     }
 }
