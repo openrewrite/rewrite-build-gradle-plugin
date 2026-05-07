@@ -32,12 +32,21 @@ import org.gradle.api.plugins.ExtensionAware;
 import org.gradle.api.publish.maven.tasks.AbstractPublishToMaven;
 import org.gradle.api.tasks.TaskProvider;
 import org.jspecify.annotations.Nullable;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
+import org.openrewrite.maven.internal.RawPom;
+import org.openrewrite.maven.tree.GroupArtifact;
+import org.openrewrite.maven.tree.GroupArtifactVersion;
+import org.openrewrite.maven.tree.ResolvedPom;
+import org.openrewrite.maven.tree.Version;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -47,6 +56,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @SuppressWarnings("unused")
 public class RewriteBomAlignmentPlugin implements Plugin<Project> {
@@ -56,15 +67,26 @@ public class RewriteBomAlignmentPlugin implements Plugin<Project> {
         Configuration resolveApi = project.getConfigurations().create("resolveApi", c ->
                 c.extendsFrom(project.getConfigurations().getByName("api")));
         DependencyHandler dependencies = project.getDependencies();
-        (dependencies).getExtensions().create("bomAlignment", BomAlignmentExtension.class, project);
+        BomAlignmentExtension bomAlignment = ((ExtensionAware) dependencies).getExtensions().create("bomAlignment", BomAlignmentExtension.class, project);
 
         TaskProvider<?> checkBomAlignment = project.getTasks().register("checkBomAlignment", task -> {
             task.setDescription("Fails if any dependency in the BOM's transitive graph is requested at more than one version.");
             task.setGroup("verification");
             ResolutionResult resolutionResult = resolveApi.getIncoming().getResolutionResult();
             task.doLast(t -> {
-                PomAnalysis pomAnalysis = analyzePoms(project, resolutionResult);
+                Map<GroupArtifact, String> inheritedBoms = bomAlignment.getInheritedBoms();
+                PomAnalysis pomAnalysis = analyzePoms(project, resolutionResult, inheritedBoms);
                 Map<String, Map<String, Set<String>>> requestedVersions = new LinkedHashMap<>();
+                // Each parent BOM declared via bomAlignment.inheritsFrom contributes a pin for itself
+                // at its resolved version. This makes the version visible to mismatch detection so
+                // any consumer pinning an older version of the parent BOM gets flagged.
+                for (Map.Entry<GroupArtifact, String> bom : inheritedBoms.entrySet()) {
+                    String moduleId = bom.getKey().getGroupId() + ":" + bom.getKey().getArtifactId();
+                    requestedVersions
+                            .computeIfAbsent(moduleId, k -> new LinkedHashMap<>())
+                            .computeIfAbsent(bom.getValue(), k -> new LinkedHashSet<>())
+                            .add(moduleId + ":" + bom.getValue() + " (via inheritsFrom)");
+                }
                 for (DependencyResult dep : resolutionResult.getAllDependencies()) {
                     if (!(dep instanceof ResolvedDependencyResult edge)) {
                         continue;
@@ -92,15 +114,25 @@ public class RewriteBomAlignmentPlugin implements Plugin<Project> {
                 // Treat each POM `<dependencyManagement>` entry as a pin contributed by the BOM that
                 // declares it. A BOM whose <dependencyManagement> still names an outdated version is
                 // itself out of date and needs a re-release before downstream BOMs can be aligned.
-                for (Map.Entry<String, Map<String, String>> bom : pomAnalysis.managedDepVersions().entrySet()) {
-                    String bomKey = bom.getKey();
-                    String bomVersion = pomAnalysis.visitedArtifactVersions().get(bomKey);
-                    String bomDisplay = bomVersion != null ? bomKey + ":" + bomVersion : bomKey;
-                    for (Map.Entry<String, String> managed : bom.getValue().entrySet()) {
+                for (Map.Entry<GroupArtifact, Map<GroupArtifact, String>> bom : pomAnalysis.managedDepVersions().entrySet()) {
+                    String bomDisplay = displayWithVersion(bom.getKey(), pomAnalysis.visitedArtifactVersions().get(bom.getKey()));
+                    for (Map.Entry<GroupArtifact, String> managed : bom.getValue().entrySet()) {
                         requestedVersions
-                                .computeIfAbsent(managed.getKey(), k -> new LinkedHashMap<>())
+                                .computeIfAbsent(toModuleId(managed.getKey()), k -> new LinkedHashMap<>())
                                 .computeIfAbsent(managed.getValue(), k -> new LinkedHashSet<>())
                                 .add(bomDisplay);
+                    }
+                }
+                // Each `<scope>import</scope>` entry pins a specific version of the imported BOM. If
+                // multiple consumers pin different versions, the importer pinning the older one is
+                // out of date and needs a re-release.
+                for (Map.Entry<GroupArtifact, Map<GroupArtifact, String>> entry : pomAnalysis.imports().entrySet()) {
+                    String requesterDisplay = displayWithVersion(entry.getKey(), pomAnalysis.visitedArtifactVersions().get(entry.getKey()));
+                    for (Map.Entry<GroupArtifact, String> imp : entry.getValue().entrySet()) {
+                        requestedVersions
+                                .computeIfAbsent(toModuleId(imp.getKey()), k -> new LinkedHashMap<>())
+                                .computeIfAbsent(imp.getValue(), k -> new LinkedHashSet<>())
+                                .add(requesterDisplay);
                     }
                 }
 
@@ -132,6 +164,12 @@ public class RewriteBomAlignmentPlugin implements Plugin<Project> {
                 List<Map<String, Set<String>>> waves = plan.waves();
                 Map<String, Set<String>> repoDependsOn = plan.repoDependsOn();
                 Map<String, String> artifactVersions = plan.artifactVersions();
+                // For BOMs registered via inheritsFrom, prefer the latest resolved version over
+                // whatever older version some consumer pinned in the resolution graph — this is the
+                // version we'd actually want to align everything to.
+                for (Map.Entry<GroupArtifact, String> bom : inheritedBoms.entrySet()) {
+                    artifactVersions.put(bom.getKey().getGroupId() + ":" + bom.getKey().getArtifactId(), bom.getValue());
+                }
                 // Mark a repo "blocked" (x) if it needs release and any repo it depends on also needs
                 // release — that upstream must ship first. Walk waves in topological order so
                 // transitive blocking is captured: a blocked repo also blocks its consumers.
@@ -157,8 +195,9 @@ public class RewriteBomAlignmentPlugin implements Plugin<Project> {
                         }
                     }
                 }
-                if (!waves.isEmpty()) {
-                    message.append("\nRelease order to arrive at an aligned BOM (each wave can be released in parallel; ! ready to release, x waiting on a dependency, ✓ already aligned):\n");
+                Map<String, Set<String>> isolatedRepos = plan.isolatedRepos();
+                if (!waves.isEmpty() || !isolatedRepos.isEmpty()) {
+                    message.append("\nRelease order to arrive at an aligned BOM (each wave can be released in parallel; ! ready to release, x waiting on a dependency, ✓ already aligned, - relationship-less):\n");
                     for (int i = 0; i < waves.size(); i++) {
                         Map<String, Set<String>> wave = waves.get(i);
                         boolean waveHasReady = false;
@@ -185,20 +224,16 @@ public class RewriteBomAlignmentPlugin implements Plugin<Project> {
                                 marker = "    ! ";
                             }
                             message.append(marker).append(repo.getKey()).append('\n');
-                            for (String artifact : repo.getValue()) {
-                                String version = artifactVersions.get(artifact);
-                                message.append("          ").append(artifact);
-                                if (version != null) {
-                                    message.append(':').append(version);
-                                }
-                                message.append('\n');
-                                Map<String, String> pins = outdatedPinsByRequester.get(artifact);
-                                if (pins != null) {
-                                    for (Map.Entry<String, String> pin : pins.entrySet()) {
-                                        message.append("            requests ").append(pin.getKey()).append(pin.getValue()).append('\n');
-                                    }
-                                }
-                            }
+                            appendArtifacts(message, repo.getValue(), artifactVersions, outdatedPinsByRequester);
+                        }
+                    }
+                    if (!isolatedRepos.isEmpty()) {
+                        message.append("  - Wave 0: These repositories have no apparent dependency relation to any others in this release plan.\n")
+                                .append("           These may be fat jars that don't *publish* dependency information discoverable\n")
+                                .append("           by this task, but do actually have dependencies.\n");
+                        for (Map.Entry<String, Set<String>> repo : isolatedRepos.entrySet()) {
+                            message.append("    - ").append(repo.getKey()).append('\n');
+                            appendArtifacts(message, repo.getValue(), artifactVersions, outdatedPinsByRequester);
                         }
                     }
                 }
@@ -208,6 +243,23 @@ public class RewriteBomAlignmentPlugin implements Plugin<Project> {
 
         project.getTasks().withType(AbstractPublishToMaven.class).configureEach(t -> t.dependsOn(checkBomAlignment));
         project.getTasks().matching(t -> "check".equals(t.getName())).configureEach(t -> t.dependsOn(checkBomAlignment));
+    }
+
+    private static void appendArtifacts(StringBuilder message, Set<String> artifacts, Map<String, String> artifactVersions, Map<String, Map<String, String>> outdatedPinsByRequester) {
+        for (String artifact : artifacts) {
+            String version = artifactVersions.get(artifact);
+            message.append("          ").append(artifact);
+            if (version != null) {
+                message.append(':').append(version);
+            }
+            message.append('\n');
+            Map<String, String> pins = outdatedPinsByRequester.get(artifact);
+            if (pins != null) {
+                for (Map.Entry<String, String> pin : pins.entrySet()) {
+                    message.append("            requests ").append(pin.getKey()).append(pin.getValue()).append('\n');
+                }
+            }
+        }
     }
 
     private static boolean isManagedGroup(String group) {
@@ -229,7 +281,7 @@ public class RewriteBomAlignmentPlugin implements Plugin<Project> {
         for (Map.Entry<String, Map<String, Set<String>>> e : mismatches.entrySet()) {
             String latest = null;
             for (String version : e.getValue().keySet()) {
-                if (latest == null || compareVersions(version, latest) > 0) {
+                if (latest == null || new Version(version).compareTo(new Version(latest)) > 0) {
                     latest = version;
                 }
             }
@@ -261,11 +313,25 @@ public class RewriteBomAlignmentPlugin implements Plugin<Project> {
         }
         // Also flag BOMs whose <dependencyManagement> entries pin an outdated version. The BOM is
         // itself the requester here — its release is what publishes a refreshed dependencyManagement.
-        for (Map.Entry<String, Map<String, String>> bom : pomAnalysis.managedDepVersions().entrySet()) {
-            String requester = bom.getKey();
-            for (Map.Entry<String, String> managed : bom.getValue().entrySet()) {
-                String requestedModule = managed.getKey();
+        for (Map.Entry<GroupArtifact, Map<GroupArtifact, String>> bom : pomAnalysis.managedDepVersions().entrySet()) {
+            String requester = toModuleId(bom.getKey());
+            for (Map.Entry<GroupArtifact, String> managed : bom.getValue().entrySet()) {
+                String requestedModule = toModuleId(managed.getKey());
                 String version = managed.getValue();
+                String latest = latestVersionPerModule.get(requestedModule);
+                if (latest == null || latest.equals(version)) {
+                    continue;
+                }
+                String pinned = ":" + version + " (latest " + latest + ")";
+                outdatedByRequester.computeIfAbsent(requester, k -> new TreeMap<>()).put(requestedModule, pinned);
+            }
+        }
+        // And flag artifacts whose POM imports an outdated version of a BOM via <scope>import</scope>.
+        for (Map.Entry<GroupArtifact, Map<GroupArtifact, String>> entry : pomAnalysis.imports().entrySet()) {
+            String requester = toModuleId(entry.getKey());
+            for (Map.Entry<GroupArtifact, String> imp : entry.getValue().entrySet()) {
+                String requestedModule = toModuleId(imp.getKey());
+                String version = imp.getValue();
                 String latest = latestVersionPerModule.get(requestedModule);
                 if (latest == null || latest.equals(version)) {
                     continue;
@@ -277,51 +343,24 @@ public class RewriteBomAlignmentPlugin implements Plugin<Project> {
         return outdatedByRequester;
     }
 
-    private static int compareVersions(String a, String b) {
-        String[] pa = a.split("\\.");
-        String[] pb = b.split("\\.");
-        int len = Math.min(pa.length, pb.length);
-        for (int i = 0; i < len; i++) {
-            int cmp = compareVersionPart(pa[i], pb[i]);
-            if (cmp != 0) {
-                return cmp;
-            }
-        }
-        return Integer.compare(pa.length, pb.length);
+    private static String toModuleId(GroupArtifact ga) {
+        return ga.getGroupId() + ":" + ga.getArtifactId();
     }
 
-    private static int compareVersionPart(String a, String b) {
-        Integer ai = tryParseInt(a);
-        Integer bi = tryParseInt(b);
-        if (ai != null && bi != null) {
-            return Integer.compare(ai, bi);
-        }
-        if (ai != null) {
-            return 1;
-        }
-        if (bi != null) {
-            return -1;
-        }
-        return a.compareTo(b);
+    private static String displayWithVersion(GroupArtifact ga, @Nullable String version) {
+        return version != null ? ga.getGroupId() + ":" + ga.getArtifactId() + ":" + version
+                : ga.getGroupId() + ":" + ga.getArtifactId();
     }
 
-    private static @Nullable Integer tryParseInt(String s) {
-        try {
-            return Integer.parseInt(s);
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    private record ReleasePlan(List<Map<String, Set<String>>> waves, Map<String, Set<String>> repoDependsOn, Map<String, String> artifactVersions) {
+    private record ReleasePlan(List<Map<String, Set<String>>> waves, Map<String, Set<String>> repoDependsOn, Map<String, String> artifactVersions, Map<String, Set<String>> isolatedRepos) {
     }
 
     private record PomAnalysis(
-            Map<String, String> scmUrls,
-            Map<String, Set<String>> imports,
-            Map<String, String> importedBomVersions,
-            Map<String, Map<String, String>> managedDepVersions,
-            Map<String, String> visitedArtifactVersions) {
+            Map<GroupArtifact, String> scmUrls,
+            Map<GroupArtifact, Map<GroupArtifact, String>> imports,
+            Map<GroupArtifact, String> importedBomVersions,
+            Map<GroupArtifact, Map<GroupArtifact, String>> managedDepVersions,
+            Map<GroupArtifact, String> visitedArtifactVersions) {
     }
 
     private static ReleasePlan computeReleasePlan(ResolutionResult resolutionResult, PomAnalysis pomAnalysis) {
@@ -362,18 +401,19 @@ public class RewriteBomAlignmentPlugin implements Plugin<Project> {
         // depending on rewrite-recipe-bom via platform import). Gradle's resolution graph treats these
         // as version constraints only and does not surface them as edges, but for release ordering they
         // matter — the imported BOM must ship before its consumer can pick up new pins.
-        for (Map.Entry<String, Set<String>> entry : pomAnalysis.imports().entrySet()) {
-            String fromArtifact = entry.getKey();
+        for (Map.Entry<GroupArtifact, Map<GroupArtifact, String>> entry : pomAnalysis.imports().entrySet()) {
+            String fromArtifact = toModuleId(entry.getKey());
             if (!artifactNodes.contains(fromArtifact)) {
                 continue;
             }
-            for (String importedBom : entry.getValue()) {
-                artifactNodes.add(importedBom);
-                artifactDependsOn.computeIfAbsent(importedBom, k -> new TreeSet<>());
-                artifactDependsOn.computeIfAbsent(fromArtifact, k -> new TreeSet<>()).add(importedBom);
+            for (GroupArtifact importedBom : entry.getValue().keySet()) {
+                String importedKey = toModuleId(importedBom);
+                artifactNodes.add(importedKey);
+                artifactDependsOn.computeIfAbsent(importedKey, k -> new TreeSet<>());
+                artifactDependsOn.computeIfAbsent(fromArtifact, k -> new TreeSet<>()).add(importedKey);
                 String importedVersion = pomAnalysis.importedBomVersions().get(importedBom);
                 if (importedVersion != null) {
-                    artifactVersions.putIfAbsent(importedBom, importedVersion);
+                    artifactVersions.putIfAbsent(importedKey, importedVersion);
                 }
             }
         }
@@ -382,12 +422,13 @@ public class RewriteBomAlignmentPlugin implements Plugin<Project> {
         // must ship after those artifacts so its new release can point at their new versions.
         // Only add edges to artifacts already in the graph — managed entries pointing at unrelated
         // modules don't matter for this BOM's release ordering.
-        for (Map.Entry<String, Map<String, String>> entry : pomAnalysis.managedDepVersions().entrySet()) {
-            String managingArtifact = entry.getKey();
+        for (Map.Entry<GroupArtifact, Map<GroupArtifact, String>> entry : pomAnalysis.managedDepVersions().entrySet()) {
+            String managingArtifact = toModuleId(entry.getKey());
             if (!artifactNodes.contains(managingArtifact)) {
                 continue;
             }
-            for (String managedArtifact : entry.getValue().keySet()) {
+            for (GroupArtifact managedGa : entry.getValue().keySet()) {
+                String managedArtifact = toModuleId(managedGa);
                 if (!artifactNodes.contains(managedArtifact)) {
                     continue;
                 }
@@ -400,11 +441,13 @@ public class RewriteBomAlignmentPlugin implements Plugin<Project> {
 
         // Collapse to repo-level: artifacts sharing an SCM URL are released together.
         // Artifacts with no known SCM URL get their own bucket keyed by group:artifact.
-        Map<String, String> scmUrls = pomAnalysis.scmUrls();
+        Map<GroupArtifact, String> scmUrls = pomAnalysis.scmUrls();
         Map<String, String> artifactToRepo = new HashMap<>();
         Map<String, Set<String>> repoArtifacts = new TreeMap<>();
         for (String artifact : artifactNodes) {
-            String repo = repoLabel(artifact, scmUrls.get(artifact));
+            String[] ga = artifact.split(":");
+            String scm = ga.length == 2 ? scmUrls.get(new GroupArtifact(ga[0], ga[1])) : null;
+            String repo = repoLabel(artifact, scm);
             artifactToRepo.put(artifact, repo);
             repoArtifacts.computeIfAbsent(repo, k -> new TreeSet<>()).add(artifact);
         }
@@ -470,20 +513,11 @@ public class RewriteBomAlignmentPlugin implements Plugin<Project> {
             remaining.removeAll(wave);
         }
 
-        if (!isolatedRepos.isEmpty()) {
-            Map<String, Set<String>> finalWave;
-            if (waves.isEmpty()) {
-                finalWave = new TreeMap<>();
-                waves.add(finalWave);
-            } else {
-                finalWave = waves.get(waves.size() - 1);
-            }
-            for (String repo : isolatedRepos) {
-                finalWave.put(repo, repoArtifacts.get(repo));
-            }
+        Map<String, Set<String>> isolatedRepoArtifacts = new TreeMap<>();
+        for (String repo : isolatedRepos) {
+            isolatedRepoArtifacts.put(repo, repoArtifacts.get(repo));
         }
-
-        return new ReleasePlan(waves, repoDependsOn, artifactVersions);
+        return new ReleasePlan(waves, repoDependsOn, artifactVersions, isolatedRepoArtifacts);
     }
 
     private static String repoLabel(String artifact, @Nullable String scmUrl) {
@@ -494,14 +528,14 @@ public class RewriteBomAlignmentPlugin implements Plugin<Project> {
         return artifact + " (scm url unknown)";
     }
 
-    private static PomAnalysis analyzePoms(Project project, ResolutionResult resolutionResult) {
-        Map<String, String> scmUrls = new HashMap<>();
-        Map<String, Set<String>> imports = new HashMap<>();
-        Map<String, String> importedBomVersions = new HashMap<>();
-        Map<String, Map<String, String>> managedDepVersions = new HashMap<>();
-        Map<String, String> visitedArtifactVersions = new HashMap<>();
-        Set<String> processed = new HashSet<>();
-        java.util.Deque<String[]> queue = new java.util.ArrayDeque<>();
+    private static PomAnalysis analyzePoms(Project project, ResolutionResult resolutionResult, Map<GroupArtifact, String> inheritedBoms) {
+        Map<GroupArtifact, String> scmUrls = new HashMap<>();
+        Map<GroupArtifact, Map<GroupArtifact, String>> imports = new HashMap<>();
+        Map<GroupArtifact, String> importedBomVersions = new HashMap<>();
+        Map<GroupArtifact, Map<GroupArtifact, String>> managedDepVersions = new HashMap<>();
+        Map<GroupArtifact, String> visitedArtifactVersions = new HashMap<>();
+        Set<GroupArtifact> processed = new HashSet<>();
+        Deque<GroupArtifactVersion> queue = new ArrayDeque<>();
 
         for (DependencyResult dep : resolutionResult.getAllDependencies()) {
             if (!(dep instanceof ResolvedDependencyResult edge)) {
@@ -509,86 +543,104 @@ public class RewriteBomAlignmentPlugin implements Plugin<Project> {
             }
             ComponentIdentifier id = edge.getSelected().getId();
             if (id instanceof ModuleComponentIdentifier moduleId && isManagedGroup(moduleId.getGroup())) {
-                queue.add(new String[]{moduleId.getGroup(), moduleId.getModule(), moduleId.getVersion()});
+                queue.add(new GroupArtifactVersion(moduleId.getGroup(), moduleId.getModule(), moduleId.getVersion()));
             }
+        }
+        // Seed inherited BOMs at the version inheritsFrom resolved them to. This ensures we walk
+        // their POMs (so their managed entries become pins) even though they aren't in the
+        // resolution graph as dependencies.
+        for (Map.Entry<GroupArtifact, String> bom : inheritedBoms.entrySet()) {
+            queue.add(new GroupArtifactVersion(bom.getKey().getGroupId(), bom.getKey().getArtifactId(), bom.getValue()));
         }
 
         while (!queue.isEmpty()) {
-            String[] coords = queue.poll();
-            String key = coords[0] + ":" + coords[1];
-            if (!processed.add(key)) {
+            GroupArtifactVersion coords = queue.poll();
+            GroupArtifact ga = coords.asGroupArtifact();
+            if (!processed.add(ga)) {
                 continue;
             }
-            visitedArtifactVersions.put(key, coords[2]);
+            visitedArtifactVersions.put(ga, coords.getVersion());
             File pomFile;
             try {
-                pomFile = fetchPomFile(project, coords[0] + ":" + coords[1] + ":" + coords[2]);
+                pomFile = fetchPomFile(project, coords);
             } catch (RuntimeException ignored) {
                 continue;
             }
             if (pomFile == null) {
                 continue;
             }
-            Document doc = Poms.parse(pomFile);
-            if (doc == null) {
+            byte[] pomBytes;
+            try {
+                pomBytes = Files.readAllBytes(pomFile.toPath());
+            } catch (IOException ignored) {
                 continue;
             }
 
-            String scm = parseScmUrl(doc);
+            String scm = parseScmUrl(new String(pomBytes, StandardCharsets.UTF_8));
             if (scm != null) {
-                scmUrls.put(key, scm);
+                scmUrls.put(ga, scm);
+            }
+
+            RawPom rawPom;
+            try {
+                rawPom = RawPom.parse(new ByteArrayInputStream(pomBytes), null);
+            } catch (RuntimeException ignored) {
+                continue;
             }
 
             Map<String, String> props = new HashMap<>();
-            props.put("project.version", coords[2]);
-            props.put("project.groupId", coords[0]);
-            props.put("project.artifactId", coords[1]);
-            Poms.readProperties(doc, props);
+            if (rawPom.getProperties() != null) {
+                props.putAll(rawPom.getProperties());
+            }
+            props.put("project.version", coords.getVersion());
+            props.put("project.groupId", coords.getGroupId());
+            props.put("project.artifactId", coords.getArtifactId());
 
-            Set<String> myImports = new TreeSet<>();
-            Map<String, String> myManagedDeps = new TreeMap<>();
-            Element root = doc.getDocumentElement();
-            for (Element depMgmt : Poms.directChildElements(root, "dependencyManagement")) {
-                for (Element deps : Poms.directChildElements(depMgmt, "dependencies")) {
-                    for (Element depElem : Poms.directChildElements(deps, "dependency")) {
-                        String group = Poms.substitute(Poms.directChildText(depElem, "groupId"), props);
-                        String artifact = Poms.substitute(Poms.directChildText(depElem, "artifactId"), props);
-                        String version = Poms.substitute(Poms.directChildText(depElem, "version"), props);
-                        String scope = Poms.directChildText(depElem, "scope");
-                        String type = Poms.directChildText(depElem, "type");
-                        if (group == null || artifact == null) {
-                            continue;
+            Map<GroupArtifact, String> myImports = new TreeMap<>(GA_BY_GROUP_ARTIFACT);
+            Map<GroupArtifact, String> myManagedDeps = new TreeMap<>(GA_BY_GROUP_ARTIFACT);
+            RawPom.DependencyManagement depMgmt = rawPom.getDependencyManagement();
+            if (depMgmt != null && depMgmt.getDependencies() != null) {
+                for (RawPom.Dependency dep : depMgmt.getDependencies().getDependencies()) {
+                    String group = ResolvedPom.placeholderHelper.replacePlaceholders(dep.getGroupId(), props::get);
+                    String artifact = ResolvedPom.placeholderHelper.replacePlaceholders(dep.getArtifactId(), props::get);
+                    String version = dep.getVersion() == null ? null : ResolvedPom.placeholderHelper.replacePlaceholders(dep.getVersion(), props::get);
+                    if (group == null || artifact == null) {
+                        continue;
+                    }
+                    if (!isManagedGroup(group)) {
+                        continue;
+                    }
+                    GroupArtifact importKey = new GroupArtifact(group, artifact);
+                    if ("import".equals(dep.getScope()) && "pom".equals(dep.getType()) && version != null) {
+                        myImports.put(importKey, version);
+                        importedBomVersions.putIfAbsent(importKey, version);
+                        if (!processed.contains(importKey)) {
+                            queue.add(new GroupArtifactVersion(group, artifact, version));
                         }
-                        if (!isManagedGroup(group)) {
-                            continue;
-                        }
-                        if ("import".equals(scope) && "pom".equals(type) && version != null) {
-                            String importKey = group + ":" + artifact;
-                            myImports.add(importKey);
-                            importedBomVersions.putIfAbsent(importKey, version);
-                            if (!processed.contains(importKey)) {
-                                queue.add(new String[]{group, artifact, version});
-                            }
-                        } else if (version != null && !isDynamicVersion(version)) {
-                            myManagedDeps.put(group + ":" + artifact, version);
-                        }
+                    } else if (version != null && !isDynamicVersion(version)) {
+                        myManagedDeps.put(importKey, version);
                     }
                 }
             }
             if (!myImports.isEmpty()) {
-                imports.put(key, myImports);
+                imports.put(ga, myImports);
             }
             if (!myManagedDeps.isEmpty()) {
-                managedDepVersions.put(key, myManagedDeps);
+                managedDepVersions.put(ga, myManagedDeps);
             }
         }
 
         return new PomAnalysis(scmUrls, imports, importedBomVersions, managedDepVersions, visitedArtifactVersions);
     }
 
-    private static @Nullable File fetchPomFile(Project project, String coords) {
+    /** {@link GroupArtifact} doesn't override compareTo, so we provide a stable order for tree sets/maps. */
+    private static final java.util.Comparator<GroupArtifact> GA_BY_GROUP_ARTIFACT =
+            java.util.Comparator.comparing(GroupArtifact::getGroupId).thenComparing(GroupArtifact::getArtifactId);
+
+    private static @Nullable File fetchPomFile(Project project, GroupArtifactVersion gav) {
         try {
-            Dependency dep = (Dependency) project.getDependencies().create(coords + "@pom");
+            String coords = gav.getGroupId() + ":" + gav.getArtifactId() + ":" + gav.getVersion();
+            Dependency dep = project.getDependencies().create(coords + "@pom");
             Configuration cfg = project.getConfigurations().detachedConfiguration(dep);
             cfg.setTransitive(false);
             return cfg.getSingleFile();
@@ -597,15 +649,15 @@ public class RewriteBomAlignmentPlugin implements Plugin<Project> {
         }
     }
 
-    private static @Nullable String parseScmUrl(Document doc) {
-        Element root = doc.getDocumentElement();
-        for (Element scmEl : Poms.directChildElements(root, "scm")) {
-            String url = Poms.directChildText(scmEl, "url");
-            if (url != null && !url.isEmpty()) {
-                return url;
-            }
+    private static final Pattern SCM_URL_PATTERN = Pattern.compile("<scm[^>]*>[\\s\\S]*?<url[^>]*>([^<]+)</url>[\\s\\S]*?</scm>");
+
+    private static @Nullable String parseScmUrl(String pomContent) {
+        Matcher m = SCM_URL_PATTERN.matcher(pomContent);
+        if (!m.find()) {
+            return null;
         }
-        return null;
+        String url = m.group(1).trim();
+        return url.isEmpty() ? null : url;
     }
 
     private static @Nullable String toReleasesUrl(@Nullable String scmUrl) {
