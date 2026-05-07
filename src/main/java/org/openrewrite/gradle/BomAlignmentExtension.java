@@ -15,20 +15,36 @@
  */
 package org.openrewrite.gradle;
 
+import lombok.Getter;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.artifacts.ResolvedArtifact;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
+import org.gradle.api.artifacts.repositories.ArtifactRepository;
+import org.gradle.api.artifacts.repositories.MavenArtifactRepository;
+import org.openrewrite.InMemoryExecutionContext;
+import org.openrewrite.SourceFile;
+import org.openrewrite.maven.MavenExecutionContextView;
+import org.openrewrite.maven.MavenParser;
+import org.openrewrite.maven.tree.GroupArtifact;
+import org.openrewrite.maven.tree.GroupArtifactVersion;
+import org.openrewrite.maven.tree.MavenRepository;
+import org.openrewrite.maven.tree.MavenResolutionResult;
+import org.openrewrite.maven.tree.ResolvedManagedDependency;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.TimeUnit;
 
 /**
  * DSL extension for the BOM alignment plugin.
@@ -44,6 +60,14 @@ import java.util.TreeSet;
 public class BomAlignmentExtension {
 
     private final Project project;
+    /**
+     * Parent BOMs registered via {@link #inheritsFrom(String)}, keyed by group/artifact with the
+     * value being the version Gradle resolved (i.e. the concrete latest release/integration the
+     * dynamic selector resolved to, not {@code latest.release} itself). Used by {@code
+     * checkBomAlignment} to compare against the versions other consumers pin.
+     */
+    @Getter
+    private final Map<GroupArtifact, String> inheritedBoms = new LinkedHashMap<>();
 
     public BomAlignmentExtension(Project project) {
         this.project = project;
@@ -60,65 +84,88 @@ public class BomAlignmentExtension {
      * during this project's alignment check.
      */
     public void inheritsFrom(String parentBomCoords) {
-        String[] parts = parentBomCoords.split(":");
-        if (parts.length != 3) {
-            throw new IllegalArgumentException("Expected 'group:artifact:version' coordinates, got: " + parentBomCoords);
+        GroupArtifactVersion gav = parseGav(parentBomCoords);
+        FetchedPom resolved = fetchPom(gav);
+        // Record resolved version so the alignment check knows the up-to-date version of the parent
+        // BOM and can flag downstream consumers that pin an older version of it.
+        inheritedBoms.put(gav.asGroupArtifact(), resolved.resolvedVersion());
+
+        // Use MavenParser so parents and transitive <scope>import</scope> entries are flattened for
+        // us. ResolvedPom.getDependencyManagement() returns the fully-resolved managed-dep list with
+        // placeholders substituted.
+        Set<GroupArtifact> managedDeps = new TreeSet<>(GA_BY_TOSTRING);
+        for (ResolvedManagedDependency dep : parseResolved(resolved.pomFile(), gradleRepositories()).getPom().getDependencyManagement()) {
+            managedDeps.add(new GroupArtifact(dep.getGroupId(), dep.getArtifactId()));
         }
-        String version = parts[2];
-        Set<String> managedDeps = new TreeSet<>();
-        collectManagedDepsRecursive(parentBomCoords, managedDeps, new HashSet<>());
 
         DependencyHandler dependencies = project.getDependencies();
         Configuration api = project.getConfigurations().getByName("api");
-        for (String groupArtifact : managedDeps) {
-            Dependency dep = (Dependency) dependencies.create(groupArtifact + ":" + version);
+        for (GroupArtifact ga : managedDeps) {
+            Dependency dep = dependencies.create(ga.getGroupId() + ":" + ga.getArtifactId() + ":" + gav.getVersion());
             api.getDependencies().add(dep);
         }
     }
 
-    private void collectManagedDepsRecursive(String bomCoords, Set<String> result, Set<String> visited) {
-        if (!visited.add(bomCoords)) {
-            return;
+    private static MavenResolutionResult parseResolved(File pomFile, List<MavenRepository> repositories) {
+        String pomXml;
+        try {
+            pomXml = new String(Files.readAllBytes(pomFile.toPath()));
+        } catch (IOException e) {
+            throw new GradleException("Failed to read POM " + pomFile, e);
         }
-        File pomFile = fetchPom(bomCoords);
-        Document doc = Poms.parse(pomFile);
-        if (doc == null) {
-            throw new GradleException("Failed to parse BOM POM for " + bomCoords + " at " + pomFile);
-        }
-
-        String[] parts = bomCoords.split(":");
-        Map<String, String> props = new HashMap<>();
-        props.put("project.version", parts[2]);
-        props.put("project.groupId", parts[0]);
-        props.put("project.artifactId", parts[1]);
-        Poms.readProperties(doc, props);
-
-        Element root = doc.getDocumentElement();
-        for (Element depMgmt : Poms.directChildElements(root, "dependencyManagement")) {
-            for (Element deps : Poms.directChildElements(depMgmt, "dependencies")) {
-                for (Element depElem : Poms.directChildElements(deps, "dependency")) {
-                    String group = Poms.substitute(Poms.directChildText(depElem, "groupId"), props);
-                    String artifact = Poms.substitute(Poms.directChildText(depElem, "artifactId"), props);
-                    String depVersion = Poms.substitute(Poms.directChildText(depElem, "version"), props);
-                    String scope = Poms.directChildText(depElem, "scope");
-                    String type = Poms.directChildText(depElem, "type");
-                    if (group == null || artifact == null) {
-                        continue;
-                    }
-                    if ("import".equals(scope) && "pom".equals(type) && depVersion != null) {
-                        collectManagedDepsRecursive(group + ":" + artifact + ":" + depVersion, result, visited);
-                    } else {
-                        result.add(group + ":" + artifact);
-                    }
-                }
-            }
-        }
+        InMemoryExecutionContext ctx = new InMemoryExecutionContext(t -> {
+            throw new GradleException("Failed to parse POM " + pomFile, t);
+        });
+        // Tell MavenParser's downloader to look in the project's repositories for parents and
+        // imported BOMs, not just the default Maven Central.
+        MavenExecutionContextView.view(ctx).setRepositories(repositories);
+        SourceFile parsed = MavenParser.builder().build().parse(ctx, pomXml)
+                .findFirst()
+                .orElseThrow(() -> new GradleException("MavenParser produced no source files for " + pomFile));
+        return parsed.getMarkers().findFirst(MavenResolutionResult.class)
+                .orElseThrow(() -> new GradleException("MavenParser produced no MavenResolutionResult marker for " + pomFile));
     }
 
-    private File fetchPom(String coords) {
-        Dependency dep = (Dependency) project.getDependencies().create(coords + "@pom");
+    private List<MavenRepository> gradleRepositories() {
+        List<MavenRepository> repos = new ArrayList<>();
+        for (ArtifactRepository repo : project.getRepositories()) {
+            if (repo instanceof MavenArtifactRepository m) {
+                repos.add(new MavenRepository(repo.getName(), m.getUrl().toString(), "true", "true", true, null, null, null, false));
+            }
+        }
+        return repos;
+    }
+
+    private FetchedPom fetchPom(GroupArtifactVersion gav) {
+        String coords = gav.getGroupId() + ":" + gav.getArtifactId() + ":" + gav.getVersion();
+        Dependency dep = project.getDependencies().create(coords + "@pom");
         Configuration cfg = project.getConfigurations().detachedConfiguration(dep);
         cfg.setTransitive(false);
-        return cfg.getSingleFile();
+        // Detached configurations don't inherit resolutionStrategy from configurations.all, so the
+        // dynamic-version cache TTL the user set on their project configurations doesn't apply.
+        // Force an immediate refresh so `latest.release` truly picks up the latest published.
+        cfg.getResolutionStrategy().cacheDynamicVersionsFor(0, TimeUnit.SECONDS);
+        cfg.getResolutionStrategy().cacheChangingModulesFor(0, TimeUnit.SECONDS);
+        Set<ResolvedArtifact> artifacts = cfg.getResolvedConfiguration().getResolvedArtifacts();
+        if (artifacts.isEmpty()) {
+            throw new GradleException("Could not resolve POM for " + coords);
+        }
+        ResolvedArtifact ra = artifacts.iterator().next();
+        return new FetchedPom(ra.getFile(), ra.getModuleVersion().getId().getVersion());
+    }
+
+    private static GroupArtifactVersion parseGav(String coords) {
+        String[] parts = coords.split(":");
+        if (parts.length != 3) {
+            throw new IllegalArgumentException("Expected 'group:artifact:version' coordinates, got: " + coords);
+        }
+        return new GroupArtifactVersion(parts[0], parts[1], parts[2]);
+    }
+
+    /** {@link GroupArtifact} doesn't override compareTo, so build a stable order for tree sets. */
+    private static final Comparator<GroupArtifact> GA_BY_TOSTRING =
+            Comparator.comparing(GroupArtifact::getGroupId).thenComparing(GroupArtifact::getArtifactId);
+
+    private record FetchedPom(File pomFile, String resolvedVersion) {
     }
 }
