@@ -74,4 +74,15 @@
         <packageUrl regex="true">^pkg:maven/io\.opentelemetry/opentelemetry-.*@.*$</packageUrl>
         <cve>CVE-2026-39882</cve>
     </suppress>
+    <suppress until="2026-06-01Z">
+        <notes><![CDATA[
+            False positive. CVE-2026-42154 is for the Go Prometheus server's remote read
+            endpoint (/api/v1/read) memory-allocation DoS. The Java io.prometheus:simpleclient*
+            instrumentation libraries are unaffected — they are a separate codebase used by
+            applications to expose metrics, not the Prometheus server itself.
+            Added: 2026-05-13
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/io\.prometheus/simpleclient.*@.*$</packageUrl>
+        <cve>CVE-2026-42154</cve>
+    </suppress>
 </suppressions>
