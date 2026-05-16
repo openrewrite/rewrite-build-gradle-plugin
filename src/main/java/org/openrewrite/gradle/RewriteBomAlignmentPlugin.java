@@ -28,7 +28,6 @@ import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.artifacts.result.DependencyResult;
 import org.gradle.api.artifacts.result.ResolutionResult;
 import org.gradle.api.artifacts.result.ResolvedDependencyResult;
-import org.gradle.api.plugins.ExtensionAware;
 import org.gradle.api.publish.maven.tasks.AbstractPublishToMaven;
 import org.gradle.api.tasks.TaskProvider;
 import org.jspecify.annotations.Nullable;
@@ -45,7 +44,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -59,6 +57,8 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static java.util.Collections.disjoint;
+
 @SuppressWarnings("unused")
 public class RewriteBomAlignmentPlugin implements Plugin<Project> {
 
@@ -67,7 +67,7 @@ public class RewriteBomAlignmentPlugin implements Plugin<Project> {
         Configuration resolveApi = project.getConfigurations().create("resolveApi", c ->
                 c.extendsFrom(project.getConfigurations().getByName("api")));
         DependencyHandler dependencies = project.getDependencies();
-        BomAlignmentExtension bomAlignment = ((ExtensionAware) dependencies).getExtensions().create("bomAlignment", BomAlignmentExtension.class, project);
+        BomAlignmentExtension bomAlignment = dependencies.getExtensions().create("bomAlignment", BomAlignmentExtension.class, project);
 
         TaskProvider<?> checkBomAlignment = project.getTasks().register("checkBomAlignment", task -> {
             task.setDescription("Fails if any dependency in the BOM's transitive graph is requested at more than one version.");
@@ -176,7 +176,7 @@ public class RewriteBomAlignmentPlugin implements Plugin<Project> {
                 Set<String> reposNeedingRelease = new java.util.HashSet<>();
                 for (Map<String, Set<String>> wave : waves) {
                     for (Map.Entry<String, Set<String>> repo : wave.entrySet()) {
-                        if (!Collections.disjoint(repo.getValue(), needsRelease)) {
+                        if (!disjoint(repo.getValue(), needsRelease)) {
                             reposNeedingRelease.add(repo.getKey());
                         }
                     }
@@ -348,8 +348,8 @@ public class RewriteBomAlignmentPlugin implements Plugin<Project> {
     }
 
     private static String displayWithVersion(GroupArtifact ga, @Nullable String version) {
-        return version != null ? ga.getGroupId() + ":" + ga.getArtifactId() + ":" + version
-                : ga.getGroupId() + ":" + ga.getArtifactId();
+        return version != null ? ga.getGroupId() + ":" + ga.getArtifactId() + ":" + version :
+                ga.getGroupId() + ":" + ga.getArtifactId();
     }
 
     private record ReleasePlan(List<Map<String, Set<String>>> waves, Map<String, Set<String>> repoDependsOn, Map<String, String> artifactVersions, Map<String, Set<String>> isolatedRepos) {
