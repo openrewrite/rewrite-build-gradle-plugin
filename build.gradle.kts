@@ -257,6 +257,12 @@ dependencies {
         implementation("org.apache.httpcomponents.client5:httpclient5-cache:5.6.1") {
             because("CVE-2026-40542")
         }
+        implementation("org.apache.logging.log4j:log4j-api:2.25.4") {
+            because("CVE-2026-34477, CVE-2026-34479")
+        }
+        implementation("org.apache.logging.log4j:log4j-core:2.25.4") {
+            because("CVE-2026-34478, CVE-2026-34479, CVE-2026-34480, CVE-2025-68161, CVE-2026-34477")
+        }
     }
 }
 

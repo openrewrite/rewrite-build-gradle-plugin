@@ -19,4 +19,18 @@
         <packageUrl regex="true">^pkg:maven/com\.h2database/h2@2\..*$</packageUrl>
         <cve>CVE-2018-14335</cve>
     </suppress>
+    <suppress until="2026-07-01Z">
+        <notes><![CDATA[
+            False positive. These CVEs affect spring-webflux and/or spring-webmvc, not spring-core.
+            The build plugin only depends on spring-core. The scanner incorrectly matches via the
+            shared Spring Framework CPE.
+            Added: 2026-05-20
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.springframework/spring-(core|jcl)@.*$</packageUrl>
+        <cve>CVE-2026-22740</cve>
+        <cve>CVE-2026-22737</cve>
+        <cve>CVE-2026-22745</cve>
+        <cve>CVE-2026-22741</cve>
+        <cve>CVE-2026-22735</cve>
+    </suppress>
 </suppressions>
