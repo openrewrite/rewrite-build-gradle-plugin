@@ -85,4 +85,43 @@
         <packageUrl regex="true">^pkg:maven/io\.prometheus/simpleclient.*@.*$</packageUrl>
         <cve>CVE-2026-42154</cve>
     </suppress>
+    <suppress until="2026-07-01Z">
+        <notes><![CDATA[
+            False positive. CVE-2026-34070 is for Python langchain-core (path traversal in
+            legacy load_prompt functions). The Java dev.langchain4j library is a separate
+            project and is not affected.
+            Added: 2026-05-20
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/dev\.langchain4j/langchain4j.*@.*$</packageUrl>
+        <cve>CVE-2026-34070</cve>
+    </suppress>
+    <suppress until="2026-07-01Z">
+        <notes><![CDATA[
+            False positive. CVE-2026-41488 is for Python langchain-openai (SSRF via DNS
+            rebinding in image token counting). The Java dev.langchain4j library is a separate
+            project and is not affected. The actual severity for the Python package is LOW.
+            Added: 2026-05-20
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/dev\.langchain4j/langchain4j.*@.*$</packageUrl>
+        <cve>CVE-2026-41488</cve>
+    </suppress>
+    <suppress until="2026-08-01Z">
+        <notes><![CDATA[
+            False positive. CVE-2020-29582 was fixed in Kotlin 1.4.21. Versions 1.6.10+
+            and 1.9.10+ are not affected. The scanner incorrectly matches the CVE against
+            newer Kotlin stdlib versions.
+            Added: 2026-05-20
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.jetbrains\.kotlin/kotlin-(stdlib|reflect).*@.*$</packageUrl>
+        <cve>CVE-2020-29582</cve>
+    </suppress>
+    <suppress until="2026-08-01Z">
+        <notes><![CDATA[
+            jackson-core DoS via number length constraint bypass in async parser. Transitive
+            dependency in recipe modules. Patch available in 2.18.6+.
+            Added: 2026-05-20
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/com\.fasterxml\.jackson\.core/jackson-core@.*$</packageUrl>
+        <vulnerabilityName>GHSA-72hv-8253-57qq</vulnerabilityName>
+    </suppress>
 </suppressions>
