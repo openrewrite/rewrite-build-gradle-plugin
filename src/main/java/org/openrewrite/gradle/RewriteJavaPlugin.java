@@ -22,6 +22,7 @@ import org.gradle.api.attributes.Attribute;
 import org.gradle.api.file.DuplicatesStrategy;
 import org.gradle.api.plugins.JavaLibraryPlugin;
 import org.gradle.api.plugins.JavaPluginExtension;
+import org.gradle.api.plugins.jvm.JvmTestSuite;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.javadoc.Javadoc;
 import org.gradle.api.tasks.testing.Test;
@@ -30,6 +31,7 @@ import org.gradle.api.tasks.testing.logging.TestLoggingContainer;
 import org.gradle.external.javadoc.CoreJavadocOptions;
 import org.gradle.jvm.tasks.Jar;
 import org.gradle.jvm.toolchain.JavaLanguageVersion;
+import org.gradle.testing.base.TestingExtension;
 
 import java.util.concurrent.TimeUnit;
 
@@ -37,6 +39,10 @@ public class RewriteJavaPlugin implements Plugin<Project> {
 
     private static final Attribute<String> CONFIGURATION_ORIGIN_ATTRIBUTE =
             Attribute.of("org.openrewrite.configuration.origin", String.class);
+
+    private static final int JUNIT_BOM_THRESHOLD = 17;
+    private static final String JUNIT5_BOM_VERSION = "5.+";
+    private static final String JUNIT6_BOM_VERSION = "6.+";
 
     @Override
     public void apply(Project project) {
@@ -64,6 +70,7 @@ public class RewriteJavaPlugin implements Plugin<Project> {
                 strategy.cacheDynamicVersionsFor(0, "seconds")));
 
         addDependencies(project, ext);
+        configureJUnitBom(project);
         configureJavaCompile(project);
         configureTesting(project);
 
@@ -90,13 +97,36 @@ public class RewriteJavaPlugin implements Plugin<Project> {
         deps.add("implementation", "org.jetbrains:annotations:latest.release");
         deps.add("compileOnly", "com.google.code.findbugs:jsr305:latest.release");
 
-        deps.add("testImplementation", deps.platform("org.junit:junit-bom:5.14.0"));
         deps.add("testImplementation", "org.junit.jupiter:junit-jupiter-api");
         deps.add("testImplementation", "org.junit.jupiter:junit-jupiter-params");
         deps.add("testRuntimeOnly", "org.junit.jupiter:junit-jupiter-engine");
         deps.add("testRuntimeOnly", "org.junit.platform:junit-platform-launcher");
 
         deps.add("testImplementation", "org.assertj:assertj-core:latest.release");
+    }
+
+    private static void configureJUnitBom(Project project) {
+        // Inject the JUnit BOM into every JvmTestSuite (default `test` plus any registered later).
+        // The dependency is registered eagerly via addProvider; the version lambda runs lazily,
+        // so build-script toolchain overrides (e.g. rewrite-java-8 pinning to 8) have applied
+        // by the time we pick a BOM line — no afterEvaluate required.
+        project.getExtensions().configure(TestingExtension.class, testing ->
+                testing.getSuites().withType(JvmTestSuite.class).configureEach(suite -> {
+                    String implName = suite.getSources().getImplementationConfigurationName();
+                    project.getDependencies().addProvider(implName,
+                            project.provider(() -> project.getDependencies().platform(
+                                    "org.junit:junit-bom:" + pickBomVersion(toolchainVersion(project)))));
+                }));
+    }
+
+    private static String pickBomVersion(int targetJvm) {
+        return targetJvm >= JUNIT_BOM_THRESHOLD ? JUNIT6_BOM_VERSION : JUNIT5_BOM_VERSION;
+    }
+
+    private static int toolchainVersion(Project project) {
+        JavaLanguageVersion v = project.getExtensions().getByType(JavaPluginExtension.class)
+                .getToolchain().getLanguageVersion().getOrNull();
+        return v != null ? v.asInt() : Runtime.version().feature();
     }
 
     private static void configureJavaCompile(Project project) {
