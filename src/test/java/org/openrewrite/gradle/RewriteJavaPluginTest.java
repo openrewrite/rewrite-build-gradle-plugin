@@ -45,18 +45,18 @@ class RewriteJavaPluginTest {
     void retry() throws Exception {
         Files.writeString(settingsFile.toPath(), "rootProject.name = 'my-project'");
         Files.writeString(buildFile.toPath(),
-                //language=gradle
-                """
-                plugins {
-                    id 'org.openrewrite.build.language-library'
-                }
-                """);
+          //language=gradle
+          """
+            plugins {
+                id 'org.openrewrite.build.language-library'
+            }
+            """);
 
         BuildResult result = GradleRunner.create()
-                .withProjectDir(testProjectDir)
-                .withArguments("test")
-                .withPluginClasspath()
-                .build();
+          .withProjectDir(testProjectDir)
+          .withArguments("test")
+          .withPluginClasspath()
+          .build();
 
         assertThat(requireNonNull(result.task(":test")).getOutcome()).isEqualTo(NO_SOURCE);
     }
@@ -64,39 +64,30 @@ class RewriteJavaPluginTest {
     @Test
     void defaultToolchainSelectsJunit6Bom() throws Exception {
         Files.writeString(settingsFile.toPath(), "rootProject.name = 'default-toolchain'");
-        Files.writeString(buildFile.toPath(),
-                //language=gradle
-                """
-                plugins {
-                    id 'org.openrewrite.build.language-library'
-                }
-                """ + printBomTask());
-
-        assertThat(runPrintBom()).contains("JUNIT_BOM=org.junit:junit-bom:6.+");
-    }
-
-    private String runPrintBom() {
-        return GradleRunner.create()
-                .withProjectDir(testProjectDir)
-                .withArguments("printJunitBom")
-                .withPluginClasspath()
-                .build()
-                .getOutput();
-    }
-
-    private static String printBomTask() {
         //language=gradle
-        return """
+        Files.writeString(buildFile.toPath(),
+          //language=gradle
+          """
+            plugins {
+                id 'org.openrewrite.build.language-library'
+            }
 
-                tasks.register('printJunitBom') {
-                    doLast {
-                        configurations.testCompileClasspath.allDependencies.each { d ->
-                            if (d.group == 'org.junit' && d.name == 'junit-bom') {
-                                println "JUNIT_BOM=${d.group}:${d.name}:${d.version}"
-                            }
+            tasks.register('printJunitBom') {
+                doLast {
+                    configurations.testCompileClasspath.allDependencies.each { d ->
+                        if (d.group == 'org.junit' && d.name == 'junit-bom') {
+                            println "JUNIT_BOM=${d.group}:${d.name}:${d.version}"
                         }
                     }
                 }
-                """;
+            }
+            """);
+
+        assertThat(GradleRunner.create()
+          .withProjectDir(testProjectDir)
+          .withArguments("printJunitBom")
+          .withPluginClasspath()
+          .build()
+          .getOutput()).contains("JUNIT_BOM=org.junit:junit-bom:6.+");
     }
 }
