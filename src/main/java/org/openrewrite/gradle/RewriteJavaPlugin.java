@@ -137,6 +137,17 @@ public class RewriteJavaPlugin implements Plugin<Project> {
                                     "org.junit:junit-bom:" + pickBomVersion(toolchainVersion(project)))));
                 }));
 
+        // The dev snapshot repo (added by RewriteDependencyRepositoriesPlugin when not releasing)
+        // would otherwise let `5.+`/`6.+` resolve to JUnit -SNAPSHOT builds. Reject those so the
+        // selector falls through to the highest released version.
+        project.getConfigurations().configureEach(config ->
+                config.getResolutionStrategy().getComponentSelection().withModule(
+                        "org.junit:junit-bom", selection -> {
+                            if (selection.getCandidate().getVersion().endsWith("-SNAPSHOT")) {
+                                selection.reject("snapshot versions not allowed");
+                            }
+                        }));
+
 //        project.getTasks().withType(Test.class).configureEach(task ->
 //                project.getExtensions().configure(TestRetryTaskExtension.class, ext ->
 //                        ext.getMaxFailures().set(4))
