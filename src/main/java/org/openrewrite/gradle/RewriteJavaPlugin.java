@@ -104,16 +104,6 @@ public class RewriteJavaPlugin implements Plugin<Project> {
         deps.add("testImplementation", "org.assertj:assertj-core:latest.release");
     }
 
-    private static String pickBomVersion(int targetJvm) {
-        return targetJvm >= JUNIT_BOM_THRESHOLD ? JUNIT6_BOM_VERSION : JUNIT5_BOM_VERSION;
-    }
-
-    private static int toolchainVersion(Project project) {
-        JavaLanguageVersion v = project.getExtensions().getByType(JavaPluginExtension.class)
-                .getToolchain().getLanguageVersion().getOrNull();
-        return v != null ? v.asInt() : Runtime.version().feature();
-    }
-
     private static void configureJavaCompile(Project project) {
         project.getTasks().named("compileJava", JavaCompile.class, task -> task.getOptions().getRelease().set(8));
 
@@ -122,6 +112,13 @@ public class RewriteJavaPlugin implements Plugin<Project> {
             task.getOptions().getCompilerArgs().add("-parameters");
             task.getOptions().setFork(true);
         });
+    }
+
+    private static String pickBomVersion(Project project) {
+        JavaLanguageVersion v = project.getExtensions().getByType(JavaPluginExtension.class)
+                .getToolchain().getLanguageVersion().getOrNull();
+        int targetJvm = v != null ? v.asInt() : Runtime.version().feature();
+        return targetJvm >= JUNIT_BOM_THRESHOLD ? JUNIT6_BOM_VERSION : JUNIT5_BOM_VERSION;
     }
 
     private static void configureTesting(Project project) {
@@ -134,7 +131,7 @@ public class RewriteJavaPlugin implements Plugin<Project> {
                     String implName = suite.getSources().getImplementationConfigurationName();
                     project.getDependencies().addProvider(implName,
                             project.provider(() -> project.getDependencies().platform(
-                                    "org.junit:junit-bom:" + pickBomVersion(toolchainVersion(project)))));
+                                    "org.junit:junit-bom:" + pickBomVersion(project))));
                 }));
 
         // The dev snapshot repo (added by RewriteDependencyRepositoriesPlugin when not releasing)
