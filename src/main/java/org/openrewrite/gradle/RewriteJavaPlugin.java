@@ -70,7 +70,6 @@ public class RewriteJavaPlugin implements Plugin<Project> {
                 strategy.cacheDynamicVersionsFor(0, "seconds")));
 
         addDependencies(project, ext);
-        configureJUnitBom(project);
         configureJavaCompile(project);
         configureTesting(project);
 
@@ -105,20 +104,6 @@ public class RewriteJavaPlugin implements Plugin<Project> {
         deps.add("testImplementation", "org.assertj:assertj-core:latest.release");
     }
 
-    private static void configureJUnitBom(Project project) {
-        // Inject the JUnit BOM into every JvmTestSuite (default `test` plus any registered later).
-        // The dependency is registered eagerly via addProvider; the version lambda runs lazily,
-        // so build-script toolchain overrides (e.g. rewrite-java-8 pinning to 8) have applied
-        // by the time we pick a BOM line — no afterEvaluate required.
-        project.getExtensions().configure(TestingExtension.class, testing ->
-                testing.getSuites().withType(JvmTestSuite.class).configureEach(suite -> {
-                    String implName = suite.getSources().getImplementationConfigurationName();
-                    project.getDependencies().addProvider(implName,
-                            project.provider(() -> project.getDependencies().platform(
-                                    "org.junit:junit-bom:" + pickBomVersion(toolchainVersion(project)))));
-                }));
-    }
-
     private static String pickBomVersion(int targetJvm) {
         return targetJvm >= JUNIT_BOM_THRESHOLD ? JUNIT6_BOM_VERSION : JUNIT5_BOM_VERSION;
     }
@@ -140,6 +125,18 @@ public class RewriteJavaPlugin implements Plugin<Project> {
     }
 
     private static void configureTesting(Project project) {
+        // Inject the JUnit BOM into every JvmTestSuite (default `test` plus any registered later).
+        // The dependency is registered eagerly via addProvider; the version lambda runs lazily,
+        // so build-script toolchain overrides (e.g. rewrite-java-8 pinning to 8) have applied
+        // by the time we pick a BOM line — no afterEvaluate required.
+        project.getExtensions().configure(TestingExtension.class, testing ->
+                testing.getSuites().withType(JvmTestSuite.class).configureEach(suite -> {
+                    String implName = suite.getSources().getImplementationConfigurationName();
+                    project.getDependencies().addProvider(implName,
+                            project.provider(() -> project.getDependencies().platform(
+                                    "org.junit:junit-bom:" + pickBomVersion(toolchainVersion(project)))));
+                }));
+
 //        project.getTasks().withType(Test.class).configureEach(task ->
 //                project.getExtensions().configure(TestRetryTaskExtension.class, ext ->
 //                        ext.getMaxFailures().set(4))
