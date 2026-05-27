@@ -124,4 +124,22 @@
         <packageUrl regex="true">^pkg:maven/com\.fasterxml\.jackson\.core/jackson-core@.*$</packageUrl>
         <vulnerabilityName>GHSA-72hv-8253-57qq</vulnerabilityName>
     </suppress>
+    <suppress until="2026-07-01Z">
+        <notes><![CDATA[
+            False positive. These CVEs are for OpenTelemetry libraries (Python contrib,
+            opentelemetry-go, opentelemetry-go-contrib, opentelemetry-dotnet). The
+            io.prometheus:simpleclient_tracer_otel_agent Java jar is part of the Prometheus
+            simpleclient_tracer family — a small adapter that reads the current OpenTelemetry
+            trace context for Prometheus exemplars. It does not embed or use the affected
+            OTel SDKs. The scanner matches via the "OpenTelemetry Agent" evidence/CPE.
+            Added: 2026-05-27
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/io\.prometheus/simpleclient_tracer_otel_agent@.*$</packageUrl>
+        <cve>CVE-2023-43810</cve>
+        <cve>CVE-2023-45142</cve>
+        <cve>CVE-2023-47108</cve>
+        <cve>CVE-2026-41078</cve>
+        <cve>CVE-2026-39882</cve>
+        <cve>CVE-2026-40894</cve>
+    </suppress>
 </suppressions>
