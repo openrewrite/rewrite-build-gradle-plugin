@@ -141,6 +141,107 @@ class RecipeMarketplaceCsvValidateCompletenessTaskTest {
     }
 
     @Test
+    void failsWhenCsvDisplayNameDriftsFromRecipe() throws Exception {
+        createSimpleRecipeProject();
+        csvFile.getParentFile().mkdirs();
+        // displayName in CSV no longer matches the recipe's displayName
+        Files.writeString(csvFile.toPath(),
+          """
+          ecosystem,packageName,name,displayName,description
+          maven,org.example:test-recipe-project,org.example.TestRecipe,Stale display name,A test recipe.
+          """);
+
+        BuildResult result = GradleRunner.create()
+          .withProjectDir(projectDir)
+          .withArguments("recipeCsvValidateCompleteness", "--info", "--stacktrace")
+          .withPluginClasspath()
+          .withDebug(true)
+          .buildAndFail();
+
+        assertThat(requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome()).isEqualTo(FAILED);
+        assertThat(result.getOutput())
+          .contains("CSV value drifted from the recipe")
+          .contains("recipeCsvGenerate")
+          .contains("org.example.TestRecipe.displayName");
+    }
+
+    @Test
+    void failsWhenCsvDescriptionDriftsFromRecipe() throws Exception {
+        createSimpleRecipeProject();
+        csvFile.getParentFile().mkdirs();
+        // description in CSV no longer matches the recipe's description
+        Files.writeString(csvFile.toPath(),
+          """
+          ecosystem,packageName,name,displayName,description
+          maven,org.example:test-recipe-project,org.example.TestRecipe,Test recipe,A stale description.
+          """);
+
+        BuildResult result = GradleRunner.create()
+          .withProjectDir(projectDir)
+          .withArguments("recipeCsvValidateCompleteness", "--info", "--stacktrace")
+          .withPluginClasspath()
+          .withDebug(true)
+          .buildAndFail();
+
+        assertThat(requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome()).isEqualTo(FAILED);
+        assertThat(result.getOutput())
+          .contains("CSV value drifted from the recipe")
+          .contains("recipeCsvGenerate")
+          .contains("org.example.TestRecipe.description");
+    }
+
+    @Test
+    void failsWhenCsvOptionDisplayNameDriftsFromRecipe() throws Exception {
+        createProjectWithOptionRecipe();
+        csvFile.getParentFile().mkdirs();
+        // The Java recipe defines an option with displayName "Live option display" and
+        // description "Live option description."; the CSV's option JSON has a stale displayName.
+        Files.writeString(csvFile.toPath(),
+          """
+          ecosystem,packageName,name,displayName,description,options
+          maven,org.example:test-recipe-project,org.example.RecipeWithOption,Recipe with option,A recipe that has an option.,"[{""name"":""someOption"",""type"":""String"",""displayName"":""Stale option display"",""description"":""Live option description."",""required"":true}]"
+          """);
+
+        BuildResult result = GradleRunner.create()
+          .withProjectDir(projectDir)
+          .withArguments("recipeCsvValidateCompleteness", "--info", "--stacktrace")
+          .withPluginClasspath()
+          .withDebug(true)
+          .buildAndFail();
+
+        assertThat(requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome()).isEqualTo(FAILED);
+        assertThat(result.getOutput())
+          .contains("CSV value drifted from the recipe")
+          .contains("recipeCsvGenerate")
+          .contains("org.example.RecipeWithOption.options[someOption].displayName");
+    }
+
+    @Test
+    void failsWhenCsvOptionDescriptionDriftsFromRecipe() throws Exception {
+        createProjectWithOptionRecipe();
+        csvFile.getParentFile().mkdirs();
+        // CSV's option JSON has a stale description.
+        Files.writeString(csvFile.toPath(),
+          """
+          ecosystem,packageName,name,displayName,description,options
+          maven,org.example:test-recipe-project,org.example.RecipeWithOption,Recipe with option,A recipe that has an option.,"[{""name"":""someOption"",""type"":""String"",""displayName"":""Live option display"",""description"":""Stale option description."",""required"":true}]"
+          """);
+
+        BuildResult result = GradleRunner.create()
+          .withProjectDir(projectDir)
+          .withArguments("recipeCsvValidateCompleteness", "--info", "--stacktrace")
+          .withPluginClasspath()
+          .withDebug(true)
+          .buildAndFail();
+
+        assertThat(requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome()).isEqualTo(FAILED);
+        assertThat(result.getOutput())
+          .contains("CSV value drifted from the recipe")
+          .contains("recipeCsvGenerate")
+          .contains("org.example.RecipeWithOption.options[someOption].description");
+    }
+
+    @Test
     void skipsValidationWhenCsvDoesNotExist() throws Exception {
         createSimpleRecipeProject();
 
@@ -227,6 +328,66 @@ class RecipeMarketplaceCsvValidateCompletenessTaskTest {
     private void createProjectWithTwoRecipes() throws IOException {
         createSimpleRecipeProject();
         createRecipeClass("AnotherRecipe", "Another recipe", "Another test recipe.");
+    }
+
+    /**
+     * Create a project containing a Java recipe class with a single {@link org.openrewrite.Option}, so that option
+     * displayName / description drift between {@code recipes.csv} and the live recipe can be exercised.
+     */
+    private void createProjectWithOptionRecipe() throws IOException {
+        Files.writeString(settingsFile.toPath(), "rootProject.name = 'test-recipe-project'");
+        Files.writeString(buildFile.toPath(), """
+          plugins {
+              id 'java'
+              id 'org.openrewrite.build.recipe-library-base'
+              id 'org.openrewrite.build.publish'
+          }
+
+          group = 'org.example'
+          version = '1.0.0'
+
+          repositories {
+              mavenCentral()
+          }
+
+          dependencies {
+              implementation 'org.openrewrite:rewrite-core:latest.integration'
+          }
+          """);
+
+        File javaDir = new File(projectDir, "src/main/java/org/example");
+        javaDir.mkdirs();
+        @Language("java")
+        String recipeSource = """
+          package org.example;
+
+          import org.openrewrite.Option;
+          import org.openrewrite.Recipe;
+
+          public class RecipeWithOption extends Recipe {
+              @Option(displayName = "Live option display", description = "Live option description.")
+              private final String someOption;
+
+              public RecipeWithOption(String someOption) {
+                  this.someOption = someOption;
+              }
+
+              public String getSomeOption() {
+                  return someOption;
+              }
+
+              @Override
+              public String getDisplayName() {
+                  return "Recipe with option";
+              }
+
+              @Override
+              public String getDescription() {
+                  return "A recipe that has an option.";
+              }
+          }
+          """;
+        Files.writeString(new File(javaDir, "RecipeWithOption.java").toPath(), recipeSource);
     }
 
     private void createRecipeClass(String className, String displayName, String description) throws IOException {
