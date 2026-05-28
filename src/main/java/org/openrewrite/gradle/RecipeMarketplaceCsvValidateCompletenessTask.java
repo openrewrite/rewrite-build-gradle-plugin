@@ -20,6 +20,7 @@ import org.gradle.api.GradleException;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.tasks.*;
+import org.gradle.work.DisableCachingByDefault;
 import org.openrewrite.Validated;
 import org.openrewrite.config.Environment;
 import org.openrewrite.marketplace.RecipeClassLoader;
@@ -37,6 +38,7 @@ import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 
+@DisableCachingByDefault(because = "Validation task that loads recipes to verify marketplace CSV completeness")
 public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends DefaultTask {
 
     /**

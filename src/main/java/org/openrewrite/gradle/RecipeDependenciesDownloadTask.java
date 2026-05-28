@@ -23,6 +23,7 @@ import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.file.SourceDirectorySet;
 import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.work.DisableCachingByDefault;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,6 +33,7 @@ import java.util.Map;
 
 import static java.util.Objects.requireNonNull;
 
+@DisableCachingByDefault(because = "Resolves and downloads recipe dependencies from remote repositories")
 public class RecipeDependenciesDownloadTask extends DefaultTask {
 
     private static final ChainVersionMatcher versionMatcher = new ChainVersionMatcher();
