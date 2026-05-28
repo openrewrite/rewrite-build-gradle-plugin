@@ -21,6 +21,7 @@ import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.*;
+import org.gradle.work.DisableCachingByDefault;
 import org.openrewrite.marketplace.RecipeMarketplace;
 import org.openrewrite.marketplace.RecipeMarketplaceReader;
 import org.openrewrite.marketplace.RecipeMarketplaceWriter;
@@ -35,6 +36,7 @@ import java.util.List;
 
 import static java.util.stream.Collectors.toList;
 
+@DisableCachingByDefault(because = "Generates the recipe marketplace CSV from resolved recipe metadata")
 public abstract class RecipeMarketplaceCsvGenerateTask extends DefaultTask {
 
     @Input

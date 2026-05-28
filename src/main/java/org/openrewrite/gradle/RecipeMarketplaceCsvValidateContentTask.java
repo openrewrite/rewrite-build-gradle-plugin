@@ -20,6 +20,7 @@ import org.gradle.api.GradleException;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.work.DisableCachingByDefault;
 import org.openrewrite.Validated;
 import org.openrewrite.marketplace.RecipeMarketplace;
 import org.openrewrite.marketplace.RecipeMarketplaceContentValidator;
@@ -29,6 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+@DisableCachingByDefault(because = "Validation task that checks recipe marketplace CSV content")
 public abstract class RecipeMarketplaceCsvValidateContentTask extends DefaultTask {
 
     /**

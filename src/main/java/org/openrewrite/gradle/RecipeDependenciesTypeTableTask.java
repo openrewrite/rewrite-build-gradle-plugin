@@ -27,6 +27,7 @@ import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.work.DisableCachingByDefault;
 import org.openrewrite.java.internal.parser.TypeTable;
 
 import java.io.File;
@@ -37,6 +38,7 @@ import java.util.Set;
 
 import static java.util.Objects.requireNonNull;
 
+@DisableCachingByDefault(because = "Resolves and downloads recipe dependencies from remote repositories")
 public abstract class RecipeDependenciesTypeTableTask extends DefaultTask {
 
     /**
