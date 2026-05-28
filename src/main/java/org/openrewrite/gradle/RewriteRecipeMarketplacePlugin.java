@@ -53,6 +53,8 @@ public class RewriteRecipeMarketplacePlugin implements Plugin<Project> {
 
         TaskProvider<RecipeMarketplaceCsvValidateCompletenessTask> recipeCsvValidateCompleteness = project.getTasks().register("recipeCsvValidateCompleteness", RecipeMarketplaceCsvValidateCompletenessTask.class,
                 task -> {
+                    // Surface cheap CSV format errors before the heavier JAR-scanning completeness/drift check.
+                    task.mustRunAfter(recipeCsvValidateContent);
                     task.getRuntimeClasspath().from(project.getConfigurations().getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME));
                     if (project.getPlugins().hasPlugin(ShadowJavaPlugin.class)) {
                         task.getRecipeJar().convention(project.getTasks().named(ShadowJavaPlugin.SHADOW_JAR_TASK_NAME, ShadowJar.class).flatMap(Jar::getArchiveFile));

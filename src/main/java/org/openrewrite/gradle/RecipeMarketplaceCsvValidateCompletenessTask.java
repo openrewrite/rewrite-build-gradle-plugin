@@ -22,7 +22,10 @@ import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.tasks.*;
 import org.openrewrite.Validated;
 import org.openrewrite.config.Environment;
+import org.openrewrite.config.OptionDescriptor;
+import org.openrewrite.config.RecipeDescriptor;
 import org.openrewrite.marketplace.RecipeClassLoader;
+import org.openrewrite.marketplace.RecipeListing;
 import org.openrewrite.marketplace.RecipeMarketplace;
 import org.openrewrite.marketplace.RecipeMarketplaceCompletenessValidator;
 import org.openrewrite.marketplace.RecipeMarketplaceReader;
@@ -30,8 +33,10 @@ import org.openrewrite.marketplace.RecipeMarketplaceReader;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.groupingBy;
@@ -58,7 +63,7 @@ public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends Defau
 
     @Override
     public String getDescription() {
-        return "Validates the completeness of recipes.csv against the recipe JAR (CSV ↔ JAR synchronization)";
+        return "Validates the completeness of recipes.csv against the recipe JAR (CSV ↔ JAR synchronization), including drift in display names and descriptions";
     }
 
     @Override
@@ -85,10 +90,13 @@ public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends Defau
         getLogger().info("Against recipe JAR: {}", recipeJarPath);
 
         // Validate completeness
+        RecipeMarketplace marketplace = new RecipeMarketplaceReader().fromCsv(csvPath);
+        Environment environment = jarScanningEnvironment(recipeJarPath);
         RecipeMarketplaceCompletenessValidator validator = new RecipeMarketplaceCompletenessValidator();
-        Validated<RecipeMarketplace> validation = validator.validate(
-                new RecipeMarketplaceReader().fromCsv(csvPath),
-                jarScanningEnvironment(recipeJarPath));
+        Validated<RecipeMarketplace> validation = validator.validate(marketplace, environment);
+
+        // Detect field-level drift between CSV rows and the live recipes in the environment
+        validation = validation.and(validateNoDrift(marketplace, environment));
 
         if (validation.isInvalid()) {
             Map<String, List<Validated.Invalid<RecipeMarketplace>>> byMessage = validation.failures().stream()
@@ -110,6 +118,83 @@ public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends Defau
         }
 
         getLogger().lifecycle("Recipe marketplace CSV completeness validation passed");
+    }
+
+    /**
+     * Compare each CSV row's display name and description to the live values returned by the corresponding recipe
+     * in the environment, so that silent drift between source code and {@code recipes.csv} is caught at build time.
+     * <p>
+     * Rows whose recipe name is not present in the environment are skipped here; the completeness validator
+     * already flags them.
+     */
+    private Validated<RecipeMarketplace> validateNoDrift(RecipeMarketplace marketplace, Environment env) {
+        Map<String, RecipeDescriptor> byName = new HashMap<>();
+        for (RecipeDescriptor descriptor : env.listRecipeDescriptors()) {
+            byName.put(descriptor.getName(), descriptor);
+        }
+
+        Validated<RecipeMarketplace> validation = Validated.none();
+        for (RecipeListing listing : marketplace.getAllRecipes()) {
+            RecipeDescriptor descriptor = byName.get(listing.getName());
+            if (descriptor == null) {
+                continue;
+            }
+            if (!Objects.equals(listing.getDisplayName(), descriptor.getDisplayName())) {
+                validation = validation.and(Validated.invalid(
+                        listing.getName() + ".displayName",
+                        listing.getDisplayName(),
+                        "CSV value drifted from the recipe; " +
+                                "run `./gradlew recipeCsvGenerate` to update `recipes.csv`."));
+            }
+            if (!Objects.equals(listing.getDescription(), descriptor.getDescription())) {
+                validation = validation.and(Validated.invalid(
+                        listing.getName() + ".description",
+                        listing.getDescription(),
+                        "CSV value drifted from the recipe; " +
+                                "run `./gradlew recipeCsvGenerate` to update `recipes.csv`."));
+            }
+            validation = validation.and(validateOptions(listing.getName(), listing.getOptions(), descriptor.getOptions()));
+        }
+        return validation;
+    }
+
+    /**
+     * Compare CSV-listed options to the live options on the recipe descriptor. Options are matched by name; options
+     * only present on one side are skipped (the recipe's own input validation will surface those once invoked, and
+     * including them here would conflate "drift" with "set of options changed").
+     */
+    private Validated<RecipeMarketplace> validateOptions(String recipeName,
+                                                          List<OptionDescriptor> csvOptions,
+                                                          List<OptionDescriptor> liveOptions) {
+        if (csvOptions.isEmpty() || liveOptions.isEmpty()) {
+            return Validated.none();
+        }
+        Map<String, OptionDescriptor> liveByName = new HashMap<>();
+        for (OptionDescriptor live : liveOptions) {
+            liveByName.put(live.getName(), live);
+        }
+        Validated<RecipeMarketplace> validation = Validated.none();
+        for (OptionDescriptor csv : csvOptions) {
+            OptionDescriptor live = liveByName.get(csv.getName());
+            if (live == null) {
+                continue;
+            }
+            if (!Objects.equals(csv.getDisplayName(), live.getDisplayName())) {
+                validation = validation.and(Validated.invalid(
+                        recipeName + ".options[" + csv.getName() + "].displayName",
+                        csv.getDisplayName(),
+                        "CSV value drifted from the recipe; " +
+                                "run `./gradlew recipeCsvGenerate` to update `recipes.csv`."));
+            }
+            if (!Objects.equals(csv.getDescription(), live.getDescription())) {
+                validation = validation.and(Validated.invalid(
+                        recipeName + ".options[" + csv.getName() + "].description",
+                        csv.getDescription(),
+                        "CSV value drifted from the recipe; " +
+                                "run `./gradlew recipeCsvGenerate` to update `recipes.csv`."));
+            }
+        }
+        return validation;
     }
 
     /**
