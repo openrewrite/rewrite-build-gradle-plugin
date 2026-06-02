@@ -17,9 +17,14 @@ package org.openrewrite.gradle;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginExtension;
+import org.gradle.api.plugins.JvmTestSuitePlugin;
+import org.gradle.api.plugins.jvm.JvmTestSuite;
+import org.gradle.testing.base.TestingExtension;
 
+@SuppressWarnings("UnstableApiUsage")
 public class RewriteRecipeLibraryBasePlugin implements Plugin<Project> {
 
     @Override
@@ -67,6 +72,63 @@ public class RewriteRecipeLibraryBasePlugin implements Plugin<Project> {
                     });
                 }
             });
+
+            configureCliCompatSuite(project);
+        });
+    }
+
+    /**
+     * Register the {@code cliCompat} test suite — a dedicated source set
+     * ({@code src/cliCompat/java}) whose tests drive recipe execution through a
+     * pinned older moderne-cli via {@code org.openrewrite.test.ModwRunner}, catching
+     * breaking changes in the recipe runtime contract.
+     * <p>
+     * The suite is deliberately <strong>not</strong> wired into {@code check}/{@code build},
+     * so neither the regular {@code test} task nor {@code mod build} runs it; CI
+     * invokes {@code ./gradlew cliCompat} on the nightly schedule. Every recipe
+     * library gets the suite for free; modules that ship no {@code src/cliCompat}
+     * tree simply get an empty, no-op {@code cliCompat} task.
+     */
+    private static void configureCliCompatSuite(Project project) {
+        project.getPlugins().apply(JvmTestSuitePlugin.class);
+        TestingExtension testing = project.getExtensions().getByType(TestingExtension.class);
+        RewriteRecipeLibraryExtension recipeExt = project.getExtensions().getByType(RewriteRecipeLibraryExtension.class);
+        DependencyHandler deps = project.getDependencies();
+
+        testing.getSuites().register("cliCompat", JvmTestSuite.class, suite -> {
+            suite.useJUnitJupiter();
+
+            // Curated base classpath for CLI-compat tests: the rewrite testing
+            // harness (which provides ModwRunner + RewriteTest) plus the common
+            // Java/Maven assertion helpers, version-aligned through the rewrite BOM.
+            // The project dependency supplies the freshly-built recipe classes and
+            // their runtime classpath, which ModwRunner forwards to the CLI as the
+            // active-recipe classpath.
+            //
+            // Deliberately a minimal, BOM-pinned set rather than the full unit-test
+            // classpath: the recipe's complete implementation closure can drag in
+            // snapshot-only transitive deps that don't resolve in isolation. Modules
+            // whose fixtures need more (rewrite-gradle, rewrite-yaml, ...) add them
+            // to this suite in their own build script via
+            // `testing.suites.named("cliCompat")`.
+            deps.addProvider("cliCompatImplementation",
+                    recipeExt.getRewriteVersion().map(v -> deps.platform("org.openrewrite:rewrite-bom:" + v)));
+            deps.add("cliCompatImplementation", "org.openrewrite:rewrite-test");
+            deps.add("cliCompatImplementation", "org.openrewrite:rewrite-java");
+            deps.add("cliCompatImplementation", "org.openrewrite:rewrite-java-test");
+            deps.add("cliCompatImplementation", "org.openrewrite:rewrite-maven");
+            deps.add("cliCompatImplementation", project);
+
+            suite.getTargets().all(target -> target.getTestTask().configure(test -> {
+                // -PcliCompatVersion=... overrides the version hardcoded in the tests
+                // by forwarding into the system property ModwRunner reads. The
+                // MODERNE_CLI_REGRESSION_VERSION env var reaches the test JVM
+                // automatically and needs no wiring here.
+                Object override = project.findProperty("cliCompatVersion");
+                if (override != null && !override.toString().trim().isEmpty()) {
+                    test.systemProperty("moderne.cli.regression.version", override.toString().trim());
+                }
+            }));
         });
     }
 
