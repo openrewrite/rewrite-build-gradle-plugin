@@ -22,7 +22,11 @@ import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.plugins.JvmTestSuitePlugin;
 import org.gradle.api.plugins.jvm.JvmTestSuite;
+import org.gradle.jvm.toolchain.JavaLanguageVersion;
+import org.gradle.jvm.toolchain.JavaToolchainService;
 import org.gradle.testing.base.TestingExtension;
+
+import static org.openrewrite.internal.StringUtils.capitalize;
 
 @SuppressWarnings("UnstableApiUsage")
 public class RewriteRecipeLibraryBasePlugin implements Plugin<Project> {
@@ -93,6 +97,7 @@ public class RewriteRecipeLibraryBasePlugin implements Plugin<Project> {
         project.getPlugins().apply(JvmTestSuitePlugin.class);
         TestingExtension testing = project.getExtensions().getByType(TestingExtension.class);
         RewriteRecipeLibraryExtension recipeExt = project.getExtensions().getByType(RewriteRecipeLibraryExtension.class);
+        JavaToolchainService toolchains = project.getExtensions().getByType(JavaToolchainService.class);
         DependencyHandler deps = project.getDependencies();
 
         testing.getSuites().register("cliCompat", JvmTestSuite.class, suite -> {
@@ -120,6 +125,9 @@ public class RewriteRecipeLibraryBasePlugin implements Plugin<Project> {
             deps.add("cliCompatImplementation", project);
 
             suite.getTargets().all(target -> target.getTestTask().configure(test -> {
+                test.getJavaLauncher().set(toolchains.launcherFor(spec ->
+                        spec.getLanguageVersion().set(JavaLanguageVersion.of(25))));
+
                 // -PcliCompatVersion=... overrides the version hardcoded in the tests
                 // by forwarding into the system property ModwRunner reads. The
                 // MODERNE_CLI_REGRESSION_VERSION env var reaches the test JVM
@@ -130,12 +138,5 @@ public class RewriteRecipeLibraryBasePlugin implements Plugin<Project> {
                 }
             }));
         });
-    }
-
-    private static String capitalize(String str) {
-        if (str.isEmpty()) {
-            return str;
-        }
-        return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
 }
