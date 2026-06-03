@@ -28,7 +28,15 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
         if (!project.hasProperty("releasing")) {
             repos.add(repos.mavenLocal(repo -> repo.content(content ->
                     content.excludeVersionByRegex(".+", ".+", ".+-rc[-]?[0-9]*"))));
-            repos.add(repos.maven(repo -> repo.setUrl("https://central.sonatype.com/repository/maven-snapshots/")));
+            repos.add(repos.maven(repo -> {
+                repo.setUrl("https://central.sonatype.com/repository/maven-snapshots/");
+                // Only consult the snapshots repo for groups that actually publish snapshots we consume,
+                // so a snapshots-repo outage can't break resolution of third-party releases.
+                repo.content(content -> {
+                    content.includeGroupAndSubgroups("org.openrewrite");
+                    content.includeGroupAndSubgroups("io.moderne");
+                });
+            }));
         }
 
         repos.add(repos.mavenCentral(repo -> repo.content(content ->
