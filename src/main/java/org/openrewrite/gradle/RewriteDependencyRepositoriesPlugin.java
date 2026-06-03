@@ -18,7 +18,6 @@ package org.openrewrite.gradle;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.dsl.RepositoryHandler;
-import org.gradle.api.artifacts.repositories.MavenRepositoryContentDescriptor;
 
 public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
 
@@ -31,8 +30,12 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
                     content.excludeVersionByRegex(".+", ".+", ".+-rc[-]?[0-9]*"))));
             repos.add(repos.maven(repo -> {
                 repo.setUrl("https://central.sonatype.com/repository/maven-snapshots/");
-                // Only serve snapshots from here so a snapshots-repo outage can't break release resolution
-                repo.mavenContent(MavenRepositoryContentDescriptor::snapshotsOnly);
+                // Only consult the snapshots repo for groups that actually publish snapshots we consume,
+                // so a snapshots-repo outage can't break resolution of third-party releases.
+                repo.content(content -> {
+                    content.includeGroupAndSubgroups("org.openrewrite");
+                    content.includeGroupAndSubgroups("io.moderne");
+                });
             }));
         }
 
