@@ -87,6 +87,7 @@ public class RewriteBomAlignmentPlugin implements Plugin<Project> {
                             .computeIfAbsent(bom.getValue(), k -> new LinkedHashSet<>())
                             .add(moduleId + ":" + bom.getValue() + " (via inheritsFrom)");
                 }
+                String selectedManagedRequester = project.getName() + " (selected/managed version)";
                 for (DependencyResult dep : resolutionResult.getAllDependencies()) {
                     if (!(dep instanceof ResolvedDependencyResult edge)) {
                         continue;
@@ -100,6 +101,22 @@ public class RewriteBomAlignmentPlugin implements Plugin<Project> {
                     }
                     if (!isManagedRequester(edge.getFrom().getId())) {
                         continue;
+                    }
+                    // For the BOM's own direct `api` declarations, record the version the graph actually
+                    // *selected* — attributed to the BOM itself. The BOM bumps modules via dynamic
+                    // `api("…:latest.release")` entries whose requested selector is filtered out below, so
+                    // the selected (new) version would otherwise never be recorded as a pin. Without this,
+                    // "BOM manages X@new while a concrete consumer still requests X@old" stays invisible:
+                    // only the old concrete request is seen, yielding a single version → no mismatch.
+                    // Restricting to edges *from the BOM project* avoids flagging modules a third party
+                    // merely forced upward — those aren't versions the BOM is choosing to publish.
+                    if (edge.getFrom().getId() instanceof ProjectComponentIdentifier &&
+                            edge.getSelected().getId() instanceof ModuleComponentIdentifier selectedId &&
+                            isManagedGroup(selectedId.getGroup())) {
+                        requestedVersions
+                                .computeIfAbsent(selectedId.getGroup() + ":" + selectedId.getModule(), k -> new LinkedHashMap<>())
+                                .computeIfAbsent(selectedId.getVersion(), k -> new LinkedHashSet<>())
+                                .add(selectedManagedRequester);
                     }
                     String version = selector.getVersion();
                     if (isDynamicVersion(version)) {

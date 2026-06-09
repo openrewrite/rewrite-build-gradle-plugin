@@ -138,6 +138,91 @@ class RewriteBomAlignmentPluginTest {
     }
 
     @Test
+    void failsWhenBomBumpsModuleNewerThanAConcreteConsumerWasBuiltAgainst() throws Exception {
+        // The BOM declares core via a dynamic `latest.release` selector that resolves to 2.0.0, while
+        // `bar` (a sibling module the BOM also publishes) was built against the older core:1.0.0. The
+        // BOM's own pin is dynamic, so its requested selector is filtered out — only bar's concrete
+        // 1.0.0 request would otherwise be seen, leaving a single version and hiding the mismatch.
+        // Recording the BOM's *selected* (2.0.0) version surfaces it.
+        publishMavenMetadata("org.openrewrite.recipe", "core", "2.0.0", "1.0.0", "2.0.0");
+
+        writeFile(settingsFile, "rootProject.name = 'bom-bumps-newer'");
+
+        //language=groovy
+        String buildFileContent = """
+                plugins {
+                    id 'java-platform'
+                    id 'org.openrewrite.build.bom-alignment'
+                }
+                javaPlatform { allowDependencies() }
+                repositories {
+                    maven { url = uri('%s') }
+                }
+                dependencies {
+                    api 'org.openrewrite.recipe:core:latest.release'
+                    api 'org.openrewrite.recipe:bar:1.0.0'
+                }
+                """.formatted(repoDir.toURI());
+
+        writeFile(buildFile, buildFileContent);
+
+        BuildResult result = GradleRunner.create()
+                .withProjectDir(projectDir)
+                .withArguments("checkBomAlignment", "--stacktrace")
+                .withPluginClasspath()
+                .withDebug(true)
+                .buildAndFail();
+
+        assertThat(result.getOutput())
+                .contains("BOM dependency version mismatches")
+                .contains("org.openrewrite.recipe:core")
+                // 1.0.0 is what bar still requests; 2.0.0 is what the BOM selected/manages.
+                .contains("1.0.0")
+                .contains("2.0.0")
+                .contains("selected/managed version")
+                // bar is the outdated consumer needing a re-release against the new core.
+                .contains("org.openrewrite.recipe:bar")
+                .contains("requests org.openrewrite.recipe:core:1.0.0 (latest 2.0.0)");
+    }
+
+    @Test
+    void passesWhenBomBumpedModuleMatchesEveryConcreteConsumer() throws Exception {
+        // Companion negative case: the BOM again bumps core to 2.0.0 via `latest.release`, but the
+        // sibling module it ships (baz) was already built against core:2.0.0. Selected and concrete
+        // requested versions agree, so recording the selected version must stay idempotent — no mismatch.
+        publishMavenMetadata("org.openrewrite.recipe", "core", "2.0.0", "1.0.0", "2.0.0");
+
+        writeFile(settingsFile, "rootProject.name = 'bom-bumps-aligned'");
+
+        //language=groovy
+        String buildFileContent = """
+                plugins {
+                    id 'java-platform'
+                    id 'org.openrewrite.build.bom-alignment'
+                }
+                javaPlatform { allowDependencies() }
+                repositories {
+                    maven { url = uri('%s') }
+                }
+                dependencies {
+                    api 'org.openrewrite.recipe:core:latest.release'
+                    api 'org.openrewrite.recipe:baz:1.0.0'
+                }
+                """.formatted(repoDir.toURI());
+
+        writeFile(buildFile, buildFileContent);
+
+        BuildResult result = GradleRunner.create()
+                .withProjectDir(projectDir)
+                .withArguments("checkBomAlignment", "--stacktrace")
+                .withPluginClasspath()
+                .withDebug(true)
+                .build();
+
+        assertThat(requireNonNull(result.task(":checkBomAlignment")).getOutcome()).isEqualTo(SUCCESS);
+    }
+
+    @Test
     void bomManagingStaleVersionIsFlaggedAsNeedingRelease() throws Exception {
         // A BOM that pins an older version of a managed module than what's actually being used in
         // the graph is itself out of date — its <dependencyManagement> needs refreshing.
@@ -683,6 +768,31 @@ class RewriteBomAlignmentPluginTest {
                 </project>
                 """.formatted(group, artifact, version, depsXml, extraXml);
         writeFile(new File(dir, artifact + "-" + version + ".pom"), pom);
+    }
+
+    /** Write a maven-metadata.xml so Gradle can resolve dynamic selectors (e.g. {@code latest.release}). */
+    private void publishMavenMetadata(String group, String artifact, String releaseVersion, String... versions) throws IOException {
+        File dir = new File(repoDir, group.replace('.', '/') + "/" + artifact);
+        assertThat(dir.exists() || dir.mkdirs()).isTrue();
+        StringBuilder versionsXml = new StringBuilder();
+        for (String version : versions) {
+            versionsXml.append("            <version>").append(version).append("</version>\n");
+        }
+        String metadata = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <metadata>
+                    <groupId>%s</groupId>
+                    <artifactId>%s</artifactId>
+                    <versioning>
+                        <latest>%s</latest>
+                        <release>%s</release>
+                        <versions>
+                %s        </versions>
+                        <lastUpdated>20260101000000</lastUpdated>
+                    </versioning>
+                </metadata>
+                """.formatted(group, artifact, releaseVersion, releaseVersion, versionsXml);
+        writeFile(new File(dir, "maven-metadata.xml"), metadata);
     }
 
     private void writeFile(File destination, String content) throws IOException {
