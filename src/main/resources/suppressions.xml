@@ -153,4 +153,32 @@
         <cve>CVE-2026-39882</cve>
         <cve>CVE-2026-40894</cve>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+            False positive. CVE-2026-41178 (GHSA-5wrp-cwcj-q835) is for the Go opentelemetry-go
+            SDK (go.opentelemetry.io/otel/baggage and /propagation no longer cap raw baggage
+            header length). The Java io.opentelemetry packages are a separate codebase and are
+            unaffected. Here they arrive build-time only, transitively via
+            org.jetbrains.kotlin:swift-export-embeddable. Cross-ecosystem CPE overclassifier —
+            nothing for us to remediate, so suppressed indefinitely.
+            Added: 2026-06-24
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/io\.opentelemetry/opentelemetry-.*@.*$</packageUrl>
+        <cve>CVE-2026-41178</cve>
+    </suppress>
+    <suppress until="2026-07-01Z">
+        <notes><![CDATA[
+            JLine3 Telnet server unauthenticated remote DoS — GHSA-2r2c-cx56-8933 (unbounded
+            NAWS terminal geometry) and GHSA-47qp-hqvx-6r3f (unbounded NEW-ENVIRON variables).
+            Not reachable: org.jline:jline-remote-telnet is shaded into the jline-3.27.1-jdk8.jar
+            pulled transitively by org.scala-sbt:zinc_2.13 (the Scala incremental compiler) on the
+            build-time `zinc` configuration only — not on any deployed runtime classpath. The
+            vulnerable Telnet server is never instantiated (no telnet listener is exposed).
+            Patched in jline 4.2.1, but it is a deep transitive of zinc.
+            Added: 2026-06-24
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.jline/jline-remote-telnet@.*$</packageUrl>
+        <vulnerabilityName>GHSA-2r2c-cx56-8933</vulnerabilityName>
+        <vulnerabilityName>GHSA-47qp-hqvx-6r3f</vulnerabilityName>
+    </suppress>
 </suppressions>
