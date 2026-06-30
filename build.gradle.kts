@@ -1,7 +1,6 @@
 @file:Suppress("UnstableApiUsage")
 
-import nl.javadude.gradle.plugins.license.LicenseExtension
-import java.util.*
+import java.util.concurrent.TimeUnit
 
 plugins {
     id("com.netflix.nebula.release") version "latest.release"
@@ -10,7 +9,7 @@ plugins {
     id("com.netflix.nebula.maven-resolved-dependencies") version "latest.release"
     id("com.netflix.nebula.maven-apache-license") version "latest.release"
     id("com.gradle.plugin-publish") version "latest.release"
-    id("com.github.hierynomus.license") version "0.16.1"
+    id("com.diffplug.spotless") version "latest.release"
 }
 
 group = "org.openrewrite"
@@ -193,12 +192,7 @@ dependencies {
 
     implementation("org.apache.ivy:ivy:2.5.2")
     implementation("org.apache.maven:maven-plugin-api:3.9.14")
-    implementation("gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:latest.release") {
-        exclude(group = "org.springframework", module = "spring-core")
-        exclude(group = "org.springframework", module = "spring-asm")
-    }
-    // Provide a newer Spring version to replace the excluded 3.1.3
-    implementation("org.springframework:spring-core:6.2.11")
+    implementation("com.diffplug.spotless:spotless-plugin-gradle:latest.release")
     implementation("com.github.jk1:gradle-license-report:1.16")
     implementation("org.owasp:dependency-check-gradle:latest.release") {
         exclude(group = "org.apache.lucene", module = "lucene-facet") // 9.12.3 Brings in a vulnerability
@@ -251,13 +245,8 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
-configure<LicenseExtension> {
-    ext.set("year", Calendar.getInstance().get(Calendar.YEAR))
-    skipExistingHeaders = true
-    header = project.rootProject.file("gradle/licenseHeader.txt")
-    mapping(mapOf("kt" to "SLASHSTAR_STYLE", "java" to "SLASHSTAR_STYLE"))
-    strictCheck = true
-    exclude("**/versions.properties")
-    exclude("**/*.txt")
-    exclude("**/suppressions.xml")
+spotless {
+    java {
+        licenseHeaderFile(rootProject.file("gradle/licenseHeader.txt"))
+    }
 }

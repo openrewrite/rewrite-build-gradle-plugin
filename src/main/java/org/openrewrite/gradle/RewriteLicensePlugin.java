@@ -15,17 +15,18 @@
  */
 package org.openrewrite.gradle;
 
+import com.diffplug.gradle.spotless.SpotlessExtension;
+import com.diffplug.gradle.spotless.SpotlessPlugin;
 import com.github.jk1.license.LicenseReportExtension;
 import com.github.jk1.license.LicenseReportPlugin;
 import com.github.jk1.license.render.ReportRenderer;
-import com.hierynomus.gradle.license.tasks.LicenseFormat;
-import nl.javadude.gradle.plugins.license.LicenseExtension;
-import nl.javadude.gradle.plugins.license.LicensePlugin;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.jvm.tasks.Jar;
 
-import java.util.*;
+import java.io.File;
+import java.util.Map;
+import java.util.Optional;
 
 public class RewriteLicensePlugin implements Plugin<Project> {
 
@@ -34,16 +35,12 @@ public class RewriteLicensePlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
-        project.getPlugins().apply(LicensePlugin.class);
+        project.getPlugins().apply(SpotlessPlugin.class);
         project.getPlugins().apply(LicenseReportPlugin.class);
 
         project.getExtensions().configure(LicenseReportExtension.class, ext -> {
             ext.renderers = new ReportRenderer[]{new com.github.jk1.license.render.CsvReportRenderer()};
         });
-
-        project.getTasks().withType(LicenseFormat.class, task ->
-            ((org.gradle.api.plugins.ExtraPropertiesExtension) task.getExtensions().getByName("ext"))
-                    .set("year", Calendar.getInstance().get(Calendar.YEAR)));
 
         project.getTasks().withType(Jar.class).configureEach(jar ->
                 jar.getManifest().attributes(Map.of(
@@ -51,24 +48,19 @@ public class RewriteLicensePlugin implements Plugin<Project> {
                         "License-Url", LICENSE_URL
                 )));
 
-        project.getExtensions().configure(LicenseExtension.class, ext -> {
-            ext.setSkipExistingHeaders(Optional
-                    .ofNullable((String) project.findProperty("licenseSkipExistingHeaders"))
-                    .map(Boolean::parseBoolean)
-                    .orElse(true));
-            ext.getExcludePatterns().addAll(Arrays.asList("**/*.tokens", "**/*.config", "**/*.interp", "**/*.txt", "**/*.bat",
-                    "**/*.zip", "**/*.csv", "**/gradlew", "**/*.dontunpack", "**/*.css",
-                    "**/*.editorconfig", "**/*.md", "**/*.jar", "**/*.tsv.gz"));
-            ext.setHeader(project.getRootProject().file("gradle/licenseHeader.txt"));
-            ext.mapping(new HashMap<>() {{
-                put("kt", "SLASHSTAR_STYLE");
-                put("java", "SLASHSTAR_STYLE");
-                put("ts", "SLASHSTAR_STYLE");
-            }});
-            ext.setStrictCheck(Optional
+        File licenseHeader = project.getRootProject().file("gradle/licenseHeader.txt");
+
+        project.getExtensions().configure(SpotlessExtension.class, spotless -> {
+            spotless.setEnforceCheck(Optional
                     .ofNullable((String) project.findProperty("licenseStrictCheck"))
                     .map(Boolean::parseBoolean)
                     .orElse(true));
+            spotless.java(java -> java.licenseHeaderFile(licenseHeader));
+            spotless.kotlin(kotlin -> kotlin.licenseHeaderFile(licenseHeader));
+            spotless.format("typescript", format -> {
+                format.target("**/*.ts");
+                format.licenseHeaderFile(licenseHeader, "(import|export|const|declare|let|var|function|class|interface|type|enum|namespace) ");
+            });
         });
     }
 }
