@@ -181,4 +181,18 @@
         <vulnerabilityName>GHSA-2r2c-cx56-8933</vulnerabilityName>
         <vulnerabilityName>GHSA-47qp-hqvx-6r3f</vulnerabilityName>
     </suppress>
+    <suppress until="2026-08-01Z">
+        <notes><![CDATA[
+            False positive. CVE-2026-50559 (GHSA-qcxp-gm7m-4j5v) is an HTTP path-based
+            authorization bypass in the Quarkus runtime (io.quarkus:quarkus-vertx-http,
+            Quarkus 3.x) via encoded matrix parameters and encoded slashes. By contrast
+            io.quarkus:quarkus-update-recipes is an OpenRewrite recipe JAR (versioned 1.x)
+            that ships YAML migration recipes for Quarkus apps; it does not contain or use
+            the vulnerable quarkus-vertx-http runtime. CPE name-match on "quarkus" only.
+            Arrives transitively via rewrite-third-party (e.g. through rewrite-recipe-bom).
+            Added: 2026-07-01
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/io\.quarkus/quarkus-update-recipes@.*$</packageUrl>
+        <cve>CVE-2026-50559</cve>
+    </suppress>
 </suppressions>
