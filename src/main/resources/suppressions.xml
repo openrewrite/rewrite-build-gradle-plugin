@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
-    <suppress until="2026-07-01Z">
+    <suppress until="2026-08-01Z">
         <notes><![CDATA[
        file name: rewrite-jenkins-0.22.0-SNAPSHOT.jar
        sev: HIGH
@@ -10,7 +10,7 @@
         <cve>CVE-2022-34792</cve>
         <cve>CVE-2022-34794</cve>
     </suppress>
-    <suppress until="2026-07-01Z">
+    <suppress until="2026-08-01Z">
         <notes><![CDATA[
        file name: rewrite-openapi-0.6.0-SNAPSHOT.jar
            sev: HIGH
@@ -19,22 +19,7 @@
         <packageUrl regex="true">^pkg:maven/org\.openrewrite\.recipe/rewrite-openapi@.*$</packageUrl>
         <cve>CVE-2022-24863</cve>
     </suppress>
-    <suppress until="2026-07-01Z">
-        <notes><![CDATA[
-   file name: rewrite-logging-frameworks-2.19.0-SNAPSHOT.jar: log4j-1.2.17.jar
-    sev: CRITICAL
-    reason: This is a false positive. Used for identifying log4j vulnerabilities.
-   ]]></notes>
-        <packageUrl regex="true">^pkg:maven/log4j/log4j@.*$</packageUrl>
-        <cve>CVE-2022-23307</cve>
-        <cve>CVE-2022-23305</cve>
-        <cve>CVE-2022-23302</cve>
-        <cve>CVE-2019-17571</cve>
-        <cve>CVE-2020-9493</cve>
-        <cve>CVE-2023-26464</cve>
-        <cve>CVE-2021-4104</cve>
-    </suppress>
-    <suppress until="2026-07-01Z">
+    <suppress until="2026-08-01Z">
         <notes><![CDATA[
             file name: openai4j-0.25.0.jar
             sev: MEDIUM
@@ -45,7 +30,7 @@
         <packageUrl regex="true">^pkg:maven/dev\.ai4j/openai4j@.*$</packageUrl>
         <cve>CVE-2025-43714</cve>
     </suppress>
-    <suppress until="2026-07-01Z">
+    <suppress until="2026-08-01Z">
         <notes><![CDATA[
             file name: rewrite-openapi-*.jar
             sev: MEDIUM
@@ -56,7 +41,7 @@
         <packageUrl regex="true">^pkg:maven/org\.openrewrite\.recipe/rewrite-openapi@.*$</packageUrl>
         <cve>CVE-2024-25712</cve>
     </suppress>
-    <suppress until="2026-07-01Z">
+    <suppress until="2026-08-01Z">
         <notes><![CDATA[
             False positive. CVE-2026-39883 is for the Go opentelemetry-go SDK (PATH hijacking
             of the kenv command on BSD). The Java io.opentelemetry packages are unaffected.
@@ -65,7 +50,7 @@
         <packageUrl regex="true">^pkg:maven/io\.opentelemetry/opentelemetry-.*@.*$</packageUrl>
         <cve>CVE-2026-39883</cve>
     </suppress>
-    <suppress until="2026-07-01Z">
+    <suppress until="2026-08-01Z">
         <notes><![CDATA[
             False positive. CVE-2026-39882 is for Go OTLP HTTP exporters (unbounded response
             body reading). The Java io.opentelemetry packages are unaffected.
@@ -74,7 +59,7 @@
         <packageUrl regex="true">^pkg:maven/io\.opentelemetry/opentelemetry-.*@.*$</packageUrl>
         <cve>CVE-2026-39882</cve>
     </suppress>
-    <suppress until="2026-07-01Z">
+    <suppress until="2026-08-01Z">
         <notes><![CDATA[
             False positive. CVE-2026-42154 is for the Go Prometheus server's remote read
             endpoint (/api/v1/read) memory-allocation DoS. The Java io.prometheus:simpleclient*
@@ -85,7 +70,7 @@
         <packageUrl regex="true">^pkg:maven/io\.prometheus/simpleclient.*@.*$</packageUrl>
         <cve>CVE-2026-42154</cve>
     </suppress>
-    <suppress until="2026-07-01Z">
+    <suppress until="2026-08-01Z">
         <notes><![CDATA[
             False positive. CVE-2026-34070 is for Python langchain-core (path traversal in
             legacy load_prompt functions). The Java dev.langchain4j library is a separate
@@ -95,7 +80,7 @@
         <packageUrl regex="true">^pkg:maven/dev\.langchain4j/langchain4j.*@.*$</packageUrl>
         <cve>CVE-2026-34070</cve>
     </suppress>
-    <suppress until="2026-07-01Z">
+    <suppress until="2026-08-01Z">
         <notes><![CDATA[
             False positive. CVE-2026-41488 is for Python langchain-openai (SSRF via DNS
             rebinding in image token counting). The Java dev.langchain4j library is a separate
@@ -105,7 +90,7 @@
         <packageUrl regex="true">^pkg:maven/dev\.langchain4j/langchain4j.*@.*$</packageUrl>
         <cve>CVE-2026-41488</cve>
     </suppress>
-    <suppress until="2026-07-01Z">
+    <suppress until="2026-08-01Z">
         <notes><![CDATA[
             False positive. CVE-2026-44843 (GHSA-pjwx-r37v-7724) is unsafe deserialization
             via overly broad load() allowlists in the Python langchain-core (PIP) package.
@@ -116,7 +101,7 @@
         <packageUrl regex="true">^pkg:maven/dev\.langchain4j/langchain4j.*@.*$</packageUrl>
         <cve>CVE-2026-44843</cve>
     </suppress>
-    <suppress until="2026-07-01Z">
+    <suppress until="2026-08-01Z">
         <notes><![CDATA[
             False positive. CVE-2020-29582 was fixed in Kotlin 1.4.21. Versions 1.6.10+
             and 1.9.10+ are not affected. The scanner incorrectly matches the CVE against
@@ -126,7 +111,7 @@
         <packageUrl regex="true">^pkg:maven/org\.jetbrains\.kotlin/kotlin-(stdlib|reflect).*@.*$</packageUrl>
         <cve>CVE-2020-29582</cve>
     </suppress>
-    <suppress until="2026-07-01Z">
+    <suppress until="2026-08-01Z">
         <notes><![CDATA[
             jackson-core DoS via number length constraint bypass in async parser. Transitive
             dependency in recipe modules. Patch available in 2.18.6+.
@@ -135,7 +120,7 @@
         <packageUrl regex="true">^pkg:maven/com\.fasterxml\.jackson\.core/jackson-core@.*$</packageUrl>
         <vulnerabilityName>GHSA-72hv-8253-57qq</vulnerabilityName>
     </suppress>
-    <suppress until="2026-07-01Z">
+    <suppress until="2026-08-01Z">
         <notes><![CDATA[
             False positive. These CVEs are for OpenTelemetry libraries (Python contrib,
             opentelemetry-go, opentelemetry-go-contrib, opentelemetry-dotnet). The
@@ -166,7 +151,7 @@
         <packageUrl regex="true">^pkg:maven/io\.opentelemetry/opentelemetry-.*@.*$</packageUrl>
         <cve>CVE-2026-41178</cve>
     </suppress>
-    <suppress until="2026-07-01Z">
+    <suppress until="2026-08-01Z">
         <notes><![CDATA[
             JLine3 Telnet server unauthenticated remote DoS — GHSA-2r2c-cx56-8933 (unbounded
             NAWS terminal geometry) and GHSA-47qp-hqvx-6r3f (unbounded NEW-ENVIRON variables).
@@ -194,5 +179,85 @@
         ]]></notes>
         <packageUrl regex="true">^pkg:maven/io\.quarkus/quarkus-update-recipes@.*$</packageUrl>
         <cve>CVE-2026-50559</cve>
+    </suppress>
+    <suppress until="2026-08-01Z">
+        <notes><![CDATA[
+            CVE-2026-53914 is unsafe deserialization of untrusted Kotlin build-cache
+            metadata, allowing code execution (fixed in Kotlin 2.4.20). It requires local
+            access, high privileges and high attack complexity (CVSS 6.7; the scanner
+            inflates it to CRITICAL). The org.jetbrains.kotlin:* artifacts (compiler,
+            scripting, build-tools, stdlib, reflect, abi-tools, etc.) are pulled by the
+            Kotlin Gradle plugin at build time only and are not on any deployed runtime
+            classpath. The Kotlin version is dictated by the Kotlin Gradle plugin, so it
+            cannot be bumped per recipe module; re-evaluate when the toolchain moves to
+            2.4.20+.
+            Added: 2026-07-03
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.jetbrains\.kotlin/.*@.*$</packageUrl>
+        <cve>CVE-2026-53914</cve>
+    </suppress>
+    <suppress until="2026-08-01Z">
+        <notes><![CDATA[
+            jackson-databind polymorphic-typing / deserialization advisories:
+            CVE-2026-54512 (PolymorphicTypeValidator bypass via generic type parameters),
+            CVE-2026-54513 (allowIfSubTypeIsArray allowlist bypass), CVE-2026-54514
+            (InetSocketAddress eager DNS resolution / SSRF) and CVE-2026-54515
+            (case-insensitive deserialization bypasses per-property @JsonIgnoreProperties).
+            All require enabling default/polymorphic typing on attacker-controlled input;
+            OpenRewrite uses jackson to parse its own recipe YAML and serialized LSTs, not
+            untrusted polymorphic JSON, so the gadget paths are not reachable. jackson is
+            centrally managed via rewrite-core, so the version cannot be bumped per recipe
+            module. The two HIGH advisories only affect the older 2.17.x line; 2.21.4 and
+            2.22.0 are already past their patch lines. Re-evaluate when rewrite-core adopts
+            the clean 2.18.9 / 2.21.5 / 2.22.1 patch releases.
+            Added: 2026-07-03
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/com\.fasterxml\.jackson\.core/jackson-databind@.*$</packageUrl>
+        <cve>CVE-2026-54512</cve>
+        <cve>CVE-2026-54513</cve>
+        <cve>CVE-2026-54514</cve>
+        <cve>CVE-2026-54515</cve>
+    </suppress>
+    <suppress until="2026-08-01Z">
+        <notes><![CDATA[
+            False positive. CVE-2023-46122 (GHSA-h9mw-grgx-2fhf, LOW) is a Zip-Slip archive
+            extraction flaw in org.scala-sbt:io / org.scala-sbt:sbt < 1.9.7. The flagged
+            artifacts org.scala-sbt:launcher-interface and org.scala-sbt:sbinary_2.13 are
+            different packages and are not the vulnerable io/sbt modules. They arrive
+            build-time only, transitively via org.scala-sbt:zinc_2.13 (the Scala incremental
+            compiler) on the `zinc` configuration — not on any deployed runtime classpath.
+            Added: 2026-07-03
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.scala-sbt/(launcher-interface|sbinary_.*)@.*$</packageUrl>
+        <cve>CVE-2023-46122</cve>
+    </suppress>
+    <suppress until="2026-08-01Z">
+        <notes><![CDATA[
+            Log4j 2 advisories CVE-2026-34477 / CVE-2026-34479 / CVE-2026-34480 (silent log
+            event loss in XML layouts; verifyHostName ignored in TLS config) and
+            CVE-2025-68161 (SocketAppender does not verify TLS hostname). All are MODERATE
+            and require the vulnerable Log4j XML layout / TLS SocketAppender to be actively
+            configured. log4j-api / log4j-core 2.17.1 arrive build-time only, transitively
+            via the Scala/sbt build toolchain (zinc), and are not on any deployed runtime
+            classpath; no SocketAppender or XmlLayout is configured. Patched in 2.25.3/2.25.4.
+            Added: 2026-07-03
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.apache\.logging\.log4j/log4j-(api|core)@.*$</packageUrl>
+        <cve>CVE-2026-34477</cve>
+        <cve>CVE-2026-34479</cve>
+        <cve>CVE-2026-34480</cve>
+        <cve>CVE-2025-68161</cve>
+    </suppress>
+    <suppress until="2026-08-01Z">
+        <notes><![CDATA[
+            CVE-2023-50572 (GHSA-2268-98wh-qfhf, MODERATE) is an out-of-memory error in
+            JLine < 3.25.0. The flagged org.scala-sbt.jline:jline 2.14.7-sbt is the sbt-shaded
+            JLine 2 fork, pulled build-time only and transitively via the Scala/sbt build
+            toolchain (zinc) — not on any deployed runtime classpath, and no interactive JLine
+            terminal is exposed.
+            Added: 2026-07-03
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.scala-sbt\.jline/jline@.*$</packageUrl>
+        <cve>CVE-2023-50572</cve>
     </suppress>
 </suppressions>
