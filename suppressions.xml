@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
-    <suppress until="2026-07-01Z">
+    <suppress until="2026-08-01Z">
         <notes><![CDATA[
             file name: okio-jvm-2.10.0.jar
             sev: HIGH
@@ -19,7 +19,7 @@
         <packageUrl regex="true">^pkg:maven/com\.h2database/h2@2\..*$</packageUrl>
         <cve>CVE-2018-14335</cve>
     </suppress>
-    <suppress until="2026-07-01Z">
+    <suppress until="2026-08-01Z">
         <notes><![CDATA[
             False positive. These CVEs affect spring-webflux and/or spring-webmvc, not spring-core.
             The build plugin only depends on spring-core. The scanner incorrectly matches via the
@@ -32,5 +32,38 @@
         <cve>CVE-2026-22745</cve>
         <cve>CVE-2026-22741</cve>
         <cve>CVE-2026-22735</cve>
+    </suppress>
+    <suppress until="2026-08-01Z">
+        <notes><![CDATA[
+            CVE-2026-53914 is unsafe deserialization of untrusted Kotlin build-cache
+            metadata, allowing code execution (fixed in Kotlin 2.4.20). It requires local
+            access, high privileges and high attack complexity (CVSS 6.7; the scanner
+            inflates it to CRITICAL). The org.jetbrains.kotlin:* artifacts arrive build-time
+            only via the Kotlin Gradle plugin toolchain and are not on any deployed runtime
+            classpath. The Kotlin version is dictated by the Kotlin Gradle plugin; re-evaluate
+            when it moves to 2.4.20+.
+            Added: 2026-07-03
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.jetbrains\.kotlin/.*@.*$</packageUrl>
+        <cve>CVE-2026-53914</cve>
+    </suppress>
+    <suppress until="2026-08-01Z">
+        <notes><![CDATA[
+            jackson-databind polymorphic-typing / deserialization advisories:
+            CVE-2026-54512 (PolymorphicTypeValidator bypass via generic type parameters),
+            CVE-2026-54513 (allowIfSubTypeIsArray allowlist bypass), CVE-2026-54514
+            (InetSocketAddress eager DNS resolution / SSRF) and CVE-2026-54515
+            (case-insensitive deserialization bypasses per-property @JsonIgnoreProperties).
+            All require enabling default/polymorphic typing on attacker-controlled input;
+            the build plugin uses jackson only to read/write its own build metadata, not
+            untrusted polymorphic JSON, so the gadget paths are not reachable. jackson is
+            centrally managed, so the version cannot be bumped here.
+            Added: 2026-07-03
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/com\.fasterxml\.jackson\.core/jackson-databind@.*$</packageUrl>
+        <cve>CVE-2026-54512</cve>
+        <cve>CVE-2026-54513</cve>
+        <cve>CVE-2026-54514</cve>
+        <cve>CVE-2026-54515</cve>
     </suppress>
 </suppressions>
