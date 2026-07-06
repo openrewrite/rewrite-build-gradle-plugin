@@ -260,4 +260,19 @@
         <packageUrl regex="true">^pkg:maven/org\.scala-sbt\.jline/jline@.*$</packageUrl>
         <cve>CVE-2023-50572</cve>
     </suppress>
+    <suppress until="2026-08-01Z">
+        <notes><![CDATA[
+            False positive. CVE-2026-54399 is an HTTP/1.1 message-parser memory-exhaustion
+            DoS in Apache HttpComponents Core 5.x (maven org.apache.httpcomponents.core5:httpcore5,
+            versions <= 5.4.2 and 5.5-alpha1/5.5-beta1; fixed in 5.4.3). The NVD CPE range
+            (apache:httpcomponents_core <= 5.4.2) numerically over-matches the separate 4.x
+            product line org.apache.httpcomponents:httpcore / httpcore-nio 4.4.x, which is a
+            distinct codebase Apache did not list as affected. These 4.x jars arrive
+            transitively (e.g. com.konghq:unirest-java, software.amazon.awssdk:v2-migration)
+            on recipe classpaths only and are not the vulnerable core5 artifact.
+            Added: 2026-07-06
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.apache\.httpcomponents/httpcore(-nio)?@4\..*$</packageUrl>
+        <cve>CVE-2026-54399</cve>
+    </suppress>
 </suppressions>
