@@ -198,28 +198,6 @@
     </suppress>
     <suppress until="2026-08-01Z">
         <notes><![CDATA[
-            jackson-databind polymorphic-typing / deserialization advisories:
-            CVE-2026-54512 (PolymorphicTypeValidator bypass via generic type parameters),
-            CVE-2026-54513 (allowIfSubTypeIsArray allowlist bypass), CVE-2026-54514
-            (InetSocketAddress eager DNS resolution / SSRF) and CVE-2026-54515
-            (case-insensitive deserialization bypasses per-property @JsonIgnoreProperties).
-            All require enabling default/polymorphic typing on attacker-controlled input;
-            OpenRewrite uses jackson to parse its own recipe YAML and serialized LSTs, not
-            untrusted polymorphic JSON, so the gadget paths are not reachable. jackson is
-            centrally managed via rewrite-core, so the version cannot be bumped per recipe
-            module. The two HIGH advisories only affect the older 2.17.x line; 2.21.4 and
-            2.22.0 are already past their patch lines. Re-evaluate when rewrite-core adopts
-            the clean 2.18.9 / 2.21.5 / 2.22.1 patch releases.
-            Added: 2026-07-03
-        ]]></notes>
-        <packageUrl regex="true">^pkg:maven/com\.fasterxml\.jackson\.core/jackson-databind@.*$</packageUrl>
-        <cve>CVE-2026-54512</cve>
-        <cve>CVE-2026-54513</cve>
-        <cve>CVE-2026-54514</cve>
-        <cve>CVE-2026-54515</cve>
-    </suppress>
-    <suppress until="2026-08-01Z">
-        <notes><![CDATA[
             False positive. CVE-2023-46122 (GHSA-h9mw-grgx-2fhf, LOW) is a Zip-Slip archive
             extraction flaw in org.scala-sbt:io / org.scala-sbt:sbt < 1.9.7. The flagged
             artifacts org.scala-sbt:launcher-interface and org.scala-sbt:sbinary_2.13 are
