@@ -238,7 +238,7 @@
         <packageUrl regex="true">^pkg:maven/org\.scala-sbt\.jline/jline@.*$</packageUrl>
         <cve>CVE-2023-50572</cve>
     </suppress>
-    <suppress until="2026-08-01Z">
+    <suppress>
         <notes><![CDATA[
             False positive. CVE-2026-54399 is an HTTP/1.1 message-parser memory-exhaustion
             DoS in Apache HttpComponents Core 5.x (maven org.apache.httpcomponents.core5:httpcore5,
@@ -248,9 +248,41 @@
             distinct codebase Apache did not list as affected. These 4.x jars arrive
             transitively (e.g. com.konghq:unirest-java, software.amazon.awssdk:v2-migration)
             on recipe classpaths only and are not the vulnerable core5 artifact.
+            Same-vendor cross-product-line over-match, pinned to the CVE and suppressed
+            indefinitely: CVE-2026-54399 is permanently scoped to core5, so the 4.x line can
+            never become a true positive for this CVE.
             Added: 2026-07-06
         ]]></notes>
         <packageUrl regex="true">^pkg:maven/org\.apache\.httpcomponents/httpcore(-nio)?@4\..*$</packageUrl>
         <cve>CVE-2026-54399</cve>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
+            False positive. CVE-2026-54428 is an HTTP/2 HPACK-decoder memory-exhaustion DoS in
+            Apache HttpComponents Core 5.x (maven org.apache.httpcomponents.core5:httpcore5,
+            versions <= 5.4.2 and 5.5-beta1). HTTP/2 does not exist in the separate 4.x product
+            line org.apache.httpcomponents:httpcore / httpcore-nio 4.4.x, but the NVD CPE range
+            (apache:httpcomponents_core <= 5.4.2) numerically over-matches those 4.x jars, which
+            Apache did not list as affected. Same-vendor cross-product-line over-match, identical
+            to CVE-2026-54399 above; pinned to the CVE and suppressed indefinitely (permanently
+            core5-scoped, so the 4.x line can never become a true positive for this CVE).
+            Added: 2026-07-13
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.apache\.httpcomponents/httpcore(-nio)?@4\..*$</packageUrl>
+        <cve>CVE-2026-54428</cve>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
+            False positive. Reference only. org.apache.camel.upgrade:camel-upgrade-recipes is the
+            OpenRewrite recipe artifact that migrates user code between Apache Camel versions — it
+            carries recipe definitions, not the Camel runtime. Its version tracks Camel releases
+            (4.20.0), so the apache:camel CPE numerically over-matches it, flooding the scan with
+            Camel runtime CVEs (camel-core, camel-pqc, etc.) that this artifact does not ship.
+            Suppress all apache:camel CPE matches against this artifact indefinitely, mirroring the
+            io.quarkus:quarkus-update-recipes reference-only suppression.
+            Added: 2026-07-13
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.apache\.camel\.upgrade/camel-upgrade-recipes@.*$</packageUrl>
+        <cpe>cpe:/a:apache:camel</cpe>
     </suppress>
 </suppressions>
