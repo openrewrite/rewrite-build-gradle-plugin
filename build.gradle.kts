@@ -103,6 +103,13 @@ gradlePlugin {
             implementationClass = "org.openrewrite.gradle.RewritePublishPlugin"
             tags = listOf("rewrite", "refactoring")
         }
+        create("build-publish-cgp") {
+            id = "org.openrewrite.build.publish-cgp"
+            displayName = "Rewrite Code Genome Project publishing"
+            description = "Publishes recipe artifacts to the Code Genome Project"
+            implementationClass = "org.openrewrite.gradle.RewriteCgpPublishPlugin"
+            tags = listOf("rewrite", "refactoring", "oss")
+        }
         create("build-shadow") {
             id = "org.openrewrite.build.shadow"
             displayName = "Rewrite shadow configuration"

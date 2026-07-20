@@ -38,6 +38,7 @@ public class RewriteRecipeLibraryPlugin implements Plugin<Project> {
         project.getPlugins().apply(RewriteMetadataPlugin.class);
         project.getPlugins().apply(RewriteBuildInputLoggingPlugin.class);
         project.getPlugins().apply(RewritePublishPlugin.class);
+        project.getPlugins().apply(RewriteCgpPublishPlugin.class);
         project.getPlugins().apply(PublishVerificationPlugin.class);
     }
 }
