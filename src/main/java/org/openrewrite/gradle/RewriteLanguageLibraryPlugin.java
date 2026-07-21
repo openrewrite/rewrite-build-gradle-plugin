@@ -69,6 +69,7 @@ public class RewriteLanguageLibraryPlugin implements Plugin<Project> {
         });
 
         project.getPlugins().apply(RewritePublishPlugin.class);
+        project.getPlugins().apply(RewriteCgpPublishPlugin.class);
     }
 
     private static String capitalize(String str) {
