@@ -66,7 +66,7 @@ public abstract class RecipeDependenciesTypeTableTask extends DefaultTask {
     @Classpath
     public abstract ConfigurableFileCollection getRecipeDependenciesClasspath();
 
-    public RecipeDependenciesTypeTableTask() {
+    protected RecipeDependenciesTypeTableTask() {
         getSourceSetName().convention("main");
         getTargetDir().convention(
                 getProject().getLayout().getProjectDirectory().dir("src/main/resources")
