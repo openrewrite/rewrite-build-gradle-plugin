@@ -302,4 +302,22 @@
         <packageUrl regex="true">^pkg:maven/org\.apache\.camel\.upgrade/camel-upgrade-recipes@.*$</packageUrl>
         <cpe>cpe:/a:apache:camel</cpe>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+            False positive. Dependency-check mines vendor evidence from the Full-Change git SHA
+            that this plugin writes into every jar manifest. Where that 40-char hex string happens
+            to contain "ada" it yields a LOW-confidence cpe:/a:ada:ada match — e.g.
+            rewrite-spring-6.36.0-SNAPSHOT.jar carries
+            Full-Change=ea9cfba8b47f090ada56cdf0dbe226ce5d6399bc, flagged for CVE-2024-9410, a
+            blind SSRF in Ada.cx's hosted Sentry configuration. Ada.cx is a SaaS product with no
+            Java artifact, so nothing on an OpenRewrite or Moderne classpath can ever be affected.
+            Scoped to our own coordinates rather than one artifact because the match follows the
+            commit SHA, not the library: roughly 1% of SHAs contain "ada", so it resurfaces on a
+            different jar each time it recurs. Suppressed indefinitely — the CPE is mis-attributed
+            at the source and can never become a true positive for us.
+            Added: 2026-07-29
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/(org\.openrewrite|io\.moderne).*$</packageUrl>
+        <cpe>cpe:/a:ada:ada</cpe>
+    </suppress>
 </suppressions>
