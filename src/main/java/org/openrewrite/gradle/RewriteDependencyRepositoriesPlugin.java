@@ -18,8 +18,11 @@ package org.openrewrite.gradle;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.dsl.RepositoryHandler;
+import org.gradle.api.provider.ProviderFactory;
 
 public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
+
+    private static final String CGP_URL = "https://artifacts.codegenomeproject.org/maven";
 
     @Override
     public void apply(Project project) {
@@ -41,5 +44,25 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
 
         repos.add(repos.mavenCentral(repo -> repo.content(content ->
                 content.excludeVersionByRegex(".+", ".+", ".+-rc[-]?[0-9]*"))));
+
+        ProviderFactory providers = project.getProviders();
+        String cgpUsername = providers.gradleProperty("codegenomeUsername").getOrElse("");
+        String cgpPassword = providers.gradleProperty("codegenomePassword").getOrElse("");
+        if (!cgpUsername.isEmpty() && !cgpPassword.isEmpty()) {
+            repos.add(repos.maven(repo -> {
+                repo.setName("codegenome");
+                repo.setUrl(CGP_URL);
+                repo.credentials(creds -> {
+                    creds.setUsername(cgpUsername);
+                    creds.setPassword(cgpPassword);
+                });
+                // Declared after Maven Central and group-scoped, so an outage or expired token
+                // can't break resolution of anything CGP doesn't serve.
+                repo.content(content -> {
+                    content.includeGroupAndSubgroups("org.openrewrite");
+                    content.includeGroupAndSubgroups("io.moderne");
+                });
+            }));
+        }
     }
 }
