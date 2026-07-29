@@ -226,6 +226,23 @@
         <cve>CVE-2026-34480</cve>
         <cve>CVE-2025-68161</cve>
     </suppress>
+    <suppress until="2026-10-01Z">
+        <notes><![CDATA[
+            CVE-2026-49844 (MODERATE, CVSS 5.9) is improper encoding of non-finite IEEE 754
+            values (NaN / Infinity / -Infinity) by MapMessage.asJson(), which emits bare
+            tokens that RFC 8259 does not permit. It is reachable only when the application
+            uses the JsonTemplateLayout message resolver (or another layout calling
+            MapMessage.asJson()) AND logs a MapMessage holding an attacker-controlled
+            floating-point value. Neither holds here: log4j-api / log4j-core 2.17.1 arrive
+            build-time only, transitively via the Scala/sbt build toolchain
+            (org.scala-sbt:zinc_2.13 -> org.apache.logging.log4j:log4j-core), and are not on
+            any deployed runtime classpath; no JsonTemplateLayout is configured and no
+            MapMessage is logged. Patched in 2.25.5, but the version is dictated by zinc.
+            Added: 2026-07-29
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.apache\.logging\.log4j/log4j-(api|core)@.*$</packageUrl>
+        <cve>CVE-2026-49844</cve>
+    </suppress>
     <suppress until="2026-08-01Z">
         <notes><![CDATA[
             CVE-2023-50572 (GHSA-2268-98wh-qfhf, MODERATE) is an out-of-memory error in
