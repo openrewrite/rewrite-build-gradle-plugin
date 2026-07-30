@@ -39,4 +39,4 @@ codegenomePassword=cgp_...
 ```
 
 In CI, expose the same values as the `ORG_GRADLE_PROJECT_codegenomeUsername` and `ORG_GRADLE_PROJECT_codegenomePassword`
-environment variables. Tokens are per-account, so prefer a machine account over a personal token for shared CI.
+environment variables.
