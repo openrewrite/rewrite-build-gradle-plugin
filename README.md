@@ -24,3 +24,19 @@
 ## What is this?
 
 This project provides a Gradle plugin that provides common build opinions to repositories in the openrewrite GitHub organization.organization's source code.
+
+## Code Genome Project artifacts
+
+`org.openrewrite.build.recipe-repositories` (applied by the `recipe-library` and `language-library` plugins) adds
+https://artifacts.codegenomeproject.org/maven as a dependency repository for the `org.openrewrite` and `io.moderne`
+groups. It is only added when credentials are present, so builds without them resolve from Maven Central as before.
+
+Set credentials as Gradle properties in `~/.gradle/gradle.properties` — never in a file under source control:
+
+```properties
+codegenomeUsername=you@example.com
+codegenomePassword=cgp_...
+```
+
+In CI, expose the same values as the `ORG_GRADLE_PROJECT_codegenomeUsername` and `ORG_GRADLE_PROJECT_codegenomePassword`
+environment variables.
