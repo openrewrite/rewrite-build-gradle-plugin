@@ -28,10 +28,8 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
     public void apply(Project project) {
         RepositoryHandler repos = project.getRepositories();
 
-        if (!project.hasProperty("releasing")) {
-            repos.add(repos.mavenLocal(repo -> repo.content(content ->
-                    content.excludeVersionByRegex(".+", ".+", ".+-rc[-]?[0-9]*"))));
-        }
+        repos.add(repos.mavenLocal(repo -> repo.content(content ->
+                content.excludeVersionByRegex(".+", ".+", ".+-rc[-]?[0-9]*"))));
 
         repos.add(repos.mavenCentral(repo -> repo.content(content ->
                 content.excludeVersionByRegex(".+", ".+", ".+-rc[-]?[0-9]*"))));
