@@ -37,7 +37,6 @@ nexusPublishing {
     repositories {
         sonatype {
             nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
-            snapshotRepositoryUrl.set(uri("https://central.sonatype.com/repository/maven-snapshots/"))
         }
     }
 }
@@ -75,7 +74,7 @@ gradlePlugin {
             displayName = "Rewrite recipe repositories"
             description =
                 "Configures the repositories that OpenRewrite modules in open source draw dependencies from, " +
-                        "such as Maven Central and Nexus Snapshots. "
+                        "such as Maven Central. "
             implementationClass = "org.openrewrite.gradle.RewriteDependencyRepositoriesPlugin"
             tags = listOf("rewrite", "refactoring", "oss")
         }

@@ -22,7 +22,7 @@ import org.gradle.api.Project;
 
 /**
  * A plugin that applies all the necessary plugins to create a recipe library in an open source environment where
- * Maven Central and Nexus Snapshots artifact repositories are available.
+ * the Maven Central artifact repository is available.
  * If your project does not use all the same plugins you can
  */
 public class RewriteRecipeLibraryPlugin implements Plugin<Project> {
