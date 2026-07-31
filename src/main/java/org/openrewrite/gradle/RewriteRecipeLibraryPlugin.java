@@ -19,11 +19,9 @@ import nebula.plugin.publishing.verification.PublishVerificationPlugin;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 
-
 /**
- * A plugin that applies all the necessary plugins to create a recipe library in an open source environment where
- * the Maven Central artifact repository is available.
- * If your project does not use all the same plugins you can
+ * Applies every plugin needed to build and publish an open source recipe library.
+ * Apply the constituent plugins individually if you need a different combination.
  */
 public class RewriteRecipeLibraryPlugin implements Plugin<Project> {
 
