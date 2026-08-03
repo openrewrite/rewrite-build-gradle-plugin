@@ -1,117 +1,163 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
-    <suppress until="2026-08-01Z">
+    <suppress>
         <notes><![CDATA[
        file name: rewrite-jenkins-0.22.0-SNAPSHOT.jar
        sev: HIGH
        reason: False positive. These CVEs are for Jenkins plugins, not the rewrite-jenkins recipe jar.
+       CPE name-match on "jenkins" only; the recipe jar ships OpenRewrite recipes that migrate
+       Jenkins plugin code, it is not a Jenkins plugin and does not run in a Jenkins controller.
+       Cross-product CPE overclassifier — nothing for us to remediate, so suppressed indefinitely.
        ]]></notes>
         <cve>CVE-2022-34793</cve>
         <cve>CVE-2022-34792</cve>
         <cve>CVE-2022-34794</cve>
     </suppress>
-    <suppress until="2026-08-01Z">
+    <suppress>
         <notes><![CDATA[
        file name: rewrite-openapi-0.6.0-SNAPSHOT.jar
            sev: HIGH
            reason: False positive. CVE-2022-24863 is about the Go http-swagger package, not the Java rewrite-openapi library.
+           Cross-ecosystem CPE overclassifier — nothing for us to remediate, so suppressed indefinitely.
        ]]></notes>
         <packageUrl regex="true">^pkg:maven/org\.openrewrite\.recipe/rewrite-openapi@.*$</packageUrl>
         <cve>CVE-2022-24863</cve>
     </suppress>
-    <suppress until="2026-08-01Z">
+    <suppress>
         <notes><![CDATA[
             file name: openai4j-0.25.0.jar
             sev: MEDIUM
             reason: False positive. CVE-2025-43714 is about ChatGPT's web UI rendering SVG inline
             (stored XSS in shared conversations). It has nothing to do with the openai4j Java client
             library. The scanner is incorrectly associating the CVE with this client library.
+            The advisory is permanently scoped to a hosted web product with no Java artifact, so
+            this can never become a true positive; suppressed indefinitely.
         ]]></notes>
         <packageUrl regex="true">^pkg:maven/dev\.ai4j/openai4j@.*$</packageUrl>
         <cve>CVE-2025-43714</cve>
     </suppress>
-    <suppress until="2026-08-01Z">
+    <suppress>
         <notes><![CDATA[
             file name: rewrite-openapi-*.jar
             sev: MEDIUM
             reason: False positive. CVE-2024-25712 is about the Go http-swagger package (XSS via
             httpSwagger.WrapHandler), not the Java rewrite-openapi library. The scanner is matching
             on the "swagger"/"openapi" name in the artifact.
+            Cross-ecosystem CPE overclassifier — nothing for us to remediate, so suppressed indefinitely.
         ]]></notes>
         <packageUrl regex="true">^pkg:maven/org\.openrewrite\.recipe/rewrite-openapi@.*$</packageUrl>
         <cve>CVE-2024-25712</cve>
     </suppress>
-    <suppress until="2026-08-01Z">
+    <suppress>
         <notes><![CDATA[
             False positive. CVE-2026-39883 is for the Go opentelemetry-go SDK (PATH hijacking
             of the kenv command on BSD). The Java io.opentelemetry packages are unaffected.
+            Cross-ecosystem CPE overclassifier — the fix would require NVD/upstream to correct
+            the CPE, not us, so suppressed indefinitely.
             Added: 2026-04-16
         ]]></notes>
         <packageUrl regex="true">^pkg:maven/io\.opentelemetry/opentelemetry-.*@.*$</packageUrl>
         <cve>CVE-2026-39883</cve>
     </suppress>
-    <suppress until="2026-08-01Z">
+    <suppress>
         <notes><![CDATA[
             False positive. CVE-2026-39882 is for Go OTLP HTTP exporters (unbounded response
             body reading). The Java io.opentelemetry packages are unaffected.
+            Cross-ecosystem CPE overclassifier — the fix would require NVD/upstream to correct
+            the CPE, not us, so suppressed indefinitely.
             Added: 2026-04-16
         ]]></notes>
         <packageUrl regex="true">^pkg:maven/io\.opentelemetry/opentelemetry-.*@.*$</packageUrl>
         <cve>CVE-2026-39882</cve>
     </suppress>
-    <suppress until="2026-08-01Z">
+    <suppress>
         <notes><![CDATA[
             False positive. CVE-2026-42154 is for the Go Prometheus server's remote read
             endpoint (/api/v1/read) memory-allocation DoS. The Java io.prometheus:simpleclient*
             instrumentation libraries are unaffected — they are a separate codebase used by
             applications to expose metrics, not the Prometheus server itself.
+            Cross-ecosystem CPE overclassifier — nothing for us to remediate, so suppressed indefinitely.
             Added: 2026-05-13
         ]]></notes>
         <packageUrl regex="true">^pkg:maven/io\.prometheus/simpleclient.*@.*$</packageUrl>
         <cve>CVE-2026-42154</cve>
     </suppress>
-    <suppress until="2026-08-01Z">
+    <suppress>
         <notes><![CDATA[
             False positive. CVE-2026-34070 is for Python langchain-core (path traversal in
             legacy load_prompt functions). The Java dev.langchain4j library is a separate
             project and is not affected.
+            Cross-ecosystem CPE overclassifier — nothing for us to remediate, so suppressed indefinitely.
             Added: 2026-05-20
         ]]></notes>
         <packageUrl regex="true">^pkg:maven/dev\.langchain4j/langchain4j.*@.*$</packageUrl>
         <cve>CVE-2026-34070</cve>
     </suppress>
-    <suppress until="2026-08-01Z">
+    <suppress>
         <notes><![CDATA[
             False positive. CVE-2026-41488 is for Python langchain-openai (SSRF via DNS
             rebinding in image token counting). The Java dev.langchain4j library is a separate
             project and is not affected. The actual severity for the Python package is LOW.
+            Cross-ecosystem CPE overclassifier — nothing for us to remediate, so suppressed indefinitely.
             Added: 2026-05-20
         ]]></notes>
         <packageUrl regex="true">^pkg:maven/dev\.langchain4j/langchain4j.*@.*$</packageUrl>
         <cve>CVE-2026-41488</cve>
     </suppress>
-    <suppress until="2026-08-01Z">
+    <suppress>
         <notes><![CDATA[
             False positive. CVE-2026-44843 (GHSA-pjwx-r37v-7724) is unsafe deserialization
             via overly broad load() allowlists in the Python langchain-core (PIP) package.
             The Java dev.langchain4j library is a separate project and is not affected.
             The scanner matches on the "langchain" name.
+            Cross-ecosystem CPE overclassifier — nothing for us to remediate, so suppressed indefinitely.
             Added: 2026-06-04
         ]]></notes>
         <packageUrl regex="true">^pkg:maven/dev\.langchain4j/langchain4j.*@.*$</packageUrl>
         <cve>CVE-2026-44843</cve>
     </suppress>
-    <suppress until="2026-08-01Z">
+    <suppress>
         <notes><![CDATA[
             False positive. CVE-2020-29582 was fixed in Kotlin 1.4.21. Versions 1.6.10+
             and 1.9.10+ are not affected. The scanner incorrectly matches the CVE against
             newer Kotlin stdlib versions.
+            The advisory is permanently scoped to Kotlin < 1.4.21, so versions we resolve can
+            never become a true positive for this CVE; suppressed indefinitely.
             Added: 2026-05-20
         ]]></notes>
         <packageUrl regex="true">^pkg:maven/org\.jetbrains\.kotlin/kotlin-(stdlib|reflect).*@.*$</packageUrl>
         <cve>CVE-2020-29582</cve>
     </suppress>
-    <suppress until="2026-08-01Z">
+    <suppress>
+        <notes><![CDATA[
+            False positive. CVE-2009-2475, CVE-2009-2476, CVE-2009-2676, CVE-2009-2689,
+            CVE-2009-2690, CVE-2009-2716, CVE-2009-2717, CVE-2009-2719 and CVE-2009-2720 are
+            2009 advisories against Sun Java SE 5.0 / 6 and OpenJDK (cpe:/a:sun:java_se,
+            cpe:/a:sun:openjdk, cpe:/a:sun:jdk) — the JDK itself, covering LayoutQueue and other
+            non-final statics, JMX, JDK13Services, the applet plugin, AWT, Java Web Start and
+            javax.swing.plaf.synth. They have nothing to do with net.java.dev.jna:jna /
+            jna-platform, a JNI binding library. Dependency-check mines "sun"/"java" vendor
+            evidence from the net.java.dev.jna coordinates and manifest and produces a
+            LOW-confidence match against the JDK CPEs. JNA arrives transitively via
+            org.openrewrite:rewrite-java-test / rewrite-bom and via recipe jars such as
+            ai.timefold.solver:timefold-solver-migration and software.amazon.awssdk:v2-migration.
+            Cross-product CPE overclassifier — these advisories are permanently scoped to the
+            Sun/Oracle JDK, so jna can never become a true positive for them; suppressed
+            indefinitely.
+            Added: 2026-08-03
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/net\.java\.dev\.jna/jna(-platform)?@.*$</packageUrl>
+        <cve>CVE-2009-2475</cve>
+        <cve>CVE-2009-2476</cve>
+        <cve>CVE-2009-2676</cve>
+        <cve>CVE-2009-2689</cve>
+        <cve>CVE-2009-2690</cve>
+        <cve>CVE-2009-2716</cve>
+        <cve>CVE-2009-2717</cve>
+        <cve>CVE-2009-2719</cve>
+        <cve>CVE-2009-2720</cve>
+    </suppress>
+    <suppress until="2026-09-01Z">
         <notes><![CDATA[
             jackson-core DoS via number length constraint bypass in async parser. Transitive
             dependency in recipe modules. Patch available in 2.18.6+.
@@ -120,7 +166,7 @@
         <packageUrl regex="true">^pkg:maven/com\.fasterxml\.jackson\.core/jackson-core@.*$</packageUrl>
         <vulnerabilityName>GHSA-72hv-8253-57qq</vulnerabilityName>
     </suppress>
-    <suppress until="2026-08-01Z">
+    <suppress>
         <notes><![CDATA[
             False positive. These CVEs are for OpenTelemetry libraries (Python contrib,
             opentelemetry-go, opentelemetry-go-contrib, opentelemetry-dotnet). The
@@ -128,6 +174,7 @@
             simpleclient_tracer family — a small adapter that reads the current OpenTelemetry
             trace context for Prometheus exemplars. It does not embed or use the affected
             OTel SDKs. The scanner matches via the "OpenTelemetry Agent" evidence/CPE.
+            Cross-ecosystem CPE overclassifier — nothing for us to remediate, so suppressed indefinitely.
             Added: 2026-05-27
         ]]></notes>
         <packageUrl regex="true">^pkg:maven/io\.prometheus/simpleclient_tracer_otel_agent@.*$</packageUrl>
@@ -151,7 +198,7 @@
         <packageUrl regex="true">^pkg:maven/io\.opentelemetry/opentelemetry-.*@.*$</packageUrl>
         <cve>CVE-2026-41178</cve>
     </suppress>
-    <suppress until="2026-08-01Z">
+    <suppress until="2026-09-01Z">
         <notes><![CDATA[
             JLine3 Telnet server unauthenticated remote DoS — GHSA-2r2c-cx56-8933 (unbounded
             NAWS terminal geometry) and GHSA-47qp-hqvx-6r3f (unbounded NEW-ENVIRON variables).
@@ -166,7 +213,7 @@
         <vulnerabilityName>GHSA-2r2c-cx56-8933</vulnerabilityName>
         <vulnerabilityName>GHSA-47qp-hqvx-6r3f</vulnerabilityName>
     </suppress>
-    <suppress until="2026-08-01Z">
+    <suppress>
         <notes><![CDATA[
             False positive. CVE-2026-50559 (GHSA-qcxp-gm7m-4j5v) is an HTTP path-based
             authorization bypass in the Quarkus runtime (io.quarkus:quarkus-vertx-http,
@@ -175,12 +222,15 @@
             that ships YAML migration recipes for Quarkus apps; it does not contain or use
             the vulnerable quarkus-vertx-http runtime. CPE name-match on "quarkus" only.
             Arrives transitively via rewrite-third-party (e.g. through rewrite-recipe-bom).
+            Cross-product CPE overclassifier — the advisory is permanently scoped to the
+            Quarkus runtime, so the recipe jar can never become a true positive for this CVE;
+            suppressed indefinitely.
             Added: 2026-07-01
         ]]></notes>
         <packageUrl regex="true">^pkg:maven/io\.quarkus/quarkus-update-recipes@.*$</packageUrl>
         <cve>CVE-2026-50559</cve>
     </suppress>
-    <suppress until="2026-08-01Z">
+    <suppress until="2026-09-01Z">
         <notes><![CDATA[
             CVE-2026-53914 is unsafe deserialization of untrusted Kotlin build-cache
             metadata, allowing code execution (fixed in Kotlin 2.4.20). It requires local
@@ -190,13 +240,14 @@
             Kotlin Gradle plugin at build time only and are not on any deployed runtime
             classpath. The Kotlin version is dictated by the Kotlin Gradle plugin, so it
             cannot be bumped per recipe module; re-evaluate when the toolchain moves to
-            2.4.20+.
+            2.4.20+. As of 2026-08-03 Maven Central has only 2.4.20-Beta2, so no fixed
+            release is available yet.
             Added: 2026-07-03
         ]]></notes>
         <packageUrl regex="true">^pkg:maven/org\.jetbrains\.kotlin/.*@.*$</packageUrl>
         <cve>CVE-2026-53914</cve>
     </suppress>
-    <suppress until="2026-08-01Z">
+    <suppress>
         <notes><![CDATA[
             False positive. CVE-2023-46122 (GHSA-h9mw-grgx-2fhf, LOW) is a Zip-Slip archive
             extraction flaw in org.scala-sbt:io / org.scala-sbt:sbt < 1.9.7. The flagged
@@ -204,12 +255,15 @@
             different packages and are not the vulnerable io/sbt modules. They arrive
             build-time only, transitively via org.scala-sbt:zinc_2.13 (the Scala incremental
             compiler) on the `zinc` configuration — not on any deployed runtime classpath.
+            Same-vendor cross-artifact over-match, pinned to the CVE and suppressed
+            indefinitely: CVE-2023-46122 is permanently scoped to org.scala-sbt:io / :sbt, so
+            launcher-interface and sbinary can never become a true positive for this CVE.
             Added: 2026-07-03
         ]]></notes>
         <packageUrl regex="true">^pkg:maven/org\.scala-sbt/(launcher-interface|sbinary_.*)@.*$</packageUrl>
         <cve>CVE-2023-46122</cve>
     </suppress>
-    <suppress until="2026-08-01Z">
+    <suppress until="2026-09-01Z">
         <notes><![CDATA[
             Log4j 2 advisories CVE-2026-34477 / CVE-2026-34479 / CVE-2026-34480 (silent log
             event loss in XML layouts; verifyHostName ignored in TLS config) and
@@ -243,7 +297,7 @@
         <packageUrl regex="true">^pkg:maven/org\.apache\.logging\.log4j/log4j-(api|core)@.*$</packageUrl>
         <cve>CVE-2026-49844</cve>
     </suppress>
-    <suppress until="2026-08-01Z">
+    <suppress until="2026-09-01Z">
         <notes><![CDATA[
             CVE-2023-50572 (GHSA-2268-98wh-qfhf, MODERATE) is an out-of-memory error in
             JLine < 3.25.0. The flagged org.scala-sbt.jline:jline 2.14.7-sbt is the sbt-shaded
