@@ -35,10 +35,8 @@ public class RewriteRootProjectPlugin implements Plugin<Project> {
         project.getPlugins().apply(NexusPublishPlugin.class);
 
         project.getExtensions().configure(NexusPublishExtension.class, ext ->
-                ext.getRepositories().sonatype(nexusRepository -> {
-                    nexusRepository.getNexusUrl().set(URI.create("https://ossrh-staging-api.central.sonatype.com/service/local/"));
-                    nexusRepository.getSnapshotRepositoryUrl().set(URI.create("https://central.sonatype.com/repository/maven-snapshots/"));
-        }));
+                ext.getRepositories().sonatype(nexusRepository ->
+                        nexusRepository.getNexusUrl().set(URI.create("https://ossrh-staging-api.central.sonatype.com/service/local/"))));
 
         if (project.getExtensions().findByType(ReleasePluginExtension.class) != null) {
             project.getExtensions().configure(ReleasePluginExtension.class, ext ->
