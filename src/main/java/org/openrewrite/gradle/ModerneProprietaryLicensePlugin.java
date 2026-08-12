@@ -35,24 +35,13 @@ public class ModerneProprietaryLicensePlugin implements Plugin<Project> {
     @Override
     public void apply(Project project) {
         // Empty JARs are OK: https://central.sonatype.org/publish/requirements/#supply-javadoc-and-sources
-        Jar emptySourcesJar;
-        Task sourcesJar = project.getTasks().findByName("sourcesJar");
-        if (sourcesJar != null) {
-            sourcesJar.setEnabled(false);
-
-            emptySourcesJar = project.getTasks().create("emptySourceJar", Jar.class, task -> {
-                task.from("README.md");
-                task.getArchiveClassifier().set("sources");
-            });
-            project.getTasks().named("assemble", task -> task.dependsOn(emptySourcesJar));
-        } else {
-            emptySourcesJar = null;
-        }
+        Jar emptySourcesJar = replaceWithEmptyJar(project, "sourcesJar", "emptySourceJar", "sources");
+        Jar emptyJavadocJar = replaceWithEmptyJar(project, "javadocJar", "emptyJavadocJar", "javadoc");
 
         project.getPlugins().apply(MavenBasePublishPlugin.class);
         PublishingExtension publishing = project.getExtensions().getByType(PublishingExtension.class);
         publishing.publications(publications ->
-                publications.withType(MavenPublication.class, p -> configureLicense(p, emptySourcesJar)));
+                publications.withType(MavenPublication.class, p -> configureLicense(p, emptySourcesJar, emptyJavadocJar)));
 
         project.getTasks().withType(Jar.class).configureEach(jar ->
                 jar.getManifest().attributes(Map.of(
@@ -61,9 +50,25 @@ public class ModerneProprietaryLicensePlugin implements Plugin<Project> {
                 )));
     }
 
-    private void configureLicense(MavenPublication publication, @Nullable Jar sourcesJar) {
+    private static @Nullable Jar replaceWithEmptyJar(Project project, String taskName, String emptyTaskName, String classifier) {
+        Task replaced = project.getTasks().findByName(taskName);
+        if (replaced == null) {
+            return null;
+        }
+        replaced.setEnabled(false);
+
+        Jar emptyJar = project.getTasks().create(emptyTaskName, Jar.class, task ->
+                task.getArchiveClassifier().set(classifier));
+        project.getTasks().named("assemble", task -> task.dependsOn(emptyJar));
+        return emptyJar;
+    }
+
+    private void configureLicense(MavenPublication publication, @Nullable Jar sourcesJar, @Nullable Jar javadocJar) {
         if (sourcesJar != null) {
             publication.artifact(sourcesJar);
+        }
+        if (javadocJar != null) {
+            publication.artifact(javadocJar);
         }
 
         publication.pom(pom ->

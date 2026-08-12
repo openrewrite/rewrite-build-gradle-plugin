@@ -60,6 +60,24 @@ class RewriteDependencyRepositoriesPluginTest {
         assertThat(result.getOutput()).contains("repo:codegenome=https://artifacts.codegenomeproject.org/maven");
     }
 
+    @Test
+    void codegenomeResolvedBeforeMavenCentral(@TempDir File projectDir) throws IOException {
+        writeProject(projectDir);
+
+        BuildResult result = GradleRunner.create()
+                .withProjectDir(projectDir)
+                .withPluginClasspath()
+                .withArguments("printRepositories",
+                        "-PcodegenomeUsername=test-user",
+                        "-PcodegenomePassword=cgp_test-token")
+                .build();
+
+        String output = result.getOutput();
+        assertThat(output).doesNotContain("https://central.sonatype.com/repository/maven-snapshots/");
+        assertThat(output.indexOf("repo:codegenome="))
+                .isLessThan(output.indexOf("repo:MavenRepo="));
+    }
+
     private static void writeProject(File projectDir) throws IOException {
         writeFile(new File(projectDir, "settings.gradle"), "rootProject.name = 'cgp-consumer'");
         //language=groovy

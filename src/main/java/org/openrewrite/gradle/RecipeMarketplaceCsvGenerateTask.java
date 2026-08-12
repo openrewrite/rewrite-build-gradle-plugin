@@ -112,7 +112,7 @@ public abstract class RecipeMarketplaceCsvGenerateTask extends DefaultTask {
 
             String packageName = groupId + ":" + artifactId;
             existing.uninstall("maven", packageName);
-            existing.getRoot().merge(generated.getRoot());
+            existing.merge(generated);
             marketplace = existing;
         } else {
             getLogger().info("No existing recipes.csv found, creating new file");

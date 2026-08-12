@@ -27,18 +27,19 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
     @Override
     public void apply(Project project) {
         RepositoryHandler repos = project.getRepositories();
+        boolean releasing = project.hasProperty("releasing");
 
-        if (!project.hasProperty("releasing")) {
+        if (!releasing) {
             repos.add(repos.mavenLocal(repo -> repo.content(content ->
                     content.excludeVersionByRegex(".+", ".+", ".+-rc[-]?[0-9]*"))));
         }
-        repos.add(repos.mavenCentral(repo -> repo.content(content ->
-                content.excludeVersionByRegex(".+", ".+", ".+-rc[-]?[0-9]*"))));
 
         ProviderFactory providers = project.getProviders();
         String cgpUsername = providers.gradleProperty("codegenomeUsername").getOrElse("");
         String cgpPassword = providers.gradleProperty("codegenomePassword").getOrElse("");
         if (!cgpUsername.isEmpty() && !cgpPassword.isEmpty()) {
+            // CGP is the first publish target for both snapshots and releases, so consult it
+            // ahead of Maven Central; group-scoped to the artifacts it serves.
             repos.add(repos.maven(repo -> {
                 repo.setName("codegenome");
                 repo.setUrl(CGP_URL);
@@ -46,13 +47,14 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
                     creds.setUsername(cgpUsername);
                     creds.setPassword(cgpPassword);
                 });
-                // Declared after Maven Central and group-scoped, so an outage or expired token
-                // can't break resolution of anything CGP doesn't serve.
                 repo.content(content -> {
                     content.includeGroupAndSubgroups("org.openrewrite");
                     content.includeGroupAndSubgroups("io.moderne");
                 });
             }));
         }
+
+        repos.add(repos.mavenCentral(repo -> repo.content(content ->
+                content.excludeVersionByRegex(".+", ".+", ".+-rc[-]?[0-9]*"))));
     }
 }
