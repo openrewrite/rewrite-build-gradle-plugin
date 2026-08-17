@@ -374,4 +374,20 @@
         <packageUrl regex="true">^pkg:maven/(org\.openrewrite|io\.moderne).*$</packageUrl>
         <cpe>cpe:/a:ada:ada</cpe>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+            False positive. org.ruby-lang:prism-parser-api / -wasm are the Java bindings for
+            ruby/prism, a standalone Ruby parser; they ship no CRuby interpreter code and arrive
+            transitively via org.openrewrite:rewrite-ruby. Dependency-check derives
+            cpe:/a:ruby-lang:ruby from the groupId alone, and 0.0.4 sorts below every CRuby release
+            (1.8.x-3.x), so it matches the "<= X" range of ~38 interpreter CVEs (2008-2023).
+            Suppressed by CPE rather than per-CVE, and indefinitely: the product match is
+            mis-attributed at the source and can never become a true positive. With no <cve>
+            element this only drops the bogus identifier, so purl-based advisories against these
+            artifacts still surface. Bounded to the 0.x line, where the version premise holds.
+            Added: 2026-08-17
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.ruby-lang/prism-parser-(api|wasm)@0\..*$</packageUrl>
+        <cpe>cpe:/a:ruby-lang:ruby</cpe>
+    </suppress>
 </suppressions>
