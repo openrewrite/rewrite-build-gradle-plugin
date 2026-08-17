@@ -374,4 +374,29 @@
         <packageUrl regex="true">^pkg:maven/(org\.openrewrite|io\.moderne).*$</packageUrl>
         <cpe>cpe:/a:ada:ada</cpe>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+            file name: prism-parser-api-0.0.4.jar, prism-parser-wasm-0.0.4.jar
+            sev: CRITICAL
+            reason: False positive. These are the Java bindings for ruby/prism, a standalone Ruby
+            *parser* library, published under groupId org.ruby-lang. Dependency-check derives
+            cpe:2.3:a:ruby-lang:ruby:0.0.4 from that groupId alone, and because 0.0.4 sorts below
+            every real CRuby release (1.8.x-3.x) it numerically matches the "<= X" range of every
+            CRuby interpreter advisory ever published — ~38 CVEs from 2008 to 2023 covering WEBrick,
+            Net::FTP, RDoc, Rake, cgi, Fiddle/dl, OpenSSL hostname verification and the bundled
+            oniguruma regex engine. None of that code ships here: prism-parser-api contains only
+            org/ruby_lang/prism/Nodes*.class AST types, and prism-parser-wasm contains only the
+            Prism parser compiled to wasm (org/ruby_lang/prism/wasm/PrismParser.*.native plus the
+            generated PrismParserMachine* classes); `strings` over every native blob finds zero
+            occurrences of onig/webrick/net-ftp/rdoc. Both jars arrive transitively via
+            org.openrewrite:rewrite-ruby, which uses Prism to parse Ruby sources into an LST.
+            Suppressed by CPE rather than per-CVE, and indefinitely: the ruby-lang:ruby product
+            match against a parser binding is mis-attributed at the source and can never become a
+            true positive, and a per-CVE list would need re-extending on every future CRuby
+            advisory.
+            Added: 2026-08-17
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.ruby-lang/prism-parser-(api|wasm)@.*$</packageUrl>
+        <cpe>cpe:/a:ruby-lang:ruby</cpe>
+    </suppress>
 </suppressions>
