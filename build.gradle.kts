@@ -258,11 +258,11 @@ dependencies {
         implementation("org.codehaus.plexus:plexus-utils:4.0.3") {
             because("CVE-2022-4244, CVE-2022-4245")
         }
-        implementation("org.apache.httpcomponents.client5:httpclient5:5.6.1") {
-            because("CVE-2026-40542")
+        implementation("org.apache.httpcomponents.client5:httpclient5:5.6.4") {
+            because("CVE-2026-40542, CVE-2026-64607")
         }
-        implementation("org.apache.httpcomponents.client5:httpclient5-cache:5.6.1") {
-            because("CVE-2026-40542")
+        implementation("org.apache.httpcomponents.client5:httpclient5-cache:5.6.4") {
+            because("CVE-2026-40542, CVE-2026-64607")
         }
         implementation("org.apache.httpcomponents.core5:httpcore5:5.4.3") {
             because("CVE-2026-54399")
