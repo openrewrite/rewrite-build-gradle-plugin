@@ -394,9 +394,19 @@
             match against a parser binding is mis-attributed at the source and can never become a
             true positive, and a per-CVE list would need re-extending on every future CRuby
             advisory.
+            Scope of this rule, since a bare <cpe> element looks broad: it is an *identifier*
+            correction, not a vulnerability mute. CpeSuppressionAnalyzer runs at
+            POST_IDENTIFIER_ANALYSIS and only removes the bogus cpe:/a:ruby-lang:ruby identifier
+            from these two jars, before the NVD lookup derives any CVE from it; with no <cve>
+            element the rule never removes a Vulnerability. Purl-based matching is therefore
+            untouched — a genuine advisory published against pkg:maven/org.ruby-lang/prism-parser-*
+            still surfaces (there are none today). Bounded to the 0.x line, which is exactly the
+            range where the "sorts below every CRuby release" premise holds: if these bindings ever
+            re-version to track CRuby, the rule stops applying and the classification gets
+            re-examined rather than silently carried over.
             Added: 2026-08-17
         ]]></notes>
-        <packageUrl regex="true">^pkg:maven/org\.ruby-lang/prism-parser-(api|wasm)@.*$</packageUrl>
+        <packageUrl regex="true">^pkg:maven/org\.ruby-lang/prism-parser-(api|wasm)@0\..*$</packageUrl>
         <cpe>cpe:/a:ruby-lang:ruby</cpe>
     </suppress>
 </suppressions>
