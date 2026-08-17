@@ -79,7 +79,7 @@ class RewriteDependencyRepositoriesPluginTest {
     }
 
     @Test
-    void rewriteArtifactsResolveFromCodegenomeWhileToolsForksStayOnMavenCentral(@TempDir File projectDir) throws IOException {
+    void rewriteArtifactsIncludingToolsForksResolveFromCodegenome(@TempDir File projectDir) throws IOException {
         String username = System.getenv("ORG_GRADLE_PROJECT_codegenomeUsername");
         assumeTrue(username != null && !username.isEmpty(), "CGP credentials absent — Maven Central stays the fallback");
         writeFile(new File(projectDir, "settings.gradle"), "rootProject.name = 'cgp-consumer'");
@@ -91,7 +91,7 @@ class RewriteDependencyRepositoriesPluginTest {
                 }
                 dependencies {
                     implementation platform('org.openrewrite:rewrite-bom:latest.release')
-                    implementation 'org.openrewrite.tools:java-object-diff:1.0.1'
+                    implementation 'org.openrewrite.tools:java-object-diff:1.0.2'
                 }
                 tasks.register('resolve') {
                     def files = configurations.compileClasspath
@@ -109,9 +109,8 @@ class RewriteDependencyRepositoriesPluginTest {
 
         String output = result.getOutput();
         assertThat(output).contains("https://artifacts.codegenomeproject.org/maven/org/openrewrite/rewrite-bom");
-        assertThat(output).doesNotContain("https://repo.maven.apache.org/maven2/org/openrewrite/rewrite-bom");
-        assertThat(output).contains("https://repo.maven.apache.org/maven2/org/openrewrite/tools/java-object-diff");
-        assertThat(output).doesNotContain("https://artifacts.codegenomeproject.org/maven/org/openrewrite/tools");
+        assertThat(output).contains("https://artifacts.codegenomeproject.org/maven/org/openrewrite/tools/java-object-diff");
+        assertThat(output).doesNotContain("https://repo.maven.apache.org/maven2/org/openrewrite");
     }
 
     private static void writeProject(File projectDir) throws IOException {

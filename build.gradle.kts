@@ -169,14 +169,11 @@ val codegenomeUsername = providers.gradleProperty("codegenomeUsername").getOrEls
 val codegenomePassword = providers.gradleProperty("codegenomePassword").getOrElse("")
 val codegenomeConfigured = codegenomeUsername.isNotEmpty() && codegenomePassword.isNotEmpty()
 
-// org.openrewrite.tools holds third-party forks such as jgit, lombok and java-object-diff that only ever
-// shipped to Maven Central, so that subgroup stays resolvable there
 fun MavenArtifactRepository.excludeCodegenomeGroups() {
     if (codegenomeConfigured) {
         content {
+            excludeGroupAndSubgroups("org.openrewrite")
             excludeGroupAndSubgroups("io.moderne")
-            excludeGroup("org.openrewrite")
-            excludeGroupByRegex("org\\.openrewrite\\.(?!tools).*")
         }
     }
 }
@@ -194,7 +191,6 @@ repositories {
             content {
                 includeGroupAndSubgroups("org.openrewrite")
                 includeGroupAndSubgroups("io.moderne")
-                excludeGroupAndSubgroups("org.openrewrite.tools")
             }
         }
     }
