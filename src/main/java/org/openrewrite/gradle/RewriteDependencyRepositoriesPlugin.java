@@ -24,6 +24,12 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
 
     private static final String CGP_URL = "https://artifacts.codegenomeproject.org/maven";
 
+    /**
+     * Third-party forks such as jgit, lombok and java-object-diff that only ever shipped to Maven Central,
+     * so they are neither served by CGP nor covered by the Maven Central exclusions below.
+     */
+    private static final String TOOLS_GROUP = "org.openrewrite.tools";
+
     @Override
     public void apply(Project project) {
         RepositoryHandler repos = project.getRepositories();
@@ -51,6 +57,7 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
                 repo.content(content -> {
                     content.includeGroupAndSubgroups("org.openrewrite");
                     content.includeGroupAndSubgroups("io.moderne");
+                    content.excludeGroupAndSubgroups(TOOLS_GROUP);
                 });
             }));
         }
@@ -73,8 +80,9 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
                 // Maven Central is no longer a publish target for these groups, so anything it still
                 // serves is stale; resolve them from CGP (or mavenLocal) or not at all. Without CGP
                 // credentials Central remains the fallback, so outside contributors can still build.
-                content.excludeGroupAndSubgroups("org.openrewrite");
                 content.excludeGroupAndSubgroups("io.moderne");
+                content.excludeGroup("org.openrewrite");
+                content.excludeGroupByRegex("org\\.openrewrite\\.(?!tools).*");
             }
         })));
     }
