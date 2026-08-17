@@ -376,34 +376,15 @@
     </suppress>
     <suppress>
         <notes><![CDATA[
-            file name: prism-parser-api-0.0.4.jar, prism-parser-wasm-0.0.4.jar
-            sev: CRITICAL
-            reason: False positive. These are the Java bindings for ruby/prism, a standalone Ruby
-            *parser* library, published under groupId org.ruby-lang. Dependency-check derives
-            cpe:2.3:a:ruby-lang:ruby:0.0.4 from that groupId alone, and because 0.0.4 sorts below
-            every real CRuby release (1.8.x-3.x) it numerically matches the "<= X" range of every
-            CRuby interpreter advisory ever published — ~38 CVEs from 2008 to 2023 covering WEBrick,
-            Net::FTP, RDoc, Rake, cgi, Fiddle/dl, OpenSSL hostname verification and the bundled
-            oniguruma regex engine. None of that code ships here: prism-parser-api contains only
-            org/ruby_lang/prism/Nodes*.class AST types, and prism-parser-wasm contains only the
-            Prism parser compiled to wasm (org/ruby_lang/prism/wasm/PrismParser.*.native plus the
-            generated PrismParserMachine* classes); `strings` over every native blob finds zero
-            occurrences of onig/webrick/net-ftp/rdoc. Both jars arrive transitively via
-            org.openrewrite:rewrite-ruby, which uses Prism to parse Ruby sources into an LST.
-            Suppressed by CPE rather than per-CVE, and indefinitely: the ruby-lang:ruby product
-            match against a parser binding is mis-attributed at the source and can never become a
-            true positive, and a per-CVE list would need re-extending on every future CRuby
-            advisory.
-            Scope of this rule, since a bare <cpe> element looks broad: it is an *identifier*
-            correction, not a vulnerability mute. CpeSuppressionAnalyzer runs at
-            POST_IDENTIFIER_ANALYSIS and only removes the bogus cpe:/a:ruby-lang:ruby identifier
-            from these two jars, before the NVD lookup derives any CVE from it; with no <cve>
-            element the rule never removes a Vulnerability. Purl-based matching is therefore
-            untouched — a genuine advisory published against pkg:maven/org.ruby-lang/prism-parser-*
-            still surfaces (there are none today). Bounded to the 0.x line, which is exactly the
-            range where the "sorts below every CRuby release" premise holds: if these bindings ever
-            re-version to track CRuby, the rule stops applying and the classification gets
-            re-examined rather than silently carried over.
+            False positive. org.ruby-lang:prism-parser-api / -wasm are the Java bindings for
+            ruby/prism, a standalone Ruby parser; they ship no CRuby interpreter code and arrive
+            transitively via org.openrewrite:rewrite-ruby. Dependency-check derives
+            cpe:/a:ruby-lang:ruby from the groupId alone, and 0.0.4 sorts below every CRuby release
+            (1.8.x-3.x), so it matches the "<= X" range of ~38 interpreter CVEs (2008-2023).
+            Suppressed by CPE rather than per-CVE, and indefinitely: the product match is
+            mis-attributed at the source and can never become a true positive. With no <cve>
+            element this only drops the bogus identifier, so purl-based advisories against these
+            artifacts still surface. Bounded to the 0.x line, where the version premise holds.
             Added: 2026-08-17
         ]]></notes>
         <packageUrl regex="true">^pkg:maven/org\.ruby-lang/prism-parser-(api|wasm)@0\..*$</packageUrl>
