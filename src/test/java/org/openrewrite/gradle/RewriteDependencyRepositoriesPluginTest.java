@@ -78,6 +78,37 @@ class RewriteDependencyRepositoriesPluginTest {
                 .isLessThan(output.indexOf("repo:MavenRepo="));
     }
 
+    @Test
+    void rewriteArtifactsNotResolvedFromMavenCentral(@TempDir File projectDir) throws IOException {
+        String username = System.getenv("ORG_GRADLE_PROJECT_codegenomeUsername");
+        assumeTrue(username != null && !username.isEmpty(), "CGP credentials absent — Maven Central stays the fallback");
+        writeFile(new File(projectDir, "settings.gradle"), "rootProject.name = 'cgp-consumer'");
+        //language=groovy
+        writeFile(new File(projectDir, "build.gradle"), """
+                plugins {
+                    id 'java-library'
+                    id 'org.openrewrite.build.recipe-repositories'
+                }
+                dependencies {
+                    implementation platform('org.openrewrite:rewrite-bom:latest.release')
+                }
+                tasks.register('resolve') {
+                    def files = configurations.compileClasspath
+                    doLast { files.resolve() }
+                }
+                """);
+
+        BuildResult result = GradleRunner.create()
+                .withProjectDir(projectDir)
+                .withPluginClasspath()
+                .withArguments("resolve", "--refresh-dependencies", "--info")
+                .build();
+
+        String output = result.getOutput();
+        assertThat(output).contains("https://artifacts.codegenomeproject.org/maven/org/openrewrite/rewrite-bom");
+        assertThat(output).doesNotContain("https://repo.maven.apache.org/maven2/org/openrewrite");
+    }
+
     private static void writeProject(File projectDir) throws IOException {
         writeFile(new File(projectDir, "settings.gradle"), "rootProject.name = 'cgp-consumer'");
         //language=groovy
