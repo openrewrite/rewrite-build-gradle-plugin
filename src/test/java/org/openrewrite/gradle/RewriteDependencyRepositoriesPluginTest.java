@@ -65,7 +65,7 @@ class RewriteDependencyRepositoriesPluginTest {
     }
 
     @Test
-    void codegenomeResolvedBeforeSnapshotsAndMavenCentral(@TempDir File projectDir) throws IOException {
+    void codegenomeResolvedBeforeMavenCentralAndSonatypeSnapshotsNotAtAll(@TempDir File projectDir) throws IOException {
         writeProject(projectDir);
 
         BuildResult result = GradleRunner.create()
@@ -77,8 +77,8 @@ class RewriteDependencyRepositoriesPluginTest {
                 .build();
 
         String output = result.getOutput();
+        assertThat(output).doesNotContain("https://central.sonatype.com/repository/maven-snapshots/");
         assertThat(output.indexOf("repo:codegenome="))
-                .isLessThan(output.indexOf("repo:maven=https://central.sonatype.com/repository/maven-snapshots/"))
                 .isLessThan(output.indexOf("repo:MavenRepo="));
     }
 
@@ -131,7 +131,7 @@ class RewriteDependencyRepositoriesPluginTest {
         List<MavenRepository> repositories = RewriteDependencyRepositoriesPlugin.pomDownloaderRepositories(project);
 
         assertThat(repositories).extracting(MavenRepository::getId)
-                .containsExactly("codegenome", "central-snapshots", "central");
+                .containsExactly("codegenome", "central");
         assertThat(repositories).first().satisfies(codegenome -> {
             assertThat(codegenome.getUri()).isEqualTo("https://artifacts.codegenomeproject.org/maven");
             assertThat(codegenome.getUsername()).isEqualTo("test-user");
@@ -145,7 +145,7 @@ class RewriteDependencyRepositoriesPluginTest {
 
         assertThat(RewriteDependencyRepositoriesPlugin.pomDownloaderRepositories(project))
                 .extracting(MavenRepository::getId)
-                .containsExactly("central-snapshots", "central");
+                .containsExactly("central");
     }
 
     /** System properties rather than {@code gradle.properties}, which CI's {@code ORG_GRADLE_PROJECT_} environment variables outrank. */

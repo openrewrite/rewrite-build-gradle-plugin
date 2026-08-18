@@ -29,8 +29,6 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
     static final String ID = "org.openrewrite.build.recipe-repositories";
     static final String CGP_ID = "codegenome";
     static final String CGP_URL = "https://artifacts.codegenomeproject.org/maven";
-    static final String SNAPSHOTS_ID = "central-snapshots";
-    static final String SNAPSHOTS_URL = "https://central.sonatype.com/repository/maven-snapshots/";
 
     @Override
     public void apply(Project project) {
@@ -60,16 +58,6 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
             }));
         }
 
-        if (!releasing) {
-            repos.add(repos.maven(repo -> {
-                repo.setUrl(SNAPSHOTS_URL);
-                repo.content(content -> {
-                    content.includeGroupAndSubgroups("org.openrewrite");
-                    content.includeGroupAndSubgroups("io.moderne");
-                });
-            }));
-        }
-
         repos.add(repos.mavenCentral(repo -> repo.content(content -> {
             content.excludeVersionByRegex(".+", ".+", ".+-rc[-]?[0-9]*");
             if (cgpConfigured) {
@@ -90,9 +78,6 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
         String cgpPassword = cgpPassword(project);
         if (cgpConfigured(cgpUsername, cgpPassword)) {
             repositories.add(new MavenRepository(CGP_ID, CGP_URL, "true", "true", true, cgpUsername, cgpPassword, null, false));
-        }
-        if (!project.hasProperty("releasing")) {
-            repositories.add(new MavenRepository(SNAPSHOTS_ID, SNAPSHOTS_URL, "false", "true", true, null, null, null, false));
         }
         repositories.add(MavenRepository.MAVEN_CENTRAL);
         return repositories;
