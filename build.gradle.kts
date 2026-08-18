@@ -73,8 +73,8 @@ gradlePlugin {
             id = "org.openrewrite.build.recipe-repositories"
             displayName = "Rewrite recipe repositories"
             description =
-                "Configures the repositories that OpenRewrite modules in open source draw dependencies from, " +
-                        "such as Maven Central. "
+                "Configures the repositories that OpenRewrite modules in open source draw dependencies from: " +
+                        "the Code Genome Project for org.openrewrite and io.moderne artifacts, Maven Central for the rest. "
             implementationClass = "org.openrewrite.gradle.RewriteDependencyRepositoriesPlugin"
             tags = listOf("rewrite", "refactoring", "oss")
         }
@@ -164,10 +164,43 @@ gradlePlugin {
     }
 }
 
+val codegenomeUsername = providers.gradleProperty("codegenomeUsername").getOrElse("")
+val codegenomePassword = providers.gradleProperty("codegenomePassword").getOrElse("")
+val codegenomeConfigured = codegenomeUsername.isNotEmpty() && codegenomePassword.isNotEmpty()
+
 repositories {
     mavenLocal()
-    gradlePluginPortal()
-    mavenCentral()
+    if (codegenomeConfigured) {
+        maven {
+            name = "codegenome"
+            url = uri("https://artifacts.codegenomeproject.org/maven")
+            credentials {
+                username = codegenomeUsername
+                password = codegenomePassword
+            }
+            content {
+                includeGroupAndSubgroups("org.openrewrite")
+                includeGroupAndSubgroups("io.moderne")
+            }
+        }
+    }
+    // The plugin portal proxies Maven Central, so it needs the same exclusion to keep these groups on CGP
+    gradlePluginPortal {
+        if (codegenomeConfigured) {
+            (this as MavenArtifactRepository).content {
+                excludeGroupAndSubgroups("org.openrewrite")
+                excludeGroupAndSubgroups("io.moderne")
+            }
+        }
+    }
+    mavenCentral {
+        if (codegenomeConfigured) {
+            content {
+                excludeGroupAndSubgroups("org.openrewrite")
+                excludeGroupAndSubgroups("io.moderne")
+            }
+        }
+    }
 }
 
 configurations.all {
@@ -227,7 +260,7 @@ dependencies {
     implementation("com.gradleup.shadow:com.gradleup.shadow.gradle.plugin:9.0.0-beta7") // Latest supporting Java 8
 
     implementation("org.jspecify:jspecify:1.0.0")
-    implementation(platform("com.fasterxml.jackson:jackson-bom:2.21.5"))
+    implementation(platform("com.fasterxml.jackson:jackson-bom:2.21.6"))
     implementation("com.fasterxml.jackson.core:jackson-core")
     implementation("com.fasterxml.jackson.core:jackson-databind")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml")
@@ -257,11 +290,11 @@ dependencies {
         implementation("org.codehaus.plexus:plexus-utils:4.0.3") {
             because("CVE-2022-4244, CVE-2022-4245")
         }
-        implementation("org.apache.httpcomponents.client5:httpclient5:5.6.1") {
-            because("CVE-2026-40542")
+        implementation("org.apache.httpcomponents.client5:httpclient5:5.6.4") {
+            because("CVE-2026-40542, CVE-2026-64607")
         }
-        implementation("org.apache.httpcomponents.client5:httpclient5-cache:5.6.1") {
-            because("CVE-2026-40542")
+        implementation("org.apache.httpcomponents.client5:httpclient5-cache:5.6.4") {
+            because("CVE-2026-40542, CVE-2026-64607")
         }
         implementation("org.apache.httpcomponents.core5:httpcore5:5.4.3") {
             because("CVE-2026-54399")
