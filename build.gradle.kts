@@ -169,15 +169,6 @@ val codegenomeUsername = providers.gradleProperty("codegenomeUsername").getOrEls
 val codegenomePassword = providers.gradleProperty("codegenomePassword").getOrElse("")
 val codegenomeConfigured = codegenomeUsername.isNotEmpty() && codegenomePassword.isNotEmpty()
 
-fun MavenArtifactRepository.excludeCodegenomeGroups() {
-    if (codegenomeConfigured) {
-        content {
-            excludeGroupAndSubgroups("org.openrewrite")
-            excludeGroupAndSubgroups("io.moderne")
-        }
-    }
-}
-
 repositories {
     mavenLocal()
     if (codegenomeConfigured) {
@@ -195,8 +186,22 @@ repositories {
         }
     }
     // The plugin portal proxies Maven Central, so it needs the same exclusion to keep these groups on CGP
-    gradlePluginPortal { (this as MavenArtifactRepository).excludeCodegenomeGroups() }
-    mavenCentral { excludeCodegenomeGroups() }
+    gradlePluginPortal {
+        if (codegenomeConfigured) {
+            (this as MavenArtifactRepository).content {
+                excludeGroupAndSubgroups("org.openrewrite")
+                excludeGroupAndSubgroups("io.moderne")
+            }
+        }
+    }
+    mavenCentral {
+        if (codegenomeConfigured) {
+            content {
+                excludeGroupAndSubgroups("org.openrewrite")
+                excludeGroupAndSubgroups("io.moderne")
+            }
+        }
+    }
 }
 
 configurations.all {
