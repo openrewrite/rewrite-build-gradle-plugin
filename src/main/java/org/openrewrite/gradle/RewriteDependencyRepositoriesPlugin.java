@@ -53,16 +53,6 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
             }));
         }
 
-        if (!releasing) {
-            repos.add(repos.maven(repo -> {
-                repo.setUrl("https://central.sonatype.com/repository/maven-snapshots/");
-                repo.content(content -> {
-                    content.includeGroupAndSubgroups("org.openrewrite");
-                    content.includeGroupAndSubgroups("io.moderne");
-                });
-            }));
-        }
-
         repos.add(repos.mavenCentral(repo -> repo.content(content -> {
             content.excludeVersionByRegex(".+", ".+", ".+-rc[-]?[0-9]*");
             if (cgpConfigured) {
