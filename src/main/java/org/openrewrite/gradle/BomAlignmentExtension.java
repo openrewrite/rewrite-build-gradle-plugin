@@ -122,9 +122,8 @@ public class BomAlignmentExtension {
     }
 
     /**
-     * Where the downloader should look for parents and imported BOMs. When the repository conventions
-     * plugin is applied it owns the answer, credentials and content filters included; otherwise fall back
-     * to whatever this project declared, which is all the public Gradle API exposes.
+     * Prefer the repository conventions plugin's own list, which carries the credentials and content
+     * filters {@link Project#getRepositories()} does not expose.
      */
     private List<MavenRepository> downloaderRepositories() {
         if (project.getPlugins().hasPlugin(RewriteDependencyRepositoriesPlugin.class)) {
@@ -147,8 +146,7 @@ public class BomAlignmentExtension {
             username = credentials.getUsername();
             password = credentials.getPassword();
         } catch (RuntimeException e) {
-            // Repository authenticates by some other means than a username and password; anonymous is the
-            // closest the downloader's model can come to expressing that.
+            // Authenticates by some other means; anonymous is the closest the downloader's model comes.
         }
         return new MavenRepository(repo.getName(), repo.getUrl().toString(), "true", "true", true, username, password, null, false);
     }

@@ -141,11 +141,7 @@ class RewriteDependencyRepositoriesPluginTest {
                 .containsExactly("central-snapshots", "central");
     }
 
-    /**
-     * Set the credentials as system properties rather than in {@code gradle.properties}: those are outranked
-     * by the {@code ORG_GRADLE_PROJECT_} environment variables CI sets, which would make this test's outcome
-     * depend on whether the machine running it happens to have CGP access.
-     */
+    /** System properties rather than {@code gradle.properties}, which CI's {@code ORG_GRADLE_PROJECT_} environment variables outrank. */
     private static Project projectWithCodegenomeCredentials(File projectDir, String username, String password) {
         String usernameProperty = "org.gradle.project.codegenomeUsername";
         String passwordProperty = "org.gradle.project.codegenomePassword";

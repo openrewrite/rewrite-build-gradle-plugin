@@ -79,15 +79,9 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
     }
 
     /**
-     * The repositories {@code apply} configures, modelled for OpenRewrite's {@code MavenPomDownloader}.
-     * <p>
-     * {@link MavenRepository} has no equivalent of Gradle's {@code content {}} filters, and the downloader
-     * takes the first repository that serves an artifact rather than consulting all of them. The routing the
-     * filters express is therefore encoded in the order and the membership of this list instead of being
-     * reverse-engineered from {@link Project#getRepositories()}, which reports names and URLs but not filters
-     * or credentials. {@code mavenLocal()} is deliberately absent: its only filter is the release-candidate
-     * exclusion, which cannot be expressed here, so including it would let the downloader resolve versions
-     * Gradle itself would refuse.
+     * The repositories {@link #apply} configures, modelled for OpenRewrite's {@code MavenPomDownloader}.
+     * {@code mavenLocal()} is left out: the downloader has no equivalent of its release-candidate exclusion,
+     * so including it would resolve versions Gradle itself refuses.
      */
     static List<MavenRepository> pomDownloaderRepositories(Project project) {
         List<MavenRepository> repositories = new ArrayList<>();

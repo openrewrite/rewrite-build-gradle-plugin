@@ -768,8 +768,7 @@ class RewriteBomAlignmentPluginTest {
                     .withDebug(true)
                     .build();
 
-            // baz is only reachable through the import-scoped inner-bom, which the POM downloader — not
-            // Gradle — fetches, so it only appears if the repository's credentials reached the downloader.
+            // Only the POM downloader fetches inner-bom, so baz appears only if credentials reached it.
             assertThat(result.getOutput())
                     .contains("API org.openrewrite.recipe:bar:1.0.0")
                     .contains("API org.openrewrite.recipe:baz:1.0.0");
@@ -882,7 +881,6 @@ class RewriteBomAlignmentPluginTest {
         }
     }
 
-    /** outer-bom manages bar directly and imports inner-bom, which manages baz. */
     private void publishImportingBoms() throws IOException {
         publishPom("org.openrewrite.recipe", "inner-bom", "1.0.0", "", """
                 <dependencyManagement>
