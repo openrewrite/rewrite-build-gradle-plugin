@@ -39,8 +39,6 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
         String cgpPassword = providers.gradleProperty("codegenomePassword").getOrElse("");
         boolean cgpConfigured = !cgpUsername.isEmpty() && !cgpPassword.isEmpty();
         if (cgpConfigured) {
-            // CGP is the first publish target for both snapshots and releases, so consult it
-            // ahead of Sonatype and Maven Central; group-scoped to the artifacts it serves.
             repos.add(repos.maven(repo -> {
                 repo.setName("codegenome");
                 repo.setUrl(CGP_URL);
@@ -58,8 +56,6 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
         if (!releasing) {
             repos.add(repos.maven(repo -> {
                 repo.setUrl("https://central.sonatype.com/repository/maven-snapshots/");
-                // Only consult the snapshots repo for groups that actually publish snapshots we consume,
-                // so a snapshots-repo outage can't break resolution of third-party releases.
                 repo.content(content -> {
                     content.includeGroupAndSubgroups("org.openrewrite");
                     content.includeGroupAndSubgroups("io.moderne");
@@ -70,9 +66,6 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
         repos.add(repos.mavenCentral(repo -> repo.content(content -> {
             content.excludeVersionByRegex(".+", ".+", ".+-rc[-]?[0-9]*");
             if (cgpConfigured) {
-                // Maven Central is no longer a publish target for these groups, so anything it still
-                // serves is stale; resolve them from CGP (or mavenLocal) or not at all. Without CGP
-                // credentials Central remains the fallback, so outside contributors can still build.
                 content.excludeGroupAndSubgroups("org.openrewrite");
                 content.excludeGroupAndSubgroups("io.moderne");
             }
