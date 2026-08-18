@@ -21,9 +21,9 @@ import org.gradle.api.Project;
 
 
 /**
- * A plugin that applies all the necessary plugins to create a recipe library in an open source environment where
- * Maven Central and Nexus Snapshots artifact repositories are available.
- * If your project does not use all the same plugins you can
+ * A plugin that applies all the necessary plugins to build and publish a recipe library, resolving dependencies
+ * from the Code Genome Project artifact repository.
+ * If your project does not need all of these, apply the individual plugins it does need instead.
  */
 public class RewriteRecipeLibraryPlugin implements Plugin<Project> {
 
