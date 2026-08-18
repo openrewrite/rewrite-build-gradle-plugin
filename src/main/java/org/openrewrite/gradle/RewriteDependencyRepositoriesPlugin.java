@@ -26,6 +26,7 @@ import java.util.List;
 
 public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
 
+    static final String ID = "org.openrewrite.build.recipe-repositories";
     static final String CGP_ID = "codegenome";
     static final String CGP_URL = "https://artifacts.codegenomeproject.org/maven";
     static final String SNAPSHOTS_ID = "central-snapshots";

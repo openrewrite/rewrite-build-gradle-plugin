@@ -126,7 +126,9 @@ public class BomAlignmentExtension {
      * filters {@link Project#getRepositories()} does not expose.
      */
     private List<MavenRepository> downloaderRepositories() {
-        if (project.getPlugins().hasPlugin(RewriteDependencyRepositoriesPlugin.class)) {
+        // By id, not by type: consumers apply it from a build-src convention plugin, whose classloader is
+        // not the one this plugin was loaded from.
+        if (project.getPluginManager().hasPlugin(RewriteDependencyRepositoriesPlugin.ID)) {
             return RewriteDependencyRepositoriesPlugin.pomDownloaderRepositories(project);
         }
         List<MavenRepository> repos = new ArrayList<>();

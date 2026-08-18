@@ -118,6 +118,13 @@ class RewriteDependencyRepositoriesPluginTest {
     }
 
     @Test
+    void idMatchesTheRegisteredPluginId() {
+        assertThat(getClass().getClassLoader()
+                .getResource("META-INF/gradle-plugins/" + RewriteDependencyRepositoriesPlugin.ID + ".properties"))
+                .isNotNull();
+    }
+
+    @Test
     void pomDownloaderRepositoriesCarryCodegenomeCredentials(@TempDir File projectDir) {
         Project project = projectWithCodegenomeCredentials(projectDir, "test-user", "cgp_test-token");
 
