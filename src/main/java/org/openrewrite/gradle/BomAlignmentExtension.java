@@ -24,6 +24,7 @@ import org.gradle.api.artifacts.ResolvedArtifact;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.artifacts.repositories.ArtifactRepository;
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository;
+import org.gradle.api.artifacts.repositories.PasswordCredentials;
 import org.openrewrite.InMemoryExecutionContext;
 import org.openrewrite.SourceFile;
 import org.openrewrite.maven.MavenExecutionContextView;
@@ -88,7 +89,7 @@ public class BomAlignmentExtension {
         // us. ResolvedPom.getDependencyManagement() returns the fully-resolved managed-dep list with
         // placeholders substituted.
         Set<GroupArtifact> managedDeps = new TreeSet<>(GA_BY_TOSTRING);
-        for (ResolvedManagedDependency dep : parseResolved(resolved.pomFile(), gradleRepositories()).getPom().getDependencyManagement()) {
+        for (ResolvedManagedDependency dep : parseResolved(resolved.pomFile(), downloaderRepositories()).getPom().getDependencyManagement()) {
             managedDeps.add(new GroupArtifact(dep.getGroupId(), dep.getArtifactId()));
         }
 
@@ -120,14 +121,36 @@ public class BomAlignmentExtension {
                 .orElseThrow(() -> new GradleException("MavenParser produced no MavenResolutionResult marker for " + pomFile));
     }
 
-    private List<MavenRepository> gradleRepositories() {
+    /**
+     * Where the downloader should look for parents and imported BOMs. When the repository conventions
+     * plugin is applied it owns the answer, credentials and content filters included; otherwise fall back
+     * to whatever this project declared, which is all the public Gradle API exposes.
+     */
+    private List<MavenRepository> downloaderRepositories() {
+        if (project.getPlugins().hasPlugin(RewriteDependencyRepositoriesPlugin.class)) {
+            return RewriteDependencyRepositoriesPlugin.pomDownloaderRepositories(project);
+        }
         List<MavenRepository> repos = new ArrayList<>();
         for (ArtifactRepository repo : project.getRepositories()) {
             if (repo instanceof MavenArtifactRepository m) {
-                repos.add(new MavenRepository(repo.getName(), m.getUrl().toString(), "true", "true", true, null, null, null, false));
+                repos.add(toMavenRepository(m));
             }
         }
         return repos;
+    }
+
+    private static MavenRepository toMavenRepository(MavenArtifactRepository repo) {
+        String username = null;
+        String password = null;
+        try {
+            PasswordCredentials credentials = repo.getCredentials(PasswordCredentials.class);
+            username = credentials.getUsername();
+            password = credentials.getPassword();
+        } catch (RuntimeException e) {
+            // Repository authenticates by some other means than a username and password; anonymous is the
+            // closest the downloader's model can come to expressing that.
+        }
+        return new MavenRepository(repo.getName(), repo.getUrl().toString(), "true", "true", true, username, password, null, false);
     }
 
     private FetchedPom fetchPom(GroupArtifactVersion gav) {
