@@ -24,7 +24,9 @@ import org.gradle.api.artifacts.ResolvedArtifact;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.artifacts.repositories.ArtifactRepository;
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository;
-import org.gradle.api.artifacts.repositories.PasswordCredentials;
+import org.gradle.api.credentials.Credentials;
+import org.gradle.api.credentials.PasswordCredentials;
+import org.gradle.internal.artifacts.repositories.AuthenticationSupportedInternal;
 import org.openrewrite.InMemoryExecutionContext;
 import org.openrewrite.SourceFile;
 import org.openrewrite.maven.MavenExecutionContextView;
@@ -122,8 +124,9 @@ public class BomAlignmentExtension {
     }
 
     /**
-     * Prefer the repository conventions plugin's own list, which carries the credentials and content
-     * filters {@link Project#getRepositories()} does not expose.
+     * Prefer the repository conventions plugin's own list: it knows the credentials and content filters
+     * {@link Project#getRepositories()} does not expose, and so can order the repositories to route
+     * artifacts the way those filters intend. Repositories the project declared on top of it are dropped.
      */
     private List<MavenRepository> downloaderRepositories() {
         // By id, not by type: consumers apply it from a build-src convention plugin, whose classloader is
@@ -143,12 +146,21 @@ public class BomAlignmentExtension {
     private static MavenRepository toMavenRepository(MavenArtifactRepository repo) {
         String username = null;
         String password = null;
-        try {
-            PasswordCredentials credentials = repo.getCredentials(PasswordCredentials.class);
-            username = credentials.getUsername();
-            password = credentials.getPassword();
-        } catch (RuntimeException e) {
-            // Authenticates by some other means; anonymous is the closest the downloader's model comes.
+        // Read the credentials property rather than getCredentials(Class): the latter *creates* empty
+        // credentials on a repository that has none, after which Gradle's own resolution from that
+        // repository fails with "Username must not be null!".
+        if (repo instanceof AuthenticationSupportedInternal internal) {
+            Credentials credentials = null;
+            try {
+                credentials = internal.getConfiguredCredentials().getOrNull();
+            } catch (RuntimeException e) {
+                // Credentials are supplied by an identity provider that cannot be resolved here;
+                // anonymous is the closest the downloader's model comes.
+            }
+            if (credentials instanceof PasswordCredentials passwordCredentials) {
+                username = passwordCredentials.getUsername();
+                password = passwordCredentials.getPassword();
+            }
         }
         return new MavenRepository(repo.getName(), repo.getUrl().toString(), "true", "true", true, username, password, null, false);
     }

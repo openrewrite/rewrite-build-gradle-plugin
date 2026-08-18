@@ -802,7 +802,12 @@ class RewriteBomAlignmentPluginTest {
                         bomAlignment.inheritsFrom('org.openrewrite.recipe:outer-bom:1.0.0')
                     }
                     tasks.register('listApi') {
+                        // Reading credentials must not leave empty ones behind on a repository that has
+                        // none: Gradle then rejects every later resolution from it.
+                        def resolveAfterwards = configurations.detachedConfiguration(
+                                dependencies.create('org.openrewrite.recipe:core:2.0.0@pom'))
                         doLast {
+                            resolveAfterwards.resolve()
                             configurations.api.dependencies.each {
                                 println "API ${it.group}:${it.name}:${it.version}"
                             }
