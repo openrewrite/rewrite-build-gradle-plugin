@@ -65,7 +65,7 @@ class RewriteDependencyRepositoriesPluginTest {
     }
 
     @Test
-    void codegenomeResolvedBeforeMavenCentralAndSonatypeSnapshotsNotAtAll(@TempDir File projectDir) throws IOException {
+    void codegenomeResolvedBeforeMavenCentral(@TempDir File projectDir) throws IOException {
         writeProject(projectDir);
 
         BuildResult result = GradleRunner.create()
@@ -77,9 +77,21 @@ class RewriteDependencyRepositoriesPluginTest {
                 .build();
 
         String output = result.getOutput();
-        assertThat(output).doesNotContain("https://central.sonatype.com/repository/maven-snapshots/");
         assertThat(output.indexOf("repo:codegenome="))
                 .isLessThan(output.indexOf("repo:MavenRepo="));
+    }
+
+    @Test
+    void noSnapshotRepositoryRegistered(@TempDir File projectDir) throws IOException {
+        writeProject(projectDir);
+
+        BuildResult result = GradleRunner.create()
+                .withProjectDir(projectDir)
+                .withPluginClasspath()
+                .withArguments("printRepositories")
+                .build();
+
+        assertThat(result.getOutput()).doesNotContain("maven-snapshots");
     }
 
     @Test
