@@ -24,9 +24,6 @@ import org.gradle.api.artifacts.ResolvedArtifact;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.artifacts.repositories.ArtifactRepository;
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository;
-import org.gradle.api.credentials.Credentials;
-import org.gradle.api.credentials.PasswordCredentials;
-import org.gradle.internal.artifacts.repositories.AuthenticationSupportedInternal;
 import org.openrewrite.InMemoryExecutionContext;
 import org.openrewrite.SourceFile;
 import org.openrewrite.maven.MavenExecutionContextView;
@@ -137,32 +134,10 @@ public class BomAlignmentExtension {
         List<MavenRepository> repos = new ArrayList<>();
         for (ArtifactRepository repo : project.getRepositories()) {
             if (repo instanceof MavenArtifactRepository m) {
-                repos.add(toMavenRepository(m));
+                repos.add(new MavenRepository(repo.getName(), m.getUrl().toString(), "true", "true", true, null, null, null, false));
             }
         }
         return repos;
-    }
-
-    private static MavenRepository toMavenRepository(MavenArtifactRepository repo) {
-        String username = null;
-        String password = null;
-        // Read the credentials property rather than getCredentials(Class): the latter *creates* empty
-        // credentials on a repository that has none, after which Gradle's own resolution from that
-        // repository fails with "Username must not be null!".
-        if (repo instanceof AuthenticationSupportedInternal internal) {
-            Credentials credentials = null;
-            try {
-                credentials = internal.getConfiguredCredentials().getOrNull();
-            } catch (RuntimeException e) {
-                // Credentials are supplied by an identity provider that cannot be resolved here;
-                // anonymous is the closest the downloader's model comes.
-            }
-            if (credentials instanceof PasswordCredentials passwordCredentials) {
-                username = passwordCredentials.getUsername();
-                password = passwordCredentials.getPassword();
-            }
-        }
-        return new MavenRepository(repo.getName(), repo.getUrl().toString(), "true", "true", true, username, password, null, false);
     }
 
     private FetchedPom fetchPom(GroupArtifactVersion gav) {

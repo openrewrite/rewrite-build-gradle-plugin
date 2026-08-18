@@ -15,21 +15,15 @@
  */
 package org.openrewrite.gradle;
 
-import com.sun.net.httpserver.HttpServer;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.GradleRunner;
-import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.Base64;
 
 import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -684,7 +678,36 @@ class RewriteBomAlignmentPluginTest {
 
     @Test
     void inheritsFromFollowsImportScopedTransitiveBoms() throws Exception {
-        publishImportingBoms();
+        // inner-bom manages baz:1.0.0; outer-bom imports inner-bom and adds bar:1.0.0.
+        publishPom("org.openrewrite.recipe", "inner-bom", "1.0.0", "", """
+                <dependencyManagement>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.openrewrite.recipe</groupId>
+                            <artifactId>baz</artifactId>
+                            <version>1.0.0</version>
+                        </dependency>
+                    </dependencies>
+                </dependencyManagement>
+                """);
+        publishPom("org.openrewrite.recipe", "outer-bom", "1.0.0", "", """
+                <dependencyManagement>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.openrewrite.recipe</groupId>
+                            <artifactId>inner-bom</artifactId>
+                            <version>1.0.0</version>
+                            <type>pom</type>
+                            <scope>import</scope>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.openrewrite.recipe</groupId>
+                            <artifactId>bar</artifactId>
+                            <version>1.0.0</version>
+                        </dependency>
+                    </dependencies>
+                </dependencyManagement>
+                """);
 
         writeFile(settingsFile, "rootProject.name = 'inherits-from-transitive'");
 
@@ -723,233 +746,6 @@ class RewriteBomAlignmentPluginTest {
         assertThat(result.getOutput())
                 .contains("API org.openrewrite.recipe:bar:1.0.0")
                 .contains("API org.openrewrite.recipe:baz:1.0.0");
-    }
-
-    @Test
-    void inheritsFromCarriesRepositoryCredentialsIntoTheParentPomDownload() throws Exception {
-        publishImportingBoms();
-        HttpServer server = startRepositoryServer("bom-user", "bom-password");
-        try {
-            writeFile(settingsFile, "rootProject.name = 'inherits-from-authenticated'");
-
-            //language=groovy
-            writeFile(buildFile, """
-                    plugins {
-                        id 'java-platform'
-                        id 'org.openrewrite.build.bom-alignment'
-                    }
-                    javaPlatform { allowDependencies() }
-                    repositories {
-                        maven {
-                            url = uri('%s')
-                            allowInsecureProtocol = true
-                            credentials {
-                                username = 'bom-user'
-                                password = 'bom-password'
-                            }
-                        }
-                    }
-                    dependencies {
-                        bomAlignment.inheritsFrom('org.openrewrite.recipe:outer-bom:1.0.0')
-                    }
-                    tasks.register('listApi') {
-                        doLast {
-                            configurations.api.dependencies.each {
-                                println "API ${it.group}:${it.name}:${it.version}"
-                            }
-                        }
-                    }
-                    """.formatted(repositoryUrl(server)));
-
-            BuildResult result = GradleRunner.create()
-                    .withProjectDir(projectDir)
-                    .withArguments("listApi", "--stacktrace")
-                    .withPluginClasspath()
-                    .withDebug(true)
-                    .build();
-
-            // Only the POM downloader fetches inner-bom, so baz appears only if credentials reached it.
-            assertThat(result.getOutput())
-                    .contains("API org.openrewrite.recipe:bar:1.0.0")
-                    .contains("API org.openrewrite.recipe:baz:1.0.0");
-        } finally {
-            server.stop(0);
-        }
-    }
-
-    @Test
-    void inheritsFromResolvesFromRepositoriesWithoutCredentials() throws Exception {
-        publishImportingBoms();
-        HttpServer server = startRepositoryServer(null, null);
-        try {
-            writeFile(settingsFile, "rootProject.name = 'inherits-from-anonymous'");
-
-            //language=groovy
-            writeFile(buildFile, """
-                    plugins {
-                        id 'java-platform'
-                        id 'org.openrewrite.build.bom-alignment'
-                    }
-                    javaPlatform { allowDependencies() }
-                    repositories {
-                        mavenLocal()
-                        maven {
-                            url = uri('%s')
-                            allowInsecureProtocol = true
-                        }
-                    }
-                    dependencies {
-                        bomAlignment.inheritsFrom('org.openrewrite.recipe:outer-bom:1.0.0')
-                    }
-                    tasks.register('listApi') {
-                        // Reading credentials must not leave empty ones behind on a repository that has
-                        // none: Gradle then rejects every later resolution from it.
-                        def resolveAfterwards = configurations.detachedConfiguration(
-                                dependencies.create('org.openrewrite.recipe:core:2.0.0@pom'))
-                        doLast {
-                            resolveAfterwards.resolve()
-                            configurations.api.dependencies.each {
-                                println "API ${it.group}:${it.name}:${it.version}"
-                            }
-                        }
-                    }
-                    """.formatted(repositoryUrl(server)));
-
-            BuildResult result = GradleRunner.create()
-                    .withProjectDir(projectDir)
-                    .withArguments("listApi", "--stacktrace")
-                    .withPluginClasspath()
-                    .withDebug(true)
-                    .build();
-
-            assertThat(result.getOutput())
-                    .contains("API org.openrewrite.recipe:bar:1.0.0")
-                    .contains("API org.openrewrite.recipe:baz:1.0.0");
-        } finally {
-            server.stop(0);
-        }
-    }
-
-    @Test
-    void inheritsFromToleratesRepositoriesAuthenticatingWithoutAPassword() throws Exception {
-        publishImportingBoms();
-        HttpServer server = startRepositoryServer(null, null);
-        try {
-            writeFile(settingsFile, "rootProject.name = 'inherits-from-header-credentials'");
-
-            //language=groovy
-            writeFile(buildFile, """
-                    import org.gradle.api.credentials.HttpHeaderCredentials
-                    import org.gradle.authentication.http.HttpHeaderAuthentication
-
-                    plugins {
-                        id 'java-platform'
-                        id 'org.openrewrite.build.bom-alignment'
-                    }
-                    javaPlatform { allowDependencies() }
-                    repositories {
-                        maven {
-                            url = uri('%sempty/')
-                            allowInsecureProtocol = true
-                            credentials(HttpHeaderCredentials) {
-                                name = 'Private-Token'
-                                value = 'header-token'
-                            }
-                            authentication {
-                                header(HttpHeaderAuthentication)
-                            }
-                        }
-                        maven { url = uri('%s') }
-                    }
-                    dependencies {
-                        bomAlignment.inheritsFrom('org.openrewrite.recipe:outer-bom:1.0.0')
-                    }
-                    tasks.register('listApi') {
-                        doLast {
-                            configurations.api.dependencies.each {
-                                println "API ${it.group}:${it.name}:${it.version}"
-                            }
-                        }
-                    }
-                    """.formatted(repositoryUrl(server), repoDir.toURI()));
-
-            BuildResult result = GradleRunner.create()
-                    .withProjectDir(projectDir)
-                    .withArguments("listApi", "--stacktrace")
-                    .withPluginClasspath()
-                    .withDebug(true)
-                    .build();
-
-            assertThat(result.getOutput()).contains("API org.openrewrite.recipe:baz:1.0.0");
-        } finally {
-            server.stop(0);
-        }
-    }
-
-    private void publishImportingBoms() throws IOException {
-        publishPom("org.openrewrite.recipe", "inner-bom", "1.0.0", "", """
-                <dependencyManagement>
-                    <dependencies>
-                        <dependency>
-                            <groupId>org.openrewrite.recipe</groupId>
-                            <artifactId>baz</artifactId>
-                            <version>1.0.0</version>
-                        </dependency>
-                    </dependencies>
-                </dependencyManagement>
-                """);
-        publishPom("org.openrewrite.recipe", "outer-bom", "1.0.0", "", """
-                <dependencyManagement>
-                    <dependencies>
-                        <dependency>
-                            <groupId>org.openrewrite.recipe</groupId>
-                            <artifactId>inner-bom</artifactId>
-                            <version>1.0.0</version>
-                            <type>pom</type>
-                            <scope>import</scope>
-                        </dependency>
-                        <dependency>
-                            <groupId>org.openrewrite.recipe</groupId>
-                            <artifactId>bar</artifactId>
-                            <version>1.0.0</version>
-                        </dependency>
-                    </dependencies>
-                </dependencyManagement>
-                """);
-    }
-
-    private HttpServer startRepositoryServer(@Nullable String username, @Nullable String password) throws IOException {
-        HttpServer server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
-        String expectedAuthorization = username == null ? null : "Basic " + Base64.getEncoder()
-                .encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
-        server.createContext("/", exchange -> {
-            try (exchange) {
-                if (expectedAuthorization != null &&
-                    !expectedAuthorization.equals(exchange.getRequestHeaders().getFirst("Authorization"))) {
-                    exchange.getResponseHeaders().add("WWW-Authenticate", "Basic realm=\"bom\"");
-                    exchange.sendResponseHeaders(401, -1);
-                    return;
-                }
-                File requested = new File(repoDir, exchange.getRequestURI().getPath());
-                if (!requested.isFile()) {
-                    exchange.sendResponseHeaders(404, -1);
-                    return;
-                }
-                if ("HEAD".equals(exchange.getRequestMethod())) {
-                    exchange.sendResponseHeaders(200, -1);
-                    return;
-                }
-                byte[] body = Files.readAllBytes(requested.toPath());
-                exchange.sendResponseHeaders(200, body.length);
-                exchange.getResponseBody().write(body);
-            }
-        });
-        server.start();
-        return server;
-    }
-
-    private static String repositoryUrl(HttpServer server) {
-        return "http://localhost:" + server.getAddress().getPort() + "/";
     }
 
     private void publishPom(String group, String artifact, String version, String depsXml) throws IOException {
