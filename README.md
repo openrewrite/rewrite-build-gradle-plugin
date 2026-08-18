@@ -29,7 +29,7 @@ This project provides a Gradle plugin that provides common build opinions to rep
 
 `org.openrewrite.build.recipe-repositories` (applied by the `recipe-library` and `language-library` plugins) adds
 https://artifacts.codegenomeproject.org/maven as a dependency repository for the `org.openrewrite` and `io.moderne`
-groups. It is only added when credentials are present, so builds without them resolve from Maven Central as before.
+groups, and excludes those same groups from Maven Central, to avoid downloading older versions.
 
 Set credentials as Gradle properties in `~/.gradle/gradle.properties` — never in a file under source control:
 

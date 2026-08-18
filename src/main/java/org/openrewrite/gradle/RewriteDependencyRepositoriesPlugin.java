@@ -37,9 +37,8 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
         ProviderFactory providers = project.getProviders();
         String cgpUsername = providers.gradleProperty("codegenomeUsername").getOrElse("");
         String cgpPassword = providers.gradleProperty("codegenomePassword").getOrElse("");
-        if (!cgpUsername.isEmpty() && !cgpPassword.isEmpty()) {
-            // CGP is the first publish target for both snapshots and releases, so consult it
-            // ahead of Sonatype and Maven Central; group-scoped to the artifacts it serves.
+        boolean cgpConfigured = !cgpUsername.isEmpty() && !cgpPassword.isEmpty();
+        if (cgpConfigured) {
             repos.add(repos.maven(repo -> {
                 repo.setName("codegenome");
                 repo.setUrl(CGP_URL);
@@ -57,8 +56,6 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
         if (!releasing) {
             repos.add(repos.maven(repo -> {
                 repo.setUrl("https://central.sonatype.com/repository/maven-snapshots/");
-                // Only consult the snapshots repo for groups that actually publish snapshots we consume,
-                // so a snapshots-repo outage can't break resolution of third-party releases.
                 repo.content(content -> {
                     content.includeGroupAndSubgroups("org.openrewrite");
                     content.includeGroupAndSubgroups("io.moderne");
@@ -66,7 +63,12 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
             }));
         }
 
-        repos.add(repos.mavenCentral(repo -> repo.content(content ->
-                content.excludeVersionByRegex(".+", ".+", ".+-rc[-]?[0-9]*"))));
+        repos.add(repos.mavenCentral(repo -> repo.content(content -> {
+            content.excludeVersionByRegex(".+", ".+", ".+-rc[-]?[0-9]*");
+            if (cgpConfigured) {
+                content.excludeGroupAndSubgroups("org.openrewrite");
+                content.excludeGroupAndSubgroups("io.moderne");
+            }
+        })));
     }
 }

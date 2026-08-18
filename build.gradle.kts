@@ -74,8 +74,8 @@ gradlePlugin {
             id = "org.openrewrite.build.recipe-repositories"
             displayName = "Rewrite recipe repositories"
             description =
-                "Configures the repositories that OpenRewrite modules in open source draw dependencies from, " +
-                        "such as Maven Central and Nexus Snapshots. "
+                "Configures the repositories that OpenRewrite modules in open source draw dependencies from: " +
+                        "the Code Genome Project for org.openrewrite and io.moderne artifacts, Maven Central for the rest. "
             implementationClass = "org.openrewrite.gradle.RewriteDependencyRepositoriesPlugin"
             tags = listOf("rewrite", "refactoring", "oss")
         }
@@ -165,10 +165,43 @@ gradlePlugin {
     }
 }
 
+val codegenomeUsername = providers.gradleProperty("codegenomeUsername").getOrElse("")
+val codegenomePassword = providers.gradleProperty("codegenomePassword").getOrElse("")
+val codegenomeConfigured = codegenomeUsername.isNotEmpty() && codegenomePassword.isNotEmpty()
+
 repositories {
     mavenLocal()
-    gradlePluginPortal()
-    mavenCentral()
+    if (codegenomeConfigured) {
+        maven {
+            name = "codegenome"
+            url = uri("https://artifacts.codegenomeproject.org/maven")
+            credentials {
+                username = codegenomeUsername
+                password = codegenomePassword
+            }
+            content {
+                includeGroupAndSubgroups("org.openrewrite")
+                includeGroupAndSubgroups("io.moderne")
+            }
+        }
+    }
+    // The plugin portal proxies Maven Central, so it needs the same exclusion to keep these groups on CGP
+    gradlePluginPortal {
+        if (codegenomeConfigured) {
+            (this as MavenArtifactRepository).content {
+                excludeGroupAndSubgroups("org.openrewrite")
+                excludeGroupAndSubgroups("io.moderne")
+            }
+        }
+    }
+    mavenCentral {
+        if (codegenomeConfigured) {
+            content {
+                excludeGroupAndSubgroups("org.openrewrite")
+                excludeGroupAndSubgroups("io.moderne")
+            }
+        }
+    }
 }
 
 configurations.all {
