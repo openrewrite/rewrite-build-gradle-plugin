@@ -68,9 +68,10 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
     }
 
     /**
-     * The repositories {@link #apply} configures, modelled for OpenRewrite's {@code MavenPomDownloader}.
-     * {@code mavenLocal()} is left out: the downloader has no equivalent of its release-candidate exclusion,
-     * so including it would resolve versions Gradle itself refuses.
+     * The repositories {@link #apply} configures, modelled for OpenRewrite's {@code MavenPomDownloader}:
+     * CGP first when credentials are configured, then always Maven Central, which everything CGP does not
+     * host still comes from. {@code mavenLocal()} is left out — the downloader has no equivalent of its
+     * release-candidate exclusion, so including it would resolve versions Gradle itself refuses.
      */
     static List<MavenRepository> pomDownloaderRepositories(Project project) {
         List<MavenRepository> repositories = new ArrayList<>();
