@@ -15,14 +15,18 @@
  */
 package org.openrewrite.gradle;
 
+import org.gradle.api.Project;
+import org.gradle.testfixtures.ProjectBuilder;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.GradleRunner;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.openrewrite.maven.tree.MavenRepository;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -123,6 +127,54 @@ class RewriteDependencyRepositoriesPluginTest {
         assertThat(output).contains("https://artifacts.codegenomeproject.org/maven/org/openrewrite/rewrite-bom");
         assertThat(output).contains("https://artifacts.codegenomeproject.org/maven/org/openrewrite/tools/java-object-diff");
         assertThat(output).doesNotContain("https://repo.maven.apache.org/maven2/org/openrewrite");
+    }
+
+    @Test
+    void idMatchesTheRegisteredPluginId() {
+        assertThat(getClass().getClassLoader()
+                .getResource("META-INF/gradle-plugins/" + RewriteDependencyRepositoriesPlugin.ID + ".properties"))
+                .isNotNull();
+    }
+
+    @Test
+    void pomDownloaderRepositoriesCarryCodegenomeCredentials(@TempDir File projectDir) {
+        Project project = projectWithCodegenomeCredentials(projectDir, "test-user", "cgp_test-token");
+
+        List<MavenRepository> repositories = RewriteDependencyRepositoriesPlugin.pomDownloaderRepositories(project);
+
+        assertThat(repositories).extracting(MavenRepository::getId)
+                .containsExactly("codegenome", "central");
+        assertThat(repositories).first().satisfies(codegenome -> {
+            assertThat(codegenome.getUri()).isEqualTo("https://artifacts.codegenomeproject.org/maven");
+            assertThat(codegenome.getUsername()).isEqualTo("test-user");
+            assertThat(codegenome.getPassword()).isEqualTo("cgp_test-token");
+        });
+    }
+
+    @Test
+    void pomDownloaderRepositoriesOmitCodegenomeWithoutCredentials(@TempDir File projectDir) {
+        Project project = projectWithCodegenomeCredentials(projectDir, "", "");
+
+        assertThat(RewriteDependencyRepositoriesPlugin.pomDownloaderRepositories(project))
+                .extracting(MavenRepository::getId)
+                .containsExactly("central");
+    }
+
+    /** System properties rather than {@code gradle.properties}, which CI's {@code ORG_GRADLE_PROJECT_} environment variables outrank. */
+    private static Project projectWithCodegenomeCredentials(File projectDir, String username, String password) {
+        String usernameProperty = "org.gradle.project.codegenomeUsername";
+        String passwordProperty = "org.gradle.project.codegenomePassword";
+        System.setProperty(usernameProperty, username);
+        System.setProperty(passwordProperty, password);
+        try {
+            return ProjectBuilder.builder()
+                    .withProjectDir(projectDir)
+                    .withGradleUserHomeDir(new File(projectDir, "gradle-home"))
+                    .build();
+        } finally {
+            System.clearProperty(usernameProperty);
+            System.clearProperty(passwordProperty);
+        }
     }
 
     private static void writeProject(File projectDir) throws IOException {

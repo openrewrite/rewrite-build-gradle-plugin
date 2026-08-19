@@ -19,10 +19,16 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.dsl.RepositoryHandler;
 import org.gradle.api.provider.ProviderFactory;
+import org.openrewrite.maven.tree.MavenRepository;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
 
-    private static final String CGP_URL = "https://artifacts.codegenomeproject.org/maven";
+    static final String ID = "org.openrewrite.build.recipe-repositories";
+    static final String CGP_ID = "codegenome";
+    static final String CGP_URL = "https://artifacts.codegenomeproject.org/maven";
 
     @Override
     public void apply(Project project) {
@@ -34,13 +40,12 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
                     content.excludeVersionByRegex(".+", ".+", ".+-rc[-]?[0-9]*"))));
         }
 
-        ProviderFactory providers = project.getProviders();
-        String cgpUsername = providers.gradleProperty("codegenomeUsername").getOrElse("");
-        String cgpPassword = providers.gradleProperty("codegenomePassword").getOrElse("");
-        boolean cgpConfigured = !cgpUsername.isEmpty() && !cgpPassword.isEmpty();
+        String cgpUsername = cgpUsername(project);
+        String cgpPassword = cgpPassword(project);
+        boolean cgpConfigured = cgpConfigured(cgpUsername, cgpPassword);
         if (cgpConfigured) {
             repos.add(repos.maven(repo -> {
-                repo.setName("codegenome");
+                repo.setName(CGP_ID);
                 repo.setUrl(CGP_URL);
                 repo.credentials(creds -> {
                     creds.setUsername(cgpUsername);
@@ -60,5 +65,39 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
                 content.excludeGroupAndSubgroups("io.moderne");
             }
         })));
+    }
+
+    /**
+     * The repositories {@link #apply} configures, modelled for OpenRewrite's {@code MavenPomDownloader}:
+     * CGP first when credentials are configured, then always Maven Central, which everything CGP does not
+     * host still comes from. {@code mavenLocal()} is left out — the downloader has no equivalent of its
+     * release-candidate exclusion, so including it would resolve versions Gradle itself refuses.
+     */
+    static List<MavenRepository> pomDownloaderRepositories(Project project) {
+        List<MavenRepository> repositories = new ArrayList<>();
+        String cgpUsername = cgpUsername(project);
+        String cgpPassword = cgpPassword(project);
+        if (cgpConfigured(cgpUsername, cgpPassword)) {
+            repositories.add(new MavenRepository(CGP_ID, CGP_URL, "true", "true", true, cgpUsername, cgpPassword, null, false));
+        }
+        repositories.add(MavenRepository.MAVEN_CENTRAL);
+        return repositories;
+    }
+
+    private static String cgpUsername(Project project) {
+        return gradleProperty(project, "codegenomeUsername");
+    }
+
+    private static String cgpPassword(Project project) {
+        return gradleProperty(project, "codegenomePassword");
+    }
+
+    private static String gradleProperty(Project project, String name) {
+        ProviderFactory providers = project.getProviders();
+        return providers.gradleProperty(name).getOrElse("");
+    }
+
+    private static boolean cgpConfigured(String cgpUsername, String cgpPassword) {
+        return !cgpUsername.isEmpty() && !cgpPassword.isEmpty();
     }
 }
