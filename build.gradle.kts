@@ -308,6 +308,10 @@ project.rootProject.tasks.getByName("postRelease").dependsOn(project.tasks.getBy
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    // RewriteJavaPluginTest asserts against this file, which Gradle would not otherwise treat as a test input
+    inputs.file(layout.projectDirectory.file("build.gradle.kts"))
+        .withPropertyName("buildScript")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
 configure<LicenseExtension> {
