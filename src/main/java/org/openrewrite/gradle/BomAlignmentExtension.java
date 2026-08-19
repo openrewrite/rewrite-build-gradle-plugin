@@ -88,7 +88,7 @@ public class BomAlignmentExtension {
         // us. ResolvedPom.getDependencyManagement() returns the fully-resolved managed-dep list with
         // placeholders substituted.
         Set<GroupArtifact> managedDeps = new TreeSet<>(GA_BY_TOSTRING);
-        for (ResolvedManagedDependency dep : parseResolved(resolved.pomFile(), gradleRepositories()).getPom().getDependencyManagement()) {
+        for (ResolvedManagedDependency dep : parseResolved(resolved.pomFile(), downloaderRepositories()).getPom().getDependencyManagement()) {
             managedDeps.add(new GroupArtifact(dep.getGroupId(), dep.getArtifactId()));
         }
 
@@ -120,7 +120,17 @@ public class BomAlignmentExtension {
                 .orElseThrow(() -> new GradleException("MavenParser produced no MavenResolutionResult marker for " + pomFile));
     }
 
-    private List<MavenRepository> gradleRepositories() {
+    /**
+     * Prefer the repository conventions plugin's own list: it knows the credentials and content filters
+     * {@link Project#getRepositories()} does not expose, and so can order the repositories to route
+     * artifacts the way those filters intend. Repositories the project declared on top of it are dropped.
+     */
+    private List<MavenRepository> downloaderRepositories() {
+        // By id, not by type: consumers apply it from a build-src convention plugin, whose classloader is
+        // not the one this plugin was loaded from.
+        if (project.getPluginManager().hasPlugin(RewriteDependencyRepositoriesPlugin.ID)) {
+            return RewriteDependencyRepositoriesPlugin.pomDownloaderRepositories(project);
+        }
         List<MavenRepository> repos = new ArrayList<>();
         for (ArtifactRepository repo : project.getRepositories()) {
             if (repo instanceof MavenArtifactRepository m) {
