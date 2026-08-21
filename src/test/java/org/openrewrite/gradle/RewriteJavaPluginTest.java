@@ -23,6 +23,9 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -59,6 +62,44 @@ class RewriteJavaPluginTest {
           .build();
 
         assertThat(requireNonNull(result.task(":test")).getOutcome()).isEqualTo(NO_SOURCE);
+    }
+
+    @Test
+    void jacksonVersionAppliedToConsumersMatchesOurOwn() throws Exception {
+        Matcher ourJacksonBom = Pattern.compile("com\\.fasterxml\\.jackson:jackson-bom:([^\"]+)")
+          .matcher(Files.readString(Path.of("build.gradle.kts")));
+        assertThat(ourJacksonBom.find())
+          .as("no jackson-bom platform found in build.gradle.kts")
+          .isTrue();
+        String jacksonVersion = ourJacksonBom.group(1);
+
+        Files.writeString(settingsFile.toPath(), "rootProject.name = 'jackson-version'");
+        Files.writeString(buildFile.toPath(),
+          //language=gradle
+          """
+            plugins {
+                id 'org.openrewrite.build.language-library'
+            }
+
+            tasks.register('printJacksonBom') {
+                doLast {
+                    configurations.api.allDependencies.each { d ->
+                        if (d.group == 'com.fasterxml.jackson' && d.name == 'jackson-bom') {
+                            println "JACKSON_BOM=${d.group}:${d.name}:${d.version}"
+                        }
+                    }
+                }
+            }
+            """);
+
+        assertThat(GradleRunner.create()
+          .withProjectDir(testProjectDir)
+          .withArguments("printJacksonBom")
+          .withPluginClasspath()
+          .build()
+          .getOutput())
+          .as("bump the rewriteJava.jacksonVersion convention in RewriteJavaPlugin along with build.gradle.kts")
+          .contains("JACKSON_BOM=com.fasterxml.jackson:jackson-bom:" + jacksonVersion);
     }
 
     @Test
