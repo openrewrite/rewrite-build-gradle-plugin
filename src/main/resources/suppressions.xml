@@ -198,20 +198,51 @@
         <packageUrl regex="true">^pkg:maven/io\.opentelemetry/opentelemetry-.*@.*$</packageUrl>
         <cve>CVE-2026-41178</cve>
     </suppress>
-    <suppress until="2026-09-01Z">
+    <suppress until="2026-10-01Z">
         <notes><![CDATA[
-            JLine3 Telnet server unauthenticated remote DoS — GHSA-2r2c-cx56-8933 (unbounded
-            NAWS terminal geometry) and GHSA-47qp-hqvx-6r3f (unbounded NEW-ENVIRON variables).
+            JLine3 Telnet server unauthenticated remote DoS — CVE-2026-56741 / GHSA-2r2c-cx56-8933
+            (unbounded NAWS terminal geometry) and CVE-2026-56740 / GHSA-47qp-hqvx-6r3f (unbounded
+            NEW-ENVIRON variables). Both advisories name org.jline:jline-remote-telnet < 4.2.1 as
+            the only affected Maven package.
             Not reachable: org.jline:jline-remote-telnet is shaded into the jline-3.27.1-jdk8.jar
-            pulled transitively by org.scala-sbt:zinc_2.13 (the Scala incremental compiler) on the
-            build-time `zinc` configuration only — not on any deployed runtime classpath. The
-            vulnerable Telnet server is never instantiated (no telnet listener is exposed).
-            Patched in jline 4.2.1, but it is a deep transitive of zinc.
+            pulled transitively by org.scala-sbt:zinc_2.13:1.12.0 (the Scala incremental compiler)
+            on the build-time `zinc` configuration that Gradle's built-in `scala` plugin creates
+            for :rewrite-scala — not on any deployed runtime classpath. The vulnerable Telnet
+            server is never instantiated (no telnet listener is exposed). The zinc version is
+            dictated by Gradle's scala plugin rather than declared by the build, so jline cannot
+            be raised to the patched 4.2.1 from this repo.
+            Re-pinned from GHSA identifiers to CVE identifiers: NVD has now assigned CVE IDs to
+            both advisories, dependency-check reports them under the CVE, and the previous
+            vulnerabilityName/GHSA form logs "Suppression Rule had zero matches".
             Added: 2026-06-24
+            Renewed: 2026-08-21
         ]]></notes>
-        <packageUrl regex="true">^pkg:maven/org\.jline/jline-remote-telnet@.*$</packageUrl>
-        <vulnerabilityName>GHSA-2r2c-cx56-8933</vulnerabilityName>
-        <vulnerabilityName>GHSA-47qp-hqvx-6r3f</vulnerabilityName>
+        <packageUrl regex="true">^pkg:maven/org\.jline/jline(-remote-telnet)?@.*$</packageUrl>
+        <cve>CVE-2026-56740</cve>
+        <cve>CVE-2026-56741</cve>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
+            False positive. CVE-2026-56740 (GHSA-47qp-hqvx-6r3f) and CVE-2026-56741
+            (GHSA-2r2c-cx56-8933) are scoped to the JLine3 Telnet server, and both advisories name
+            org.jline:jline-remote-telnet < 4.2.1 as the only affected Maven package. The artifacts
+            suppressed here — jansi-core, jline-builtins, jline-native, jline-reader,
+            jline-remote-ssh, jline-style and the jline-terminal* family, plus the unrelated
+            JLine 2.x sbt fork org.scala-sbt.jline:jline — are separate modules that ship no
+            Telnet code. Dependency-check matches them through the shared cpe:/a:jline:jline
+            product name rather than the purl, so every sibling module in the family inherits the
+            advisory.
+            Same-vendor cross-artifact CPE over-match: these two CVEs are permanently scoped to
+            jline-remote-telnet, so the sibling modules can never become a true positive for them;
+            suppressed indefinitely. A future advisory against these modules would carry a
+            different CVE ID and would surface independently, unhidden by this entry.
+            They arrive build-time only, transitively via org.scala-sbt:zinc_2.13:1.12.0 on the
+            `zinc` configuration created by Gradle's built-in `scala` plugin for :rewrite-scala.
+            Added: 2026-08-21
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/(org\.jline/(jansi-core|jline-builtins|jline-native|jline-reader|jline-remote-ssh|jline-style|jline-terminal(-ffm|-jansi|-jna|-jni)?)|org\.scala-sbt\.jline/jline)@.*$</packageUrl>
+        <cve>CVE-2026-56740</cve>
+        <cve>CVE-2026-56741</cve>
     </suppress>
     <suppress>
         <notes><![CDATA[
