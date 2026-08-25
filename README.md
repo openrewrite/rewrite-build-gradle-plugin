@@ -40,3 +40,13 @@ codegenomePassword=cgp_...
 
 In CI, expose the same values as the `ORG_GRADLE_PROJECT_codegenomeUsername` and `ORG_GRADLE_PROJECT_codegenomePassword`
 environment variables.
+
+## Publishing
+
+Recipe and language libraries publish only to the Code Genome Project. `org.openrewrite.build.publish-cgp` (applied by
+the `recipe-library` and `language-library` plugins) adds the CGP bucket as a publishing repository, and stays inert
+unless `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` are set, so only CI publishes.
+
+`org.openrewrite.build.root` no longer stages artifacts to Maven Central. Modules that still have to reach Central
+during the transition can apply the deprecated `org.openrewrite.build.publish-maven-central` plugin, which restores the
+Sonatype repository and its `closeAndReleaseSonatypeStagingRepository` task.
