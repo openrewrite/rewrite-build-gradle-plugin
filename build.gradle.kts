@@ -103,6 +103,14 @@ gradlePlugin {
             implementationClass = "org.openrewrite.gradle.RewritePublishPlugin"
             tags = listOf("rewrite", "refactoring")
         }
+        create("build-publish-maven-central") {
+            id = "org.openrewrite.build.publish-maven-central"
+            displayName = "Rewrite Maven Central publishing"
+            description = "Deprecated. Stages and releases artifacts to Maven Central through Sonatype. " +
+                    "OpenRewrite publishes to the Code Genome Project instead; use org.openrewrite.build.publish-cgp."
+            implementationClass = "org.openrewrite.gradle.RewriteMavenCentralPublishPlugin"
+            tags = listOf("rewrite", "refactoring", "deprecated")
+        }
         create("build-publish-cgp") {
             id = "org.openrewrite.build.publish-cgp"
             displayName = "Rewrite Code Genome Project publishing"

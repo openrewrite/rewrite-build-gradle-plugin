@@ -15,8 +15,6 @@
  */
 package org.openrewrite.gradle;
 
-import io.github.gradlenexus.publishplugin.NexusPublishExtension;
-import io.github.gradlenexus.publishplugin.NexusPublishPlugin;
 import nebula.plugin.info.scm.ScmInfoPlugin;
 import nebula.plugin.release.NetflixOssStrategies;
 import nebula.plugin.release.ReleasePlugin;
@@ -24,21 +22,26 @@ import nebula.plugin.release.git.base.ReleasePluginExtension;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 
-import java.net.URI;
-
 public class RewriteRootProjectPlugin implements Plugin<Project> {
+
+    private static final String CLOSE_AND_RELEASE_TASK = "closeAndReleaseSonatypeStagingRepository";
 
     @Override
     public void apply(Project project) {
         project.getPlugins().apply(ReleasePlugin.class);
         project.getPlugins().apply(ScmInfoPlugin.class);
-        project.getPlugins().apply(NexusPublishPlugin.class);
 
-        project.getExtensions().configure(NexusPublishExtension.class, ext ->
-                ext.getRepositories().sonatype(nexusRepository -> {
-                    nexusRepository.getNexusUrl().set(URI.create("https://ossrh-staging-api.central.sonatype.com/service/local/"));
-                    nexusRepository.getSnapshotRepositoryUrl().set(URI.create("https://central.sonatype.com/repository/maven-snapshots/"));
-        }));
+        // Maven Central publishing is retired — artifacts go to the Code Genome Project. The shared
+        // release workflow still invokes closeAndReleaseSonatypeStagingRepository by name, so stand in
+        // for the task Nexus used to contribute rather than break releases until that workflow changes.
+        project.afterEvaluate(p -> {
+            if (p.getTasks().findByName(CLOSE_AND_RELEASE_TASK) == null) {
+                p.getTasks().register(CLOSE_AND_RELEASE_TASK, task -> {
+                    task.setGroup("publishing");
+                    task.setDescription("No-op. Artifacts publish to the Code Genome Project, not Maven Central.");
+                });
+            }
+        });
 
         if (project.getExtensions().findByType(ReleasePluginExtension.class) != null) {
             project.getExtensions().configure(ReleasePluginExtension.class, ext ->
