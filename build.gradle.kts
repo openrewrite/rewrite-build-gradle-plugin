@@ -175,39 +175,48 @@ gradlePlugin {
 
 val codegenomeUsername = providers.gradleProperty("codegenomeUsername").getOrElse("")
 val codegenomePassword = providers.gradleProperty("codegenomePassword").getOrElse("")
-val codegenomeConfigured = codegenomeUsername.isNotEmpty() && codegenomePassword.isNotEmpty()
+if (codegenomeUsername.isEmpty() || codegenomePassword.isEmpty()) {
+    throw GradleException(
+        """
+        Code Genome Project credentials are required to build this project, which resolves its org.openrewrite
+        and io.moderne dependencies from https://artifacts.codegenomeproject.org/maven.
+
+        Set them in ~/.gradle/gradle.properties:
+
+            codegenomeUsername=you@example.com
+            codegenomePassword=cgp_...
+
+        or expose them as the ORG_GRADLE_PROJECT_codegenomeUsername and ORG_GRADLE_PROJECT_codegenomePassword
+        environment variables.
+        """.trimIndent()
+    )
+}
 
 repositories {
     mavenLocal()
-    if (codegenomeConfigured) {
-        maven {
-            name = "codegenome"
-            url = uri("https://artifacts.codegenomeproject.org/maven")
-            credentials {
-                username = codegenomeUsername
-                password = codegenomePassword
-            }
-            content {
-                includeGroupAndSubgroups("org.openrewrite")
-                includeGroupAndSubgroups("io.moderne")
-            }
+    maven {
+        name = "codegenome"
+        url = uri("https://artifacts.codegenomeproject.org/maven")
+        credentials {
+            username = codegenomeUsername
+            password = codegenomePassword
+        }
+        content {
+            includeGroupAndSubgroups("org.openrewrite")
+            includeGroupAndSubgroups("io.moderne")
         }
     }
     // The plugin portal proxies Maven Central, so it needs the same exclusion to keep these groups on CGP
     gradlePluginPortal {
-        if (codegenomeConfigured) {
-            (this as MavenArtifactRepository).content {
-                excludeGroupAndSubgroups("org.openrewrite")
-                excludeGroupAndSubgroups("io.moderne")
-            }
+        (this as MavenArtifactRepository).content {
+            excludeGroupAndSubgroups("org.openrewrite")
+            excludeGroupAndSubgroups("io.moderne")
         }
     }
     mavenCentral {
-        if (codegenomeConfigured) {
-            content {
-                excludeGroupAndSubgroups("org.openrewrite")
-                excludeGroupAndSubgroups("io.moderne")
-            }
+        content {
+            excludeGroupAndSubgroups("org.openrewrite")
+            excludeGroupAndSubgroups("io.moderne")
         }
     }
 }
