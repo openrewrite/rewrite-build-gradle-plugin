@@ -175,11 +175,13 @@ gradlePlugin {
 
 val codegenomeUsername = providers.gradleProperty("codegenomeUsername").getOrElse("")
 val codegenomePassword = providers.gradleProperty("codegenomePassword").getOrElse("")
-if (codegenomeUsername.isEmpty() || codegenomePassword.isEmpty()) {
+val codegenomeConfigured = codegenomeUsername.isNotEmpty() && codegenomePassword.isNotEmpty()
+if (!codegenomeConfigured && hasProperty("releasing")) {
     throw GradleException(
         """
-        Code Genome Project credentials are required to build this project, which resolves its org.openrewrite
-        and io.moderne dependencies from https://artifacts.codegenomeproject.org/maven.
+        Code Genome Project credentials are required to release this project, so that its org.openrewrite and
+        io.moderne dependencies resolve from https://artifacts.codegenomeproject.org/maven rather than falling
+        back to older versions on Maven Central.
 
         Set them in ~/.gradle/gradle.properties:
 
@@ -194,29 +196,35 @@ if (codegenomeUsername.isEmpty() || codegenomePassword.isEmpty()) {
 
 repositories {
     mavenLocal()
-    maven {
-        name = "codegenome"
-        url = uri("https://artifacts.codegenomeproject.org/maven")
-        credentials {
-            username = codegenomeUsername
-            password = codegenomePassword
-        }
-        content {
-            includeGroupAndSubgroups("org.openrewrite")
-            includeGroupAndSubgroups("io.moderne")
+    if (codegenomeConfigured) {
+        maven {
+            name = "codegenome"
+            url = uri("https://artifacts.codegenomeproject.org/maven")
+            credentials {
+                username = codegenomeUsername
+                password = codegenomePassword
+            }
+            content {
+                includeGroupAndSubgroups("org.openrewrite")
+                includeGroupAndSubgroups("io.moderne")
+            }
         }
     }
     // The plugin portal proxies Maven Central, so it needs the same exclusion to keep these groups on CGP
     gradlePluginPortal {
-        (this as MavenArtifactRepository).content {
-            excludeGroupAndSubgroups("org.openrewrite")
-            excludeGroupAndSubgroups("io.moderne")
+        if (codegenomeConfigured) {
+            (this as MavenArtifactRepository).content {
+                excludeGroupAndSubgroups("org.openrewrite")
+                excludeGroupAndSubgroups("io.moderne")
+            }
         }
     }
     mavenCentral {
-        content {
-            excludeGroupAndSubgroups("org.openrewrite")
-            excludeGroupAndSubgroups("io.moderne")
+        if (codegenomeConfigured) {
+            content {
+                excludeGroupAndSubgroups("org.openrewrite")
+                excludeGroupAndSubgroups("io.moderne")
+            }
         }
     }
 }
