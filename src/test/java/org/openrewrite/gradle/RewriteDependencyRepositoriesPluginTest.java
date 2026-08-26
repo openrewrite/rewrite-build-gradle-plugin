@@ -130,6 +130,36 @@ class RewriteDependencyRepositoriesPluginTest {
     }
 
     @Test
+    void releasingWithoutCredentialsFails(@TempDir File projectDir) throws IOException {
+        writeProject(projectDir);
+
+        BuildResult result = GradleRunner.create()
+                .withProjectDir(projectDir)
+                .withPluginClasspath()
+                .withArguments("printRepositories", "-Preleasing",
+                        "-PcodegenomeUsername=", "-PcodegenomePassword=")
+                .buildAndFail();
+
+        assertThat(result.getOutput())
+                .contains("Code Genome Project credentials are required to release");
+    }
+
+    @Test
+    void releasingWithCredentialsSucceeds(@TempDir File projectDir) throws IOException {
+        writeProject(projectDir);
+
+        BuildResult result = GradleRunner.create()
+                .withProjectDir(projectDir)
+                .withPluginClasspath()
+                .withArguments("printRepositories", "-Preleasing",
+                        "-PcodegenomeUsername=test-user",
+                        "-PcodegenomePassword=cgp_test-token")
+                .build();
+
+        assertThat(result.getOutput()).contains("repo:codegenome=https://artifacts.codegenomeproject.org/maven");
+    }
+
+    @Test
     void idMatchesTheRegisteredPluginId() {
         assertThat(getClass().getClassLoader()
                 .getResource("META-INF/gradle-plugins/" + RewriteDependencyRepositoriesPlugin.ID + ".properties"))
