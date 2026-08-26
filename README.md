@@ -41,6 +41,10 @@ codegenomePassword=cgp_...
 In CI, expose the same values as the `ORG_GRADLE_PROJECT_codegenomeUsername` and `ORG_GRADLE_PROJECT_codegenomePassword`
 environment variables.
 
+This project's own build draws `org.openrewrite` artifacts from the Code Genome Project the same way. Ordinary builds
+still fall back to Maven Central when credentials are absent, but a release build (`-Preleasing`) fails at
+configuration time rather than releasing against whatever versions Maven Central happens to carry.
+
 ## Publishing
 
 Recipe and language libraries publish only to the Code Genome Project. `org.openrewrite.build.publish-cgp` (applied by

@@ -176,6 +176,23 @@ gradlePlugin {
 val codegenomeUsername = providers.gradleProperty("codegenomeUsername").getOrElse("")
 val codegenomePassword = providers.gradleProperty("codegenomePassword").getOrElse("")
 val codegenomeConfigured = codegenomeUsername.isNotEmpty() && codegenomePassword.isNotEmpty()
+if (!codegenomeConfigured && hasProperty("releasing")) {
+    throw GradleException(
+        """
+        Code Genome Project credentials are required to release this project, so that its org.openrewrite and
+        io.moderne dependencies resolve from https://artifacts.codegenomeproject.org/maven rather than falling
+        back to older versions on Maven Central.
+
+        Set them in ~/.gradle/gradle.properties:
+
+            codegenomeUsername=you@example.com
+            codegenomePassword=cgp_...
+
+        or expose them as the ORG_GRADLE_PROJECT_codegenomeUsername and ORG_GRADLE_PROJECT_codegenomePassword
+        environment variables.
+        """.trimIndent()
+    )
+}
 
 repositories {
     mavenLocal()
