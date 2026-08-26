@@ -15,6 +15,7 @@
  */
 package org.openrewrite.gradle;
 
+import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.dsl.RepositoryHandler;
@@ -43,6 +44,20 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
         String cgpUsername = cgpUsername(project);
         String cgpPassword = cgpPassword(project);
         boolean cgpConfigured = cgpConfigured(cgpUsername, cgpPassword);
+        if (!cgpConfigured && releasing) {
+            throw new GradleException(
+                    "Code Genome Project credentials are required to release " + project.getPath() + ", so that its\n" +
+                    "org.openrewrite and io.moderne dependencies resolve from " + CGP_URL + "\n" +
+                    "rather than falling back to older versions on Maven Central.\n" +
+                    "\n" +
+                    "Set them in ~/.gradle/gradle.properties:\n" +
+                    "\n" +
+                    "    codegenomeUsername=you@example.com\n" +
+                    "    codegenomePassword=cgp_...\n" +
+                    "\n" +
+                    "or expose them as the ORG_GRADLE_PROJECT_codegenomeUsername and ORG_GRADLE_PROJECT_codegenomePassword\n" +
+                    "environment variables.");
+        }
         if (cgpConfigured) {
             repos.add(repos.maven(repo -> {
                 repo.setName(CGP_ID);
