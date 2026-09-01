@@ -198,6 +198,18 @@
         <packageUrl regex="true">^pkg:maven/io\.opentelemetry/opentelemetry-.*@.*$</packageUrl>
         <cve>CVE-2026-41178</cve>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+            False positive. CVE-2026-54285 (GHSA-8988-4f7v-96qf) affects only the npm module
+            @opentelemetry/core < 2.8.0. The Java io.opentelemetry jars are build-time only via
+            org.jetbrains.kotlin:swift-export-embeddable and match on the CPE name alone.
+            Cross-ecosystem overclassifier, so suppressed indefinitely.
+            Upstream declined this group: DependencyCheck#8593 and #8775 closed as duplicates.
+            Added: 2026-09-01
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/io\.opentelemetry/opentelemetry-.*@.*$</packageUrl>
+        <cve>CVE-2026-54285</cve>
+    </suppress>
     <suppress until="2026-10-01Z">
         <notes><![CDATA[
             JLine3 Telnet server unauthenticated remote DoS — CVE-2026-56741 / GHSA-2r2c-cx56-8933
