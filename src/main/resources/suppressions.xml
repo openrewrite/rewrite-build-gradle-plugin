@@ -273,7 +273,7 @@
         <packageUrl regex="true">^pkg:maven/io\.quarkus/quarkus-update-recipes@.*$</packageUrl>
         <cve>CVE-2026-50559</cve>
     </suppress>
-    <suppress until="2026-09-01Z">
+    <suppress until="2026-10-01Z">
         <notes><![CDATA[
             CVE-2026-53914 is unsafe deserialization of untrusted Kotlin build-cache
             metadata, allowing code execution (fixed in Kotlin 2.4.20). It requires local
@@ -306,7 +306,7 @@
         <packageUrl regex="true">^pkg:maven/org\.scala-sbt/(launcher-interface|sbinary_.*)@.*$</packageUrl>
         <cve>CVE-2023-46122</cve>
     </suppress>
-    <suppress until="2026-09-01Z">
+    <suppress until="2026-10-01Z">
         <notes><![CDATA[
             Log4j 2 advisories CVE-2026-34477 / CVE-2026-34479 / CVE-2026-34480 (silent log
             event loss in XML layouts; verifyHostName ignored in TLS config) and
@@ -340,7 +340,7 @@
         <packageUrl regex="true">^pkg:maven/org\.apache\.logging\.log4j/log4j-(api|core)@.*$</packageUrl>
         <cve>CVE-2026-49844</cve>
     </suppress>
-    <suppress until="2026-09-01Z">
+    <suppress until="2026-10-01Z">
         <notes><![CDATA[
             CVE-2023-50572 (GHSA-2268-98wh-qfhf, MODERATE) is an out-of-memory error in
             JLine < 3.25.0. The flagged org.scala-sbt.jline:jline 2.14.7-sbt is the sbt-shaded
