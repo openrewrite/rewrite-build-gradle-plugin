@@ -293,6 +293,9 @@ dependencies {
     testImplementation(gradleTestKit())
 
     constraints {
+        implementation("com.squareup.moshi:moshi:1.15.2") {
+            because("CVE-2023-3635: gradle-dependency-lock-plugin still pins moshi 1.12.0, which brings okio 2.10.0")
+        }
         implementation("org.apache.maven:maven-settings:3.9.6") {
             because("CVE-2021-26291")
         }
