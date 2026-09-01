@@ -263,7 +263,7 @@ dependencies {
         exclude(group = "org.springframework", module = "spring-core")
         exclude(group = "org.springframework", module = "spring-asm")
     }
-    // Provide a newer Spring version to replace the excluded 3.1.3; license-maven-plugin needs only PropertyPlaceholderHelper
+    // Spring is only required for PropertyPlaceholderHelper in license-maven-plugin
     implementation("org.springframework:spring-core:7.0.9")
     implementation("com.github.jk1:gradle-license-report:1.16")
     implementation("org.owasp:dependency-check-gradle:latest.release") {
