@@ -46,6 +46,42 @@ a release build (`-Preleasing`) fails at configuration time rather than releasin
 Central happens to carry. This project's own build draws `org.openrewrite` artifacts from the Code Genome Project, and
 fails the same way when releasing without credentials.
 
+### Settings
+
+`recipe-repositories` covers a project's own dependencies. It cannot cover the plugins' dependencies: a plugin's
+classpath is resolved from the repositories *settings* declares, before any project exists. Those default to the
+Gradle Plugin Portal, which proxies Maven Central, so once recipe and language libraries stopped publishing there,
+applying any of these plugins started failing on the `org.openrewrite` artifacts they are built on:
+
+```
+> Could not find org.openrewrite:rewrite-core:8.91.4.
+    Searched in the following locations:
+      - https://plugins.gradle.org/m2/org/openrewrite/rewrite-core/8.91.4/rewrite-core-8.91.4.pom
+```
+
+Apply `org.openrewrite.build.settings` in `settings.gradle.kts` to add the Code Genome Project there too. It is
+published as its own artifact and carries no `org.openrewrite` dependencies, which is what lets it resolve from the
+plugin portal alone and then make everything else resolvable:
+
+```kotlin
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+    }
+}
+
+plugins {
+    id("org.openrewrite.build.settings") version "latest.release"
+}
+
+rootProject.name = "..."
+```
+
+It reads the same two credential properties, and does nothing when they are absent — a fork pull request has no way to
+resolve these artifacts, and failing outright would only replace one unhelpful error with another. Nothing is excluded
+from the repositories already declared: a plugin classpath is pinned to exact versions, so a hit anywhere is the same
+artifact, and excluding `org.openrewrite` from the portal would take the plugin markers with it.
+
 ## Publishing
 
 Recipe and language libraries publish only to the Code Genome Project. `org.openrewrite.build.publish-cgp` (applied by
