@@ -92,4 +92,19 @@
         <cve>CVE-2009-2719</cve>
         <cve>CVE-2009-2720</cve>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+            False positive. CVE-2020-29582 (GHSA-cqj8-47ch-rvvq) is insecure temp-file
+            permissions in kotlin-stdlib <= 1.4.20, fixed in 1.4.21. The flagged
+            kotlin-stdlib-jdk7 / -jdk8 1.8.21 are four years past the fix; they match only
+            because NVD's CPE for this CVE, cpe:2.3:a:jetbrains:kotlin:*, has no version
+            bound, so every Kotlin release matches. They arrive transitively via the nebula
+            plugins and moshi on this plugin's runtimeClasspath. Pinned to the CVE and
+            suppressed indefinitely: the advisory is permanently scoped to <= 1.4.20, so no
+            version this build would resolve can become a true positive.
+            Added: 2026-09-01
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.jetbrains\.kotlin/kotlin-stdlib(-jdk[78])?@.*$</packageUrl>
+        <cve>CVE-2020-29582</cve>
+    </suppress>
 </suppressions>
