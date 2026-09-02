@@ -46,6 +46,31 @@ a release build (`-Preleasing`) fails at configuration time rather than releasin
 Central happens to carry. This project's own build draws `org.openrewrite` artifacts from the Code Genome Project, and
 fails the same way when releasing without credentials.
 
+### One-time local setup
+
+`recipe-repositories` covers a project's own dependencies. It cannot cover the plugins' dependencies: a plugin's
+classpath is resolved from the repositories *settings* declares, before any project exists, and those default to the
+Gradle Plugin Portal, which proxies Maven Central. So a build that has never been told about the Code Genome Project at
+the settings level now fails on the `org.openrewrite` artifacts these plugins are themselves built on, before any of
+them can run:
+
+```
+> Could not find org.openrewrite:rewrite-core:8.91.4.
+    Searched in the following locations:
+      - https://plugins.gradle.org/m2/org/openrewrite/rewrite-core/8.91.4/rewrite-core-8.91.4.pom
+```
+
+CI gets this from `openrewrite/gh-automation`'s setup action. Locally, install the same init script once — it reads the
+credentials you just put in `~/.gradle/gradle.properties`, and applies to every Gradle build on the machine:
+
+```bash
+mkdir -p ~/.gradle/init.d
+curl -fsSL -o ~/.gradle/init.d/cgp-resolve.init.gradle \
+  https://raw.githubusercontent.com/openrewrite/gh-automation/main/.github/actions/setup/cgp-resolve.init.gradle
+```
+
+It stays inert until those credentials are set, and leaves a `codegenome` repository a build declares for itself alone.
+
 ## Publishing
 
 Recipe and language libraries publish only to the Code Genome Project. `org.openrewrite.build.publish-cgp` (applied by
