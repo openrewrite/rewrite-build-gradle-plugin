@@ -259,12 +259,7 @@ dependencies {
 
     implementation("org.apache.ivy:ivy:2.6.0")
     implementation("org.apache.maven:maven-plugin-api:3.9.14")
-    implementation("gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:latest.release") {
-        exclude(group = "org.springframework", module = "spring-core")
-        exclude(group = "org.springframework", module = "spring-asm")
-    }
-    // Spring is only required for PropertyPlaceholderHelper in license-maven-plugin
-    implementation("org.springframework:spring-core:7.0.9")
+    implementation("gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:latest.release")
     implementation("com.github.jk1:gradle-license-report:1.16")
     implementation("org.owasp:dependency-check-gradle:latest.release") {
         exclude(group = "org.apache.lucene", module = "lucene-facet") // 9.12.3 Brings in a vulnerability
@@ -293,6 +288,12 @@ dependencies {
     testImplementation(gradleTestKit())
 
     constraints {
+        implementation("com.mycila:license-maven-plugin") {
+            version { strictly("4.0") }
+            because("license-gradle-plugin 0.16.1 resolves 3.0, whose Document needs Spring's " +
+                    "PropertyPlaceholderHelper; 4.0 needs no Spring. 4.6 takes a Charset where 0.16.1 " +
+                    "passes a String to Document's constructor, so this is an upper bound too.")
+        }
         implementation("com.squareup.moshi:moshi:1.15.2") {
             because("CVE-2023-3635: gradle-dependency-lock-plugin still pins moshi 1.12.0, which brings okio 2.10.0")
         }
