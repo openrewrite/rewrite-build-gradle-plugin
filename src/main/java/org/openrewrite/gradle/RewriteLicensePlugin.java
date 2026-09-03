@@ -58,7 +58,8 @@ public class RewriteLicensePlugin implements Plugin<Project> {
                     .orElse(true));
             ext.getExcludePatterns().addAll(Arrays.asList("**/*.tokens", "**/*.config", "**/*.interp", "**/*.txt", "**/*.bat",
                     "**/*.zip", "**/*.csv", "**/gradlew", "**/*.dontunpack", "**/*.css",
-                    "**/*.editorconfig", "**/*.md", "**/*.jar", "**/*.tsv.gz"));
+                    "**/*.editorconfig", "**/*.md", "**/*.jar", "**/*.tsv.gz",
+                    "**/*.xslt", "**/*.wsdl", "**/*.scss"));
             ext.setHeader(project.getRootProject().file("gradle/licenseHeader.txt"));
             ext.mapping(new HashMap<>() {{
                 put("kt", "SLASHSTAR_STYLE");
