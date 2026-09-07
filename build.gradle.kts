@@ -300,6 +300,9 @@ dependencies {
         implementation("org.apache.maven:maven-settings:3.9.6") {
             because("CVE-2021-26291")
         }
+        implementation("org.apache.maven:maven-core:3.9.6") {
+            because("CVE-2021-26291")
+        }
         implementation("com.h2database:h2:2.2.224") {
             because("CVE-2022-45868")
         }
