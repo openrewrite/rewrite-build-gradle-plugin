@@ -334,10 +334,10 @@ dependencies {
             because("CVE-2026-34478, CVE-2026-34479, CVE-2026-34480, CVE-2025-68161, CVE-2026-34477, CVE-2026-49844")
         }
         implementation("org.apache.ant:ant:1.10.18") {
-            because("CVE-2026-78254: shadow 9.0.0-beta7 still pins ant 1.10.15")
+            because("CVE-2026-78254")
         }
         implementation("org.apache.ant:ant-launcher:1.10.18") {
-            because("CVE-2026-78254: shadow 9.0.0-beta7 still pins ant-launcher 1.10.15")
+            because("CVE-2026-78254")
         }
     }
 }
