@@ -333,6 +333,12 @@ dependencies {
         implementation("org.apache.logging.log4j:log4j-core:2.25.5") {
             because("CVE-2026-34478, CVE-2026-34479, CVE-2026-34480, CVE-2025-68161, CVE-2026-34477, CVE-2026-49844")
         }
+        implementation("org.apache.ant:ant:1.10.18") {
+            because("CVE-2026-78254")
+        }
+        implementation("org.apache.ant:ant-launcher:1.10.18") {
+            because("CVE-2026-78254")
+        }
     }
 }
 
