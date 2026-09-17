@@ -21,6 +21,7 @@ import nebula.plugin.contacts.ContactsPlugin;
 import nebula.plugin.info.InfoPlugin;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.tasks.bundling.Jar;
 
 public class RewriteMetadataPlugin implements Plugin<Project> {
 
@@ -28,6 +29,11 @@ public class RewriteMetadataPlugin implements Plugin<Project> {
     public void apply(Project project) {
         project.getPlugins().apply(ContactsPlugin.class);
         project.getPlugins().apply(InfoPlugin.class);
+
+        // InfoPlugin injects Implementation-Version and Built-Status from a Jar doFirst, and archiveVersion is
+        // @Internal, so the version reaches the cache key only by being declared here.
+        project.getTasks().withType(Jar.class).configureEach(task ->
+                task.getInputs().property("archiveVersion", task.getArchiveVersion()).optional(true));
 
         project.getExtensions().configure(ContactsExtension.class, ext -> {
             Contact j = new Contact("team@moderne.io");
