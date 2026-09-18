@@ -21,6 +21,7 @@ import nebula.plugin.contacts.ContactsPlugin;
 import nebula.plugin.info.InfoPlugin;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.jvm.tasks.Jar;
 
 public class RewriteMetadataPlugin implements Plugin<Project> {
 
@@ -28,6 +29,10 @@ public class RewriteMetadataPlugin implements Plugin<Project> {
     public void apply(Project project) {
         project.getPlugins().apply(ContactsPlugin.class);
         project.getPlugins().apply(InfoPlugin.class);
+
+        project.getTasks().withType(Jar.class).configureEach(task ->
+                task.getOutputs().doNotCacheIf(
+                        "provenance is injected after the caching decision", t -> true));
 
         project.getExtensions().configure(ContactsExtension.class, ext -> {
             Contact j = new Contact("team@moderne.io");
