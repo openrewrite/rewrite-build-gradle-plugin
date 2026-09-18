@@ -30,10 +30,6 @@ public class RewriteMetadataPlugin implements Plugin<Project> {
         project.getPlugins().apply(ContactsPlugin.class);
         project.getPlugins().apply(InfoPlugin.class);
 
-        // InfoPlugin fills the manifest and META-INF/<module>.properties from a Jar doFirst, after Gradle has
-        // decided whether to execute, so none of it reaches the cache key. Gradle's own Jar is
-        // @DisableCachingByDefault("Not worth caching"); ShadowJar opts back in, so a cache hit would
-        // republish the storing build's provenance.
         project.getTasks().withType(Jar.class).configureEach(task ->
                 task.getOutputs().doNotCacheIf(
                         "provenance is injected after the caching decision", t -> true));
