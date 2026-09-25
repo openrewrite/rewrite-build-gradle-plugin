@@ -5,7 +5,6 @@ import java.util.*
 
 plugins {
     id("com.netflix.nebula.release") version "21.0.2"
-    id("io.github.gradle-nexus.publish-plugin") version "latest.release"
     id("org.owasp.dependencycheck") version "latest.release"
     id("com.netflix.nebula.maven-resolved-dependencies") version "latest.release"
     id("com.netflix.nebula.maven-apache-license") version "latest.release"
@@ -31,15 +30,6 @@ configure<org.owasp.dependencycheck.gradle.extension.DependencyCheckExtension> {
     analyzers.ossIndex.username = System.getenv("OSSINDEX_USERNAME")
     analyzers.ossIndex.password = System.getenv("OSSINDEX_PASSWORD")
     suppressionFile = "suppressions.xml"
-}
-
-nexusPublishing {
-    repositories {
-        sonatype {
-            nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
-            snapshotRepositoryUrl.set(uri("https://central.sonatype.com/repository/maven-snapshots/"))
-        }
-    }
 }
 
 gradlePlugin {
@@ -102,14 +92,6 @@ gradlePlugin {
             description = "Configures publishing to Maven repositories"
             implementationClass = "org.openrewrite.gradle.RewritePublishPlugin"
             tags = listOf("rewrite", "refactoring")
-        }
-        create("build-publish-maven-central") {
-            id = "org.openrewrite.build.publish-maven-central"
-            displayName = "Rewrite Maven Central publishing"
-            description = "Deprecated. Stages and releases artifacts to Maven Central through Sonatype. " +
-                    "OpenRewrite publishes to the Code Genome Project instead; use org.openrewrite.build.publish-cgp."
-            implementationClass = "org.openrewrite.gradle.RewriteMavenCentralPublishPlugin"
-            tags = listOf("rewrite", "refactoring", "deprecated")
         }
         create("build-publish-cgp") {
             id = "org.openrewrite.build.publish-cgp"
@@ -269,7 +251,6 @@ dependencies {
     implementation("com.netflix.nebula.release:com.netflix.nebula.release.gradle.plugin:21.0.2")
     implementation("com.netflix.nebula:nebula-publishing-plugin:latest.release")
     implementation("com.netflix.nebula:nebula-project-plugin:latest.release")
-    implementation("io.github.gradle-nexus:publish-plugin:latest.release")
     implementation("com.gradleup.shadow:com.gradleup.shadow.gradle.plugin:9.0.0-beta7") // Latest supporting Java 8
 
     implementation("org.jspecify:jspecify:1.0.0")
