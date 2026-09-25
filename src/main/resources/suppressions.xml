@@ -276,12 +276,12 @@
             2.4.20) hard-pins it, so every repo applying the Kotlin Gradle plugin resolves it on
             kotlinCompilerClasspath and related plugin-internal classpaths, whatever Kotlin version
             the repo uses. kotlin-reflect contains no build-cache code; suppressed indefinitely.
-            Added: 2026-07-03
+            Added: 2026-09-25
         ]]></notes>
         <packageUrl regex="true">^pkg:maven/org\.jetbrains\.kotlin/kotlin-reflect@1\.6\.10$</packageUrl>
         <cve>CVE-2026-53914</cve>
     </suppress>
-    <suppress until="2026-10-15Z">
+    <suppress until="2026-10-01Z">
         <notes><![CDATA[
             CVE-2026-53914 on the rest of the org.jetbrains.kotlin group (see the kotlin-reflect entry
             above for the CPE over-match). As of the 2026-09-21 scan, recipe modules matched only
