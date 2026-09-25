@@ -12,21 +12,6 @@
     </suppress>
     <suppress until="2026-10-01Z">
         <notes><![CDATA[
-            CVE-2026-53914 is unsafe deserialization of untrusted Kotlin build-cache
-            metadata, allowing code execution (fixed in Kotlin 2.4.20). It requires local
-            access, high privileges and high attack complexity (CVSS 6.7; the scanner
-            inflates it to CRITICAL). The org.jetbrains.kotlin:* artifacts arrive build-time
-            only via the Kotlin Gradle plugin toolchain and are not on any deployed runtime
-            classpath. The Kotlin version is dictated by the Kotlin Gradle plugin; re-evaluate
-            when it moves to 2.4.20+. As of 2026-08-03 Maven Central has only 2.4.20-Beta2,
-            so no fixed release is available yet.
-            Added: 2026-07-03
-        ]]></notes>
-        <packageUrl regex="true">^pkg:maven/org\.jetbrains\.kotlin/.*@.*$</packageUrl>
-        <cve>CVE-2026-53914</cve>
-    </suppress>
-    <suppress until="2026-10-01Z">
-        <notes><![CDATA[
             jackson-databind polymorphic-typing / deserialization advisories:
             CVE-2026-54512 (PolymorphicTypeValidator bypass via generic type parameters),
             CVE-2026-54513 (allowIfSubTypeIsArray allowlist bypass), CVE-2026-54514

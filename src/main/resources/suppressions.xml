@@ -264,18 +264,32 @@
         <packageUrl regex="true">^pkg:maven/io\.quarkus/quarkus-update-recipes@.*$</packageUrl>
         <cve>CVE-2026-50559</cve>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+            CVE-2026-53914 (GHSA-r937-wjx7-w2jp) is unsafe deserialization of untrusted Kotlin
+            build-cache metadata. GHSA lists exactly one affected Maven package:
+            org.jetbrains.kotlin:kotlin-gradle-plugin < 2.4.20-Beta1. NVD instead encodes a single
+            coarse cpe:2.3:a:jetbrains:kotlin with versionEndExcluding 2.4.20, so every artifact in
+            the org.jetbrains.kotlin group below 2.4.20 matches, and NVD re-scored it 9.8 CRITICAL
+            (JetBrains, the CNA, scores it 6.7: AV:L/AC:H/PR:H).
+            kotlin-reflect 1.6.10 can never be remediated: kotlin-compiler-embeddable (still as of
+            2.4.20) hard-pins it, so every repo applying the Kotlin Gradle plugin resolves it on
+            kotlinCompilerClasspath and related plugin-internal classpaths, whatever Kotlin version
+            the repo uses. kotlin-reflect contains no build-cache code; suppressed indefinitely.
+            Added: 2026-09-25
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.jetbrains\.kotlin/kotlin-reflect@1\.6\.10$</packageUrl>
+        <cve>CVE-2026-53914</cve>
+    </suppress>
     <suppress until="2026-10-01Z">
         <notes><![CDATA[
-            CVE-2026-53914 is unsafe deserialization of untrusted Kotlin build-cache
-            metadata, allowing code execution (fixed in Kotlin 2.4.20). It requires local
-            access, high privileges and high attack complexity (CVSS 6.7; the scanner
-            inflates it to CRITICAL). The org.jetbrains.kotlin:* artifacts (compiler,
-            scripting, build-tools, stdlib, reflect, abi-tools, etc.) are pulled by the
-            Kotlin Gradle plugin at build time only and are not on any deployed runtime
-            classpath. The Kotlin version is dictated by the Kotlin Gradle plugin, so it
-            cannot be bumped per recipe module; re-evaluate when the toolchain moves to
-            2.4.20+. As of 2026-08-03 Maven Central has only 2.4.20-Beta2, so no fixed
-            release is available yet.
+            CVE-2026-53914 on the rest of the org.jetbrains.kotlin group (see the kotlin-reflect entry
+            above for the CPE over-match). As of the 2026-09-21 scan, recipe modules matched only
+            through the Kotlin 2.4.10 compiler, stdlib and reflect jars that rewrite-kotlin puts on
+            their runtimeClasspath; openrewrite/rewrite#8914 (merged 2026-09-25) moves rewrite-kotlin
+            to the fixed 2.4.20. This window lets that snapshot propagate. Anything still matching
+            after the expiry is repo-specific (e.g. a Kotlin Gradle plugin below 2.4.20) and should
+            be fixed or suppressed in that repo.
             Added: 2026-07-03
         ]]></notes>
         <packageUrl regex="true">^pkg:maven/org\.jetbrains\.kotlin/.*@.*$</packageUrl>

@@ -339,6 +339,15 @@ dependencies {
         implementation("org.apache.ant:ant-launcher:1.10.18") {
             because("CVE-2026-78254")
         }
+        implementation("org.jetbrains.kotlin:kotlin-stdlib:2.4.20") {
+            because("CVE-2026-53914")
+        }
+        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.4.20") {
+            because("CVE-2026-53914")
+        }
+        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.4.20") {
+            because("CVE-2026-53914")
+        }
     }
 }
 
