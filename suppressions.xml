@@ -10,27 +10,6 @@
         <packageUrl regex="true">^pkg:maven/com\.h2database/h2@2\..*$</packageUrl>
         <cve>CVE-2018-14335</cve>
     </suppress>
-    <suppress>
-        <notes><![CDATA[
-            CVE-2026-53914 (GHSA-r937-wjx7-w2jp) is unsafe deserialization of untrusted Kotlin
-            build-cache metadata. GHSA lists exactly one affected Maven package:
-            org.jetbrains.kotlin:kotlin-gradle-plugin < 2.4.20-Beta1. NVD instead encodes a single
-            coarse cpe:2.3:a:jetbrains:kotlin with versionEndExcluding 2.4.20, so every artifact in
-            the org.jetbrains.kotlin group below 2.4.20 matches, and NVD re-scored it 9.8 CRITICAL
-            (JetBrains, the CNA, scores it 6.7: AV:L/AC:H/PR:H).
-            This suppression deliberately does not cover kotlin-gradle-plugin itself, so a genuinely
-            affected plugin version is still reported. What it covers here are the Kotlin standard
-            libraries the nebula and plugin-publish plugins drag onto this plugin's runtimeClasspath
-            (kotlin-stdlib 1.8.21/1.9.21/2.2.0 and kotlin-stdlib-jdk7/jdk8 1.8.21). Those versions
-            are transitive floors we do not control, so waiting for them to reach 2.4.20 is not a
-            remediation path. Previously suppressed with until=2026-10-01Z pending a 2.4.20 release;
-            2.4.20 is now GA and rewrite-kotlin has moved to it (openrewrite/rewrite#8914), which
-            does not clear these, so the expiry is dropped.
-            Added: 2026-07-03
-        ]]></notes>
-        <packageUrl regex="true">^pkg:maven/org\.jetbrains\.kotlin/(?!kotlin-gradle-plugin@)[^@]+@.*$</packageUrl>
-        <cve>CVE-2026-53914</cve>
-    </suppress>
     <suppress until="2026-10-01Z">
         <notes><![CDATA[
             jackson-databind polymorphic-typing / deserialization advisories:
