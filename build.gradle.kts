@@ -334,6 +334,28 @@ dependencies {
 
 project.rootProject.tasks.getByName("postRelease").dependsOn(project.tasks.getByName("publishPlugins"))
 
+// Mirrors RewriteCgpPublishPlugin, which this build cannot apply to itself
+val awsAccessKeyId = System.getenv("AWS_ACCESS_KEY_ID").orEmpty()
+if (awsAccessKeyId.isNotEmpty()) {
+    allprojects {
+        pluginManager.withPlugin("maven-publish") {
+            configure<PublishingExtension> {
+                repositories {
+                    maven {
+                        name = "cgp"
+                        url = uri("s3://codegenome-artifacts.s3.us-west-2.amazonaws.com/maven")
+                        credentials(AwsCredentials::class) {
+                            accessKey = awsAccessKeyId
+                            secretKey = System.getenv("AWS_SECRET_ACCESS_KEY")
+                            sessionToken = System.getenv("AWS_SESSION_TOKEN")?.ifEmpty { null }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 tasks.withType<Test> {
     useJUnitPlatform()
     // RewriteJavaPluginTest asserts against this file, which Gradle would not otherwise treat as a test input
