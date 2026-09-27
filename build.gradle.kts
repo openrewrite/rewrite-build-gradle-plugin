@@ -332,8 +332,6 @@ dependencies {
     }
 }
 
-project.rootProject.tasks.getByName("postRelease").dependsOn(project.tasks.getByName("publishPlugins"))
-
 // Mirrors RewriteCgpPublishPlugin, which this build cannot apply to itself
 val awsAccessKeyId = System.getenv("AWS_ACCESS_KEY_ID").orEmpty()
 if (awsAccessKeyId.isNotEmpty()) {
