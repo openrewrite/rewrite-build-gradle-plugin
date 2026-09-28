@@ -24,24 +24,10 @@ import org.gradle.api.Project;
 
 public class RewriteRootProjectPlugin implements Plugin<Project> {
 
-    private static final String CLOSE_AND_RELEASE_TASK = "closeAndReleaseSonatypeStagingRepository";
-
     @Override
     public void apply(Project project) {
         project.getPlugins().apply(ReleasePlugin.class);
         project.getPlugins().apply(ScmInfoPlugin.class);
-
-        // Maven Central publishing is retired — artifacts go to the Code Genome Project. The shared
-        // release workflow still invokes closeAndReleaseSonatypeStagingRepository by name, so stand in
-        // for the task Nexus used to contribute rather than break releases until that workflow changes.
-        project.afterEvaluate(p -> {
-            if (p.getTasks().findByName(CLOSE_AND_RELEASE_TASK) == null) {
-                p.getTasks().register(CLOSE_AND_RELEASE_TASK, task -> {
-                    task.setGroup("publishing");
-                    task.setDescription("No-op. Artifacts publish to the Code Genome Project, not Maven Central.");
-                });
-            }
-        });
 
         if (project.getExtensions().findByType(ReleasePluginExtension.class) != null) {
             project.getExtensions().configure(ReleasePluginExtension.class, ext ->
