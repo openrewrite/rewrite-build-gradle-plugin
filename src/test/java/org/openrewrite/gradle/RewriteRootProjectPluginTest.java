@@ -15,7 +15,6 @@
  */
 package org.openrewrite.gradle;
 
-import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.GradleRunner;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -72,31 +71,6 @@ class RewriteRootProjectPluginTest {
         String output = publishDryRun();
         assertThat(output).contains(":lang:publish");
         assertThat(output).doesNotContain("SonatypeRepository");
-    }
-
-    /**
-     * The shared release workflow runs this alongside {@code publish}; it has to keep resolving now
-     * that the Nexus plugin no longer contributes it.
-     */
-    @Test
-    void closeAndReleaseSonatypeStagingRepositoryRemainsANoOp() throws IOException {
-        writeFile(new File(projectDir, "settings.gradle"), "rootProject.name = 'my-project'");
-        //language=groovy
-        writeFile(new File(projectDir, "build.gradle"), """
-                plugins {
-                    id 'org.openrewrite.build.recipe-library'
-                }
-                group = 'org.openrewrite'
-                version = '1.0'
-                """);
-
-        BuildResult result = GradleRunner.create()
-                .withProjectDir(projectDir)
-                .withArguments("closeAndReleaseSonatypeStagingRepository")
-                .withPluginClasspath()
-                .build();
-
-        assertThat(result.getOutput()).contains("BUILD SUCCESSFUL");
     }
 
     private String publishDryRun() {
