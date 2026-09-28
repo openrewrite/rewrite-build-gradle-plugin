@@ -49,8 +49,6 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
-rootProject.tasks.named("postRelease").configure { dependsOn(tasks.named("publishPlugins")) }
-
 configure<LicenseExtension> {
     ext.set("year", Calendar.getInstance().get(Calendar.YEAR))
     skipExistingHeaders = true

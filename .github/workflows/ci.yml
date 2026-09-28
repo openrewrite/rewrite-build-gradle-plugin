@@ -40,9 +40,8 @@ jobs:
         run: ./gradlew ${{ env.GRADLE_SWITCHES }} build
       - name: publish-snapshots
         if: github.event_name != 'pull_request'
-        run: ./gradlew ${{ env.GRADLE_SWITCHES }} snapshot :publishPluginMavenPublicationToSonatypeRepository -x test -x publishPlugins
-        env:
-          ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.SONATYPE_USERNAME }}
-          ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.SONATYPE_TOKEN }}
-          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.OSSRH_SIGNING_KEY }}
-          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.OSSRH_SIGNING_PASSWORD }}
+        uses: openrewrite/gh-automation/.github/actions/publish-snapshots@main
+        with:
+          switches: ${{ env.GRADLE_SWITCHES }}
+          cgp_aws_access_key_id: ${{ secrets.CGP_AWS_ACCESS_KEY_ID }}
+          cgp_aws_secret_access_key: ${{ secrets.CGP_AWS_SECRET_ACCESS_KEY }}
