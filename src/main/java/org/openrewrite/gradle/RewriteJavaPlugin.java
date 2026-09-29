@@ -69,6 +69,8 @@ public class RewriteJavaPlugin implements Plugin<Project> {
         project.getConfigurations().all(config -> config.resolutionStrategy(strategy ->
                 strategy.cacheDynamicVersionsFor(0, "seconds")));
 
+        project.getDependencies().getComponents().all(PreReleaseStatusRule.class);
+
         addDependencies(project, ext);
         configureJavaCompile(project);
         configureTesting(project);
