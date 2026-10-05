@@ -201,7 +201,7 @@
         <packageUrl regex="true">^pkg:maven/io\.opentelemetry/opentelemetry-.*@.*$</packageUrl>
         <cve>CVE-2026-54285</cve>
     </suppress>
-    <suppress until="2026-10-01Z">
+    <suppress until="2026-11-01Z">
         <notes><![CDATA[
             JLine3 Telnet server unauthenticated remote DoS — CVE-2026-56741 / GHSA-2r2c-cx56-8933
             (unbounded NAWS terminal geometry) and CVE-2026-56740 / GHSA-47qp-hqvx-6r3f (unbounded
@@ -217,8 +217,10 @@
             Re-pinned from GHSA identifiers to CVE identifiers: NVD has now assigned CVE IDs to
             both advisories, dependency-check reports them under the CVE, and the previous
             vulnerabilityName/GHSA form logs "Suppression Rule had zero matches".
+            Still no upgrade path as of 2026-10-05: the fix exists only in JLine 4.2.1, the latest
+            Scala 2.13.18 compiler depends on jline 3.29.0, and the latest zinc is 1.12.1.
             Added: 2026-06-24
-            Renewed: 2026-08-21
+            Renewed: 2026-10-05
         ]]></notes>
         <packageUrl regex="true">^pkg:maven/org\.jline/jline(-remote-telnet)?@.*$</packageUrl>
         <cve>CVE-2026-56740</cve>
@@ -272,27 +274,22 @@
             coarse cpe:2.3:a:jetbrains:kotlin with versionEndExcluding 2.4.20, so every artifact in
             the org.jetbrains.kotlin group below 2.4.20 matches, and NVD re-scored it 9.8 CRITICAL
             (JetBrains, the CNA, scores it 6.7: AV:L/AC:H/PR:H).
-            kotlin-reflect 1.6.10 can never be remediated: kotlin-compiler-embeddable (still as of
-            2.4.20) hard-pins it, so every repo applying the Kotlin Gradle plugin resolves it on
-            kotlinCompilerClasspath and related plugin-internal classpaths, whatever Kotlin version
-            the repo uses. kotlin-reflect contains no build-cache code; suppressed indefinitely.
+            The fix, JetBrains/kotlin@bf51df665b45 (KT-86604), changes only the KAPT incremental
+            cache in plugins/kapt/kapt-base. Those classes (org.jetbrains.kotlin.kapt.base.incremental)
+            ship in kotlin-annotation-processing-embeddable, not in any artifact matched here: checked
+            kotlin-stdlib, -reflect, -compiler-embeddable, -compiler-runner, -daemon-client,
+            -daemon-embeddable, -script-runtime and -build-tools-api/-impl/-cri-impl at 2.2.0, 2.4.0
+            and 2.4.10. kotlin-compiler-embeddable carries only kapt3.diagnostic.KaptError.
+            The CVE is permanently scoped to that code, so these artifacts can never become a true
+            positive for it; suppressed indefinitely. kotlin-gradle-plugin and
+            kotlin-annotation-processing* are excluded and still surface below 2.4.20.
+            Several matches cannot be bumped from a build anyway: kotlin-compiler-embeddable (still as
+            of 2.4.20) hard-pins kotlin-reflect 1.6.10, and Kotlin Gradle plugin 2.4.20 declares
+            kotlin-build-tools-impl {strictly 2.4.0} on its kotlinAbiValidationCompatClasspath.
             Added: 2026-09-25
+            Widened: 2026-10-05
         ]]></notes>
-        <packageUrl regex="true">^pkg:maven/org\.jetbrains\.kotlin/kotlin-reflect@1\.6\.10$</packageUrl>
-        <cve>CVE-2026-53914</cve>
-    </suppress>
-    <suppress until="2026-10-01Z">
-        <notes><![CDATA[
-            CVE-2026-53914 on the rest of the org.jetbrains.kotlin group (see the kotlin-reflect entry
-            above for the CPE over-match). As of the 2026-09-21 scan, recipe modules matched only
-            through the Kotlin 2.4.10 compiler, stdlib and reflect jars that rewrite-kotlin puts on
-            their runtimeClasspath; openrewrite/rewrite#8914 (merged 2026-09-25) moves rewrite-kotlin
-            to the fixed 2.4.20. This window lets that snapshot propagate. Anything still matching
-            after the expiry is repo-specific (e.g. a Kotlin Gradle plugin below 2.4.20) and should
-            be fixed or suppressed in that repo.
-            Added: 2026-07-03
-        ]]></notes>
-        <packageUrl regex="true">^pkg:maven/org\.jetbrains\.kotlin/.*@.*$</packageUrl>
+        <packageUrl regex="true">^pkg:maven/org\.jetbrains\.kotlin/(?!kotlin-gradle-plugin|kotlin-annotation-processing)[^@]+@.*$</packageUrl>
         <cve>CVE-2026-53914</cve>
     </suppress>
     <suppress>
