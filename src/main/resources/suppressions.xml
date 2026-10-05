@@ -201,7 +201,7 @@
         <packageUrl regex="true">^pkg:maven/io\.opentelemetry/opentelemetry-.*@.*$</packageUrl>
         <cve>CVE-2026-54285</cve>
     </suppress>
-    <suppress until="2026-11-01Z">
+    <suppress until="2026-10-01Z">
         <notes><![CDATA[
             JLine3 Telnet server unauthenticated remote DoS — CVE-2026-56741 / GHSA-2r2c-cx56-8933
             (unbounded NAWS terminal geometry) and CVE-2026-56740 / GHSA-47qp-hqvx-6r3f (unbounded
@@ -217,10 +217,8 @@
             Re-pinned from GHSA identifiers to CVE identifiers: NVD has now assigned CVE IDs to
             both advisories, dependency-check reports them under the CVE, and the previous
             vulnerabilityName/GHSA form logs "Suppression Rule had zero matches".
-            Still no upgrade path as of 2026-10-05: the fix exists only in JLine 4.2.1, the latest
-            Scala 2.13.18 compiler depends on jline 3.29.0, and the latest zinc is 1.12.1.
             Added: 2026-06-24
-            Renewed: 2026-10-05
+            Renewed: 2026-08-21
         ]]></notes>
         <packageUrl regex="true">^pkg:maven/org\.jline/jline(-remote-telnet)?@.*$</packageUrl>
         <cve>CVE-2026-56740</cve>
