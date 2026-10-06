@@ -22,8 +22,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -130,5 +133,61 @@ class RewriteJavaPluginTest {
           .withPluginClasspath()
           .build()
           .getOutput()).contains("JUNIT_BOM=org.junit:junit-bom:6.+");
+    }
+
+    @Test
+    void artifactoryCredentialsRouteTestsThroughMirror() throws Exception {
+        writeMirrorProbe();
+
+        assertThat(GradleRunner.create()
+          .withProjectDir(testProjectDir)
+          .withArguments("printMirror", "-PartifactoryUsername=test-user", "-PartifactoryPassword=test-token")
+          .withEnvironment(environmentWithoutMirror())
+          .withPluginClasspath()
+          .build()
+          .getOutput())
+          .contains("REWRITE_GRADLE_MIRROR_URL=https://artifactory.moderne.ninja/artifactory/moderne-cache-3/")
+          .contains("REWRITE_GRADLE_MIRROR_USERNAME=test-user")
+          .contains("REWRITE_GRADLE_MIRROR_PASSWORD=test-token");
+    }
+
+    @Test
+    void noMirrorWithoutArtifactoryCredentials() throws Exception {
+        writeMirrorProbe();
+
+        assertThat(GradleRunner.create()
+          .withProjectDir(testProjectDir)
+          .withArguments("printMirror")
+          .withEnvironment(environmentWithoutMirror())
+          .withPluginClasspath()
+          .build()
+          .getOutput())
+          .doesNotContain("REWRITE_GRADLE_MIRROR_");
+    }
+
+    private void writeMirrorProbe() throws IOException {
+        Files.writeString(settingsFile.toPath(), "rootProject.name = 'mirror'");
+        Files.writeString(buildFile.toPath(),
+          //language=gradle
+          """
+            plugins {
+                id 'org.openrewrite.build.language-library'
+            }
+
+            tasks.register('printMirror') {
+                def mirror = tasks.named('test', Test).get().environment.findAll { it.key.startsWith('REWRITE_GRADLE_MIRROR_') }
+                doLast {
+                    mirror.each { name, value -> println "$name=$value" }
+                }
+            }
+            """);
+    }
+
+    /** CI exports these itself, which would otherwise show up whether or not the plugin set them. */
+    private static Map<String, String> environmentWithoutMirror() {
+        Map<String, String> env = new HashMap<>(System.getenv());
+        env.keySet().removeIf(name -> name.startsWith("REWRITE_GRADLE_MIRROR_") ||
+                                      name.startsWith("ORG_GRADLE_PROJECT_artifactory"));
+        return env;
     }
 }

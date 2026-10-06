@@ -44,6 +44,8 @@ public class RewriteJavaPlugin implements Plugin<Project> {
     private static final String JUNIT5_BOM_VERSION = "5.+";
     private static final String JUNIT6_BOM_VERSION = "6.+";
 
+    private static final String ARTIFACTORY_MIRROR_URL = "https://artifactory.moderne.ninja/artifactory/moderne-cache-3/";
+
     @Override
     public void apply(Project project) {
         project.getPlugins().apply(RewriteDependencyCheckPlugin.class);
@@ -141,7 +143,17 @@ public class RewriteJavaPlugin implements Plugin<Project> {
 //                        ext.getMaxFailures().set(4))
 //        );
 
+        String artifactoryUsername = project.getProviders().gradleProperty("artifactoryUsername").getOrElse("");
+        String artifactoryPassword = project.getProviders().gradleProperty("artifactoryPassword").getOrElse("");
+
         project.getTasks().withType(Test.class).configureEach(task -> {
+            // The same variables CI sets, so local test runs resolve through the mirror rather than Maven Central
+            if (!artifactoryUsername.isEmpty() && !artifactoryPassword.isEmpty()) {
+                task.environment("REWRITE_GRADLE_MIRROR_URL", ARTIFACTORY_MIRROR_URL);
+                task.environment("REWRITE_GRADLE_MIRROR_USERNAME", artifactoryUsername);
+                task.environment("REWRITE_GRADLE_MIRROR_PASSWORD", artifactoryPassword);
+            }
+
             if (System.getenv("CI") == null) {
                 // Developer machines typically use CPUs with hyper-threading, so the logical core count is double
                 // what is useful to enable

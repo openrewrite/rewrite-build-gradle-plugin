@@ -82,6 +82,21 @@ resolve these artifacts, and failing outright would only replace one unhelpful e
 from the repositories already declared: a plugin classpath is pinned to exact versions, so a hit anywhere is the same
 artifact, and excluding `org.openrewrite` from the portal would take the plugin markers with it.
 
+## Test-time mirror
+
+Tests that resolve Maven artifacts or run Gradle builds can trip Maven Central's rate limit (HTTP 429). CI routes them
+through an Artifactory cache, and `org.openrewrite.build.java-base` (applied by the `recipe-library` and
+`language-library` plugins) does the same for local runs when Artifactory credentials are set:
+
+```properties
+artifactoryUsername=you@example.com
+artifactoryPassword=...
+```
+
+Every `Test` task then gets the `REWRITE_GRADLE_MIRROR_URL`, `REWRITE_GRADLE_MIRROR_USERNAME` and
+`REWRITE_GRADLE_MIRROR_PASSWORD` environment variables CI sets. Without credentials, tests resolve as their build
+files declare.
+
 ## Publishing
 
 Recipe and language libraries publish only to the Code Genome Project. `org.openrewrite.build.publish-cgp` (applied by
