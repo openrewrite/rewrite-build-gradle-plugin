@@ -77,25 +77,47 @@ plugins {
 rootProject.name = "..."
 ```
 
-It reads the same two credential properties, and does nothing when they are absent — a fork pull request has no way to
+It reads the same two credential properties, and adds nothing when they are absent — a fork pull request has no way to
 resolve these artifacts, and failing outright would only replace one unhelpful error with another. Nothing is excluded
 from the repositories already declared: a plugin classpath is pinned to exact versions, so a hit anywhere is the same
 artifact, and excluding `org.openrewrite` from the portal would take the plugin markers with it.
 
-## Test-time mirror
+## Artifactory mirror
 
-Tests that resolve Maven artifacts or run Gradle builds can trip Maven Central's rate limit (HTTP 429). CI routes them
-through an Artifactory cache, and `org.openrewrite.build.java-base` (applied by the `recipe-library` and
-`language-library` plugins) does the same for local runs when Artifactory credentials are set:
+Maven Central rate limits by address, so builds that resolve from it directly start failing with HTTP 429 once enough
+of them have done so from behind the same address. With credentials for Moderne's Artifactory cache, whatever these
+plugins have a hand in resolves through https://artifactory.moderne.ninja/artifactory/moderne-cache-3/ instead:
 
 ```properties
 artifactoryUsername=you@example.com
 artifactoryPassword=...
 ```
 
-Every `Test` task then gets the `REWRITE_GRADLE_MIRROR_URL`, `REWRITE_GRADLE_MIRROR_USERNAME` and
-`REWRITE_GRADLE_MIRROR_PASSWORD` environment variables CI sets. Without credentials, tests resolve as their build
-files declare.
+CI exports the same thing as the `REWRITE_GRADLE_MIRROR_URL`, `REWRITE_GRADLE_MIRROR_USERNAME` and
+`REWRITE_GRADLE_MIRROR_PASSWORD` environment variables, which are read when the properties are absent. With neither —
+or with the variables set to secrets that come out empty, as in a fork's pull request — every repository stays where
+it was declared.
+
+What gets redirected is any repository pointing at Maven Central (`mavenCentral()`, or `repo.maven.apache.org` and
+`repo1.maven.org` spelled out) or at the Gradle Plugin Portal, which answers for anything it does not host itself with
+a redirect to Maven Central. Each is repointed where it stands, so it keeps its place in the order and its content
+filters, including the Code Genome Project exclusions above. It is also limited to releases, because the mirror
+carries snapshots that neither of the two ever does.
+
+- Every `org.openrewrite.build.*` project plugin does this for the repositories of the project it is applied to,
+  whether `recipe-repositories` added them or the build script did.
+- `org.openrewrite.build.settings` does it for `pluginManagement` and `dependencyResolutionManagement`, and for the
+  repositories of every project and of its `buildscript`. Only settings can reach the classpath the plugins themselves
+  are resolved onto, which by default comes off the plugin portal.
+- `org.openrewrite.build.java-base` (applied by the `recipe-library` and `language-library` plugins) hands every `Test`
+  task the three environment variables, so that what tests resolve is mirrored too, along with any build they launch
+  that applies these plugins.
+
+Two things are out of reach: the `plugins {}` block of `settings.gradle.kts` itself, which is resolved before the
+settings plugin can run, and `buildSrc` or included builds, which are builds of their own.
+
+The mirror takes Maven Central's place rather than being tried ahead of it. A stale password fails the build with a
+401, and an artifact the mirror cannot serve is reported as not found, instead of either falling back.
 
 ## Publishing
 

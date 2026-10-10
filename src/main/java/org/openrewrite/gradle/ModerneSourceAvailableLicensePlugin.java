@@ -32,6 +32,7 @@ public class ModerneSourceAvailableLicensePlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
+        project.getPlugins().apply(RewriteArtifactoryMirrorPlugin.class);
         project.getPlugins().apply(MavenBasePublishPlugin.class);
         PublishingExtension publishing = project.getExtensions().getByType(PublishingExtension.class);
         publishing.publications(publications -> publications.withType(MavenPublication.class, this::configureLicense));

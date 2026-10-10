@@ -26,6 +26,7 @@ public class RewriteRootProjectPlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
+        project.getPlugins().apply(RewriteArtifactoryMirrorPlugin.class);
         project.getPlugins().apply(ReleasePlugin.class);
         project.getPlugins().apply(ScmInfoPlugin.class);
 

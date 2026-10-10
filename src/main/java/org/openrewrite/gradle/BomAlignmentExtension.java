@@ -131,11 +131,17 @@ public class BomAlignmentExtension {
         if (project.getPluginManager().hasPlugin(RewriteDependencyRepositoriesPlugin.ID)) {
             return RewriteDependencyRepositoriesPlugin.pomDownloaderRepositories(project);
         }
+        ArtifactoryMirror mirror = ArtifactoryMirror.ifAvailable(project.getProviders());
         List<MavenRepository> repos = new ArrayList<>();
         for (ArtifactRepository repo : project.getRepositories()) {
-            if (repo instanceof MavenArtifactRepository m) {
+            // A repository redirected to the mirror would be listed here without the credentials it needs
+            if (repo instanceof MavenArtifactRepository m && (mirror == null || !mirror.serves(m))) {
                 repos.add(new MavenRepository(repo.getName(), m.getUrl().toString(), "true", "true", true, null, null, null, false));
             }
+        }
+        if (mirror != null) {
+            // Last, which is where the downloader would otherwise add Maven Central itself
+            repos.add(mirror.asMavenCentral());
         }
         return repos;
     }

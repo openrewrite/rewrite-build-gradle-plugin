@@ -27,6 +27,7 @@ public class RewriteMetadataPlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
+        project.getPlugins().apply(RewriteArtifactoryMirrorPlugin.class);
         project.getPlugins().apply(ContactsPlugin.class);
         project.getPlugins().apply(InfoPlugin.class);
 

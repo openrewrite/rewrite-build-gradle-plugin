@@ -748,6 +748,75 @@ class RewriteBomAlignmentPluginTest {
                 .contains("API org.openrewrite.recipe:baz:1.0.0");
     }
 
+    @Test
+    void inheritsFromFollowsImportsThroughTheArtifactoryMirror(@TempDir File mirrorDir) throws Exception {
+        try (FakeMirror mirror = new FakeMirror(mirrorDir)) {
+            // Neither BOM is anywhere but on the mirror. Gradle fetches the outer one through the redirected
+            // mavenCentral(), but the import it declares is followed by OpenRewrite's own POM downloader,
+            // which has to be handed the mirror and its credentials separately.
+            mirror.publishPom("org.openrewrite.recipe", "inner-bom", "1.0.0", """
+                    <packaging>pom</packaging>
+                    <dependencyManagement>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.openrewrite.recipe</groupId>
+                                <artifactId>baz</artifactId>
+                                <version>1.0.0</version>
+                            </dependency>
+                        </dependencies>
+                    </dependencyManagement>
+                    """);
+            mirror.publishPom("org.openrewrite.recipe", "outer-bom", "1.0.0", """
+                    <packaging>pom</packaging>
+                    <dependencyManagement>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.openrewrite.recipe</groupId>
+                                <artifactId>inner-bom</artifactId>
+                                <version>1.0.0</version>
+                                <type>pom</type>
+                                <scope>import</scope>
+                            </dependency>
+                        </dependencies>
+                    </dependencyManagement>
+                    """);
+
+            writeFile(settingsFile, "rootProject.name = 'inherits-from-mirror'");
+
+            //language=groovy
+            String buildFileContent = """
+                    plugins {
+                        id 'java-platform'
+                        id 'org.openrewrite.build.bom-alignment'
+                    }
+                    javaPlatform { allowDependencies() }
+                    repositories {
+                        mavenCentral()
+                    }
+                    dependencies {
+                        bomAlignment.inheritsFrom('org.openrewrite.recipe:outer-bom:1.0.0')
+                    }
+                    tasks.register('listApi') {
+                        doLast {
+                            configurations.api.dependencies.each {
+                                println "API ${it.group}:${it.name}:${it.version}"
+                            }
+                        }
+                    }
+                    """;
+            writeFile(buildFile, buildFileContent);
+
+            BuildResult result = GradleRunner.create()
+                    .withProjectDir(projectDir)
+                    .withArguments("listApi")
+                    .withPluginClasspath()
+                    .withEnvironment(mirror.environment())
+                    .build();
+
+            assertThat(result.getOutput()).contains("API org.openrewrite.recipe:baz:1.0.0");
+        }
+    }
+
     private void publishPom(String group, String artifact, String version, String depsXml) throws IOException {
         publishPom(group, artifact, version, depsXml, "");
     }

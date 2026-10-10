@@ -25,7 +25,9 @@ gradlePlugin {
             id = "org.openrewrite.build.settings"
             displayName = "Rewrite settings"
             description = "Adds the Code Genome Project to pluginManagement.repositories, so that the " +
-                    "org.openrewrite artifacts the build plugins are built on resolve."
+                    "org.openrewrite artifacts the build plugins are built on resolve. Routes what the build " +
+                    "would fetch from Maven Central through Moderne's Artifactory cache when there are " +
+                    "credentials for it."
             implementationClass = "org.openrewrite.gradle.RewriteSettingsPlugin"
             tags = listOf("rewrite", "refactoring", "settings")
         }

@@ -33,6 +33,8 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
+        project.getPlugins().apply(RewriteArtifactoryMirrorPlugin.class);
+
         RepositoryHandler repos = project.getRepositories();
         boolean releasing = project.hasProperty("releasing");
 
@@ -85,8 +87,9 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
     /**
      * The repositories {@link #apply} configures, modelled for OpenRewrite's {@code MavenPomDownloader}:
      * CGP first when credentials are configured, then always Maven Central, which everything CGP does not
-     * host still comes from. {@code mavenLocal()} is left out — the downloader has no equivalent of its
-     * release-candidate exclusion, so including it would resolve versions Gradle itself refuses.
+     * host still comes from — by way of the Artifactory mirror when there are credentials for that.
+     * {@code mavenLocal()} is left out — the downloader has no equivalent of its release-candidate
+     * exclusion, so including it would resolve versions Gradle itself refuses.
      */
     static List<MavenRepository> pomDownloaderRepositories(Project project) {
         List<MavenRepository> repositories = new ArrayList<>();
@@ -95,7 +98,8 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
         if (cgpConfigured(cgpUsername, cgpPassword)) {
             repositories.add(new MavenRepository(CGP_ID, CGP_URL, "true", "true", true, cgpUsername, cgpPassword, null, false));
         }
-        repositories.add(MavenRepository.MAVEN_CENTRAL);
+        ArtifactoryMirror mirror = ArtifactoryMirror.ifAvailable(project.getProviders());
+        repositories.add(mirror == null ? MavenRepository.MAVEN_CENTRAL : mirror.asMavenCentral());
         return repositories;
     }
 

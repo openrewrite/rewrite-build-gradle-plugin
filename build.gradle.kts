@@ -211,6 +211,32 @@ repositories {
     }
 }
 
+// Mirrors RewriteArtifactoryMirrorPlugin, which this build cannot apply to itself
+val artifactoryUsername = providers.gradleProperty("artifactoryUsername").getOrElse("")
+val artifactoryPassword = providers.gradleProperty("artifactoryPassword").getOrElse("")
+if (artifactoryUsername.isNotEmpty() && artifactoryPassword.isNotEmpty()) {
+    val artifactoryMirrorUrl = "https://artifactory.moderne.ninja/artifactory/moderne-cache-3/"
+    allprojects {
+        repositories.withType<MavenArtifactRepository>().configureEach {
+            // The plugin portal answers for anything it does not host with a redirect to Maven Central
+            if (url.host in setOf("repo.maven.apache.org", "repo1.maven.org", "plugins.gradle.org")) {
+                setUrl(artifactoryMirrorUrl)
+                credentials {
+                    username = artifactoryUsername
+                    password = artifactoryPassword
+                }
+                mavenContent { releasesOnly() }
+            }
+        }
+        // As RewriteJavaPlugin does, which is how the builds these tests launch come to be mirrored too
+        tasks.withType<Test>().configureEach {
+            environment("REWRITE_GRADLE_MIRROR_URL", artifactoryMirrorUrl)
+            environment("REWRITE_GRADLE_MIRROR_USERNAME", artifactoryUsername)
+            environment("REWRITE_GRADLE_MIRROR_PASSWORD", artifactoryPassword)
+        }
+    }
+}
+
 configurations.all {
     resolutionStrategy {
         cacheChangingModulesFor(0, TimeUnit.SECONDS)
