@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -79,6 +80,26 @@ class RewriteDependencyRepositoriesPluginTest {
         String output = result.getOutput();
         assertThat(output.indexOf("repo:codegenome="))
                 .isLessThan(output.indexOf("repo:MavenRepo="));
+    }
+
+    @Test
+    void mavenCentralGoesThroughArtifactoryWithCredentials(@TempDir File projectDir) throws IOException {
+        writeProject(projectDir);
+
+        BuildResult result = GradleRunner.create()
+                .withProjectDir(projectDir)
+                .withPluginClasspath()
+                .withArguments("printRepositories",
+                        "-PcodegenomeUsername=test-user",
+                        "-PcodegenomePassword=cgp_test-token",
+                        "-PartifactoryUsername=test-user",
+                        "-PartifactoryPassword=test-token")
+                .build();
+
+        assertThat(result.getOutput())
+                .contains("repo:codegenome=https://artifacts.codegenomeproject.org/maven")
+                .contains("repo:MavenRepo=https://artifactory.moderne.ninja/artifactory/moderne-cache-3/")
+                .doesNotContain("https://repo.maven.apache.org");
     }
 
     @Test
@@ -190,20 +211,39 @@ class RewriteDependencyRepositoriesPluginTest {
                 .containsExactly("central");
     }
 
-    /** System properties rather than {@code gradle.properties}, which CI's {@code ORG_GRADLE_PROJECT_} environment variables outrank. */
+    @Test
+    void pomDownloaderRepositoriesGoThroughArtifactoryWithCredentials(@TempDir File projectDir) {
+        Project project = projectWithGradleProperties(projectDir, Map.of(
+                "codegenomeUsername", "",
+                "codegenomePassword", "",
+                "artifactoryUsername", "test-user",
+                "artifactoryPassword", "test-token"));
+
+        // Still under Central's id, which is what keeps the downloader from adding the real one behind it
+        assertThat(RewriteDependencyRepositoriesPlugin.pomDownloaderRepositories(project)).singleElement().satisfies(central -> {
+            assertThat(central.getId()).isEqualTo("central");
+            assertThat(central.getUri()).isEqualTo("https://artifactory.moderne.ninja/artifactory/moderne-cache-3/");
+            assertThat(central.getUsername()).isEqualTo("test-user");
+            assertThat(central.getPassword()).isEqualTo("test-token");
+        });
+    }
+
     private static Project projectWithCodegenomeCredentials(File projectDir, String username, String password) {
-        String usernameProperty = "org.gradle.project.codegenomeUsername";
-        String passwordProperty = "org.gradle.project.codegenomePassword";
-        System.setProperty(usernameProperty, username);
-        System.setProperty(passwordProperty, password);
+        return projectWithGradleProperties(projectDir, Map.of(
+                "codegenomeUsername", username,
+                "codegenomePassword", password));
+    }
+
+    /** System properties rather than {@code gradle.properties}, which CI's {@code ORG_GRADLE_PROJECT_} environment variables outrank. */
+    private static Project projectWithGradleProperties(File projectDir, Map<String, String> properties) {
+        properties.forEach((name, value) -> System.setProperty("org.gradle.project." + name, value));
         try {
             return ProjectBuilder.builder()
                     .withProjectDir(projectDir)
                     .withGradleUserHomeDir(new File(projectDir, "gradle-home"))
                     .build();
         } finally {
-            System.clearProperty(usernameProperty);
-            System.clearProperty(passwordProperty);
+            properties.keySet().forEach(name -> System.clearProperty("org.gradle.project." + name));
         }
     }
 

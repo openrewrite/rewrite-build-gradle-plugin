@@ -64,6 +64,8 @@ public class RewriteBomAlignmentPlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
+        project.getPlugins().apply(RewriteArtifactoryMirrorPlugin.class);
+
         Configuration resolveApi = project.getConfigurations().create("resolveApi", c ->
                 c.extendsFrom(project.getConfigurations().getByName("api")));
         DependencyHandler dependencies = project.getDependencies();

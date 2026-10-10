@@ -44,6 +44,7 @@ public class RewritePublishPlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
+        project.getPlugins().apply(RewriteArtifactoryMirrorPlugin.class);
         project.getPlugins().apply(JavaBasePlugin.class);
         project.getPlugins().apply(SourceJarPlugin.class);
         project.getPlugins().apply(JavadocJarPlugin.class);

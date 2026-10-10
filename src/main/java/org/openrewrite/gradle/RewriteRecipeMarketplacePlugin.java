@@ -29,6 +29,8 @@ public class RewriteRecipeMarketplacePlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
+        project.getPlugins().apply(RewriteArtifactoryMirrorPlugin.class);
+
         RegularFile recipesCsvFile = project.getLayout().getProjectDirectory().file("src/main/resources/META-INF/rewrite/recipes.csv");
 
         TaskProvider<RecipeMarketplaceCsvValidateContentTask> recipeCsvValidateContent = project.getTasks().register("recipeCsvValidateContent", RecipeMarketplaceCsvValidateContentTask.class, task -> {

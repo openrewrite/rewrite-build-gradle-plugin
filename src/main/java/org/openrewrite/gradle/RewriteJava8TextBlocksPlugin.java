@@ -38,6 +38,8 @@ public class RewriteJava8TextBlocksPlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
+        project.getPlugins().apply(RewriteArtifactoryMirrorPlugin.class);
+
         project.getTasks().withType(JavaCompile.class).configureEach(task -> {
             task.getOptions().getRelease().set((Integer) null);
             task.doLast(new MarkClassfileWithLanguageLevel8DoLast(project.fileTree(task.getDestinationDirectory(), tree -> tree.include("**/*.class"))));

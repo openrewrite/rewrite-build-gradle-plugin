@@ -23,12 +23,17 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class RewriteSettingsPluginTest {
+
+    private static final String MIRROR = "https://artifactory.moderne.ninja/artifactory/moderne-cache-3/";
+    private static final String MAVEN_CENTRAL = "https://repo.maven.apache.org/maven2/";
 
     @Test
     void registersCodegenomeWithCredentials(@TempDir File projectDir) throws IOException {
@@ -76,6 +81,94 @@ class RewriteSettingsPluginTest {
     }
 
     @Test
+    void routesPluginResolutionThroughArtifactoryWithCredentials(@TempDir File projectDir) throws IOException {
+        writeProject(projectDir, """
+                gradlePluginPortal()
+                        mavenCentral()
+                """);
+
+        assertThat(urls(run(projectDir, withArtifactoryCredentials()), "plugin"))
+                .containsExactly(MIRROR, MIRROR, RewriteSettingsPlugin.CGP_URL);
+    }
+
+    @Test
+    void declaresThePluginPortalInOrderToRouteIt(@TempDir File projectDir) throws IOException {
+        // Without Code Genome Project credentials, nothing else has declared what an empty handler falls back to
+        writeProject(projectDir, "");
+
+        BuildResult result = run(projectDir, asList("printPluginRepositories",
+                "-PcodegenomeUsername=",
+                "-PcodegenomePassword=",
+                "-PartifactoryUsername=test-user",
+                "-PartifactoryPassword=test-token"));
+
+        assertThat(result.getOutput()).contains("pluginRepo:Gradle Central Plugin Repository");
+        assertThat(urls(result, "plugin")).containsExactly(MIRROR);
+    }
+
+    @Test
+    void routesEveryProjectAndItsBuildScriptThroughArtifactory(@TempDir File projectDir) throws IOException {
+        writeProject(projectDir, "gradlePluginPortal()", "mavenCentral()", """
+                buildscript {
+                    repositories {
+                        gradlePluginPortal()
+                    }
+                }
+
+                repositories {
+                    mavenCentral()
+                    maven { url = uri("https://repo.gradle.org/gradle/libs-releases/") }
+                }
+                """);
+
+        BuildResult result = run(projectDir, withArtifactoryCredentials());
+
+        assertThat(urls(result, "shared")).containsExactly(MIRROR);
+        assertThat(urls(result, "buildscript")).containsExactly(MIRROR);
+        assertThat(urls(result, "project")).containsExactly(MIRROR, "https://repo.gradle.org/gradle/libs-releases/");
+    }
+
+    @Test
+    void leavesRepositoriesWhereTheyWereDeclaredWithoutArtifactoryCredentials(@TempDir File projectDir) throws IOException {
+        writeProject(projectDir, "gradlePluginPortal()", "mavenCentral()", "repositories { mavenCentral() }");
+
+        BuildResult result = run(projectDir, withCredentials(), environmentWithoutMirror());
+
+        assertThat(urls(result, "plugin")).containsExactly("https://plugins.gradle.org/m2", RewriteSettingsPlugin.CGP_URL);
+        assertThat(urls(result, "shared")).containsExactly(MAVEN_CENTRAL);
+        assertThat(urls(result, "project")).containsExactly(MAVEN_CENTRAL);
+    }
+
+    @Test
+    void takesTheMirrorCiExportsWhenThereAreNoGradleProperties(@TempDir File projectDir) throws IOException {
+        writeProject(projectDir, "gradlePluginPortal()", "", "repositories { mavenCentral() }");
+        Map<String, String> env = environmentWithoutMirror();
+        env.put("REWRITE_GRADLE_MIRROR_URL", "https://mirror.example.com/maven/");
+        env.put("REWRITE_GRADLE_MIRROR_USERNAME", "ci-user");
+        env.put("REWRITE_GRADLE_MIRROR_PASSWORD", "ci-token");
+
+        BuildResult result = run(projectDir, withCredentials(), env);
+
+        assertThat(urls(result, "plugin")).containsExactly("https://mirror.example.com/maven/", RewriteSettingsPlugin.CGP_URL);
+        assertThat(urls(result, "project")).containsExactly("https://mirror.example.com/maven/");
+    }
+
+    @Test
+    void leavesRepositoriesWhereTheyWereDeclaredWhenCiHasNoSecretsToExport(@TempDir File projectDir) throws IOException {
+        // A fork's pull request: the workflow still sets the variables, to secrets that come out empty
+        writeProject(projectDir, "gradlePluginPortal()", "", "repositories { mavenCentral() }");
+        Map<String, String> env = environmentWithoutMirror();
+        env.put("REWRITE_GRADLE_MIRROR_URL", MIRROR);
+        env.put("REWRITE_GRADLE_MIRROR_USERNAME", "");
+        env.put("REWRITE_GRADLE_MIRROR_PASSWORD", "");
+
+        BuildResult result = run(projectDir, withCredentials(), env);
+
+        assertThat(urls(result, "plugin")).containsExactly("https://plugins.gradle.org/m2", RewriteSettingsPlugin.CGP_URL);
+        assertThat(urls(result, "project")).containsExactly(MAVEN_CENTRAL);
+    }
+
+    @Test
     void carriesNoOpenRewriteDependencies() {
         // The whole point: this plugin resolves off the plugin portal alone, so that the plugins which do
         // depend on org.openrewrite artifacts can then resolve them from the repository it adds
@@ -96,10 +189,27 @@ class RewriteSettingsPluginTest {
                 "-PcodegenomePassword=cgp_test-token");
     }
 
+    private static List<String> withArtifactoryCredentials() {
+        return asList("printPluginRepositories",
+                "-PcodegenomeUsername=test-user",
+                "-PcodegenomePassword=cgp_test-token",
+                "-PartifactoryUsername=test-user",
+                "-PartifactoryPassword=test-token");
+    }
+
     private static List<String> pluginRepositories(File projectDir, List<String> arguments) {
         return run(projectDir, arguments).getOutput().lines()
                 .filter(line -> line.startsWith("pluginRepo:"))
                 .map(line -> line.substring("pluginRepo:".length()))
+                .toList();
+    }
+
+    /** Where the repositories of one kind point: {@code plugin}, {@code shared}, {@code buildscript} or {@code project}. */
+    private static List<String> urls(BuildResult result, String kind) {
+        String prefix = kind + "RepoUrl:";
+        return result.getOutput().lines()
+                .filter(line -> line.startsWith(prefix))
+                .map(line -> line.substring(prefix.length()))
                 .toList();
     }
 
@@ -111,7 +221,28 @@ class RewriteSettingsPluginTest {
                 .build();
     }
 
+    private static BuildResult run(File projectDir, List<String> arguments, Map<String, String> environment) {
+        return GradleRunner.create()
+                .withProjectDir(projectDir)
+                .withPluginClasspath()
+                .withArguments(arguments)
+                .withEnvironment(environment)
+                .build();
+    }
+
+    /** Whatever this build was itself given, which would otherwise decide the outcome in the test's place. */
+    private static Map<String, String> environmentWithoutMirror() {
+        Map<String, String> env = new HashMap<>(System.getenv());
+        env.keySet().removeIf(name -> name.startsWith("REWRITE_GRADLE_MIRROR_") ||
+                                      name.startsWith("ORG_GRADLE_PROJECT_artifactory"));
+        return env;
+    }
+
     private static void writeProject(File projectDir, String repositories) throws IOException {
+        writeProject(projectDir, repositories, "", "");
+    }
+
+    private static void writeProject(File projectDir, String repositories, String sharedRepositories, String buildScript) throws IOException {
         //language=kotlin
         write(new File(projectDir, "settings.gradle.kts"), """
                 pluginManagement {
@@ -126,14 +257,29 @@ class RewriteSettingsPluginTest {
 
                 rootProject.name = "settings-consumer"
 
+                dependencyResolutionManagement {
+                    repositories {
+                        %s
+                    }
+                }
+
+                fun url(repository: ArtifactRepository) = (repository as MavenArtifactRepository).url
+
                 gradle.settingsEvaluated {
                     pluginManagement.repositories.forEach { println("pluginRepo:" + it.name) }
+                    pluginManagement.repositories.forEach { println("pluginRepoUrl:" + url(it)) }
+                    dependencyResolutionManagement.repositories.forEach { println("sharedRepoUrl:" + url(it)) }
                 }
-                """.formatted(repositories));
+                gradle.projectsEvaluated {
+                    rootProject.buildscript.repositories.forEach { println("buildscriptRepoUrl:" + url(it)) }
+                    rootProject.repositories.forEach { println("projectRepoUrl:" + url(it)) }
+                }
+                """.formatted(repositories, sharedRepositories));
         //language=kotlin
         write(new File(projectDir, "build.gradle.kts"), """
+                %s
                 tasks.register("printPluginRepositories")
-                """);
+                """.formatted(buildScript));
     }
 
     private static void write(File file, String content) throws IOException {
