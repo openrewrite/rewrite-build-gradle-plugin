@@ -40,7 +40,7 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
 
         if (!releasing) {
             repos.add(repos.mavenLocal(repo -> repo.content(content ->
-                    content.excludeVersionByRegex(".+", ".+", ".+-rc[-]?[0-9]*"))));
+                    content.excludeVersionByRegex(".+", ".+", PreReleaseVersions.RELEASE_CANDIDATE_REGEX))));
         }
 
         String cgpUsername = cgpUsername(project);
@@ -76,7 +76,7 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
         }
 
         repos.add(repos.mavenCentral(repo -> repo.content(content -> {
-            content.excludeVersionByRegex(".+", ".+", ".+-rc[-]?[0-9]*");
+            content.excludeVersionByRegex(".+", ".+", PreReleaseVersions.RELEASE_CANDIDATE_REGEX);
             if (cgpConfigured) {
                 content.excludeGroupAndSubgroups("org.openrewrite");
                 content.excludeGroupAndSubgroups("io.moderne");
