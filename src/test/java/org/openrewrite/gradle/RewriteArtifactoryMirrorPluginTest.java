@@ -93,7 +93,7 @@ class RewriteArtifactoryMirrorPluginTest {
           "-PartifactoryUsername=test-user", "-PartifactoryPassword=test-token"));
 
         assertThat(repositories).hasSize(5);
-        assertThat(repositories.get(0)).startsWith("MavenLocal=file:");
+        assertThat(repositories.getFirst()).startsWith("MavenLocal=file:");
         assertThat(repositories.subList(1, 5)).containsExactly(
           "MavenRepo=" + MIRROR,
           "Gradle Central Plugin Repository=" + MIRROR,
