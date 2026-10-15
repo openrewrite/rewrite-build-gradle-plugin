@@ -16,6 +16,7 @@
 package org.openrewrite.gradle;
 
 import org.gradle.testkit.runner.GradleRunner;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -38,21 +39,42 @@ class PreReleaseStatusRuleTest {
       "1.1.0-RC1, 1.0.0",
       "1.1.0-rc.2, 1.0.0",
       "1.1.0-rc-1, 1.0.0",
+      "1.1.0-beta.1, 1.0.0",
+      "1.1.0.CR1, 1.0.0",
       "1.1.0, 1.1.0",
       "1.1.0.RELEASE, 1.1.0.RELEASE"
     })
-    void latestReleaseSkipsMilestonesAndReleaseCandidates(String newest, String expected) throws IOException {
+    void latestReleaseSkipsPreReleases(String newest, String expected) throws IOException {
         publish("1.0.0", newest);
+
+        assertThat(resolve("org.openrewrite.build.java-base", "maven { url = uri('repo') }", "latest.release")).contains("RESOLVED=" + expected);
+    }
+
+    @Test
+    void recipeRepositoriesSkipPreReleasesForLatestRelease() throws IOException {
+        publish("1.0.0", "1.1.0-RC1");
+
+        assertThat(resolve("org.openrewrite.build.recipe-repositories", "", "latest.release")).contains("RESOLVED=1.0.0");
+    }
+
+    @Test
+    void recipeRepositoriesResolvePinnedReleaseCandidates() throws IOException {
+        publish("1.0.0", "1.1.0-RC1");
+
+        assertThat(resolve("org.openrewrite.build.recipe-repositories", "", "1.1.0-RC1")).contains("RESOLVED=1.1.0-RC1");
+    }
+
+    private String resolve(String pluginId, String repositories, String version) throws IOException {
         Files.writeString(new File(testProjectDir, "settings.gradle").toPath(), "rootProject.name = 'prerelease'");
         Files.writeString(new File(testProjectDir, "build.gradle").toPath(),
           //language=gradle
           """
             plugins {
-                id 'org.openrewrite.build.java-base'
+                id '%s'
             }
 
             repositories {
-                maven { url = uri('repo') }
+                %s
             }
 
             configurations {
@@ -60,7 +82,7 @@ class PreReleaseStatusRuleTest {
             }
 
             dependencies {
-                probe 'com.example:lib:latest.release'
+                probe 'com.example:lib:%s'
             }
 
             tasks.register('printResolved') {
@@ -69,16 +91,14 @@ class PreReleaseStatusRuleTest {
                     resolved.get().dependencies.each { println "RESOLVED=${it.selected.moduleVersion.version}" }
                 }
             }
-            """);
+            """.formatted(pluginId, repositories, version));
 
-        String output = GradleRunner.create()
+        return GradleRunner.create()
           .withProjectDir(testProjectDir)
-          .withArguments("printResolved")
+          .withArguments("printResolved", "-Dmaven.repo.local=" + new File(testProjectDir, "repo").getAbsolutePath())
           .withPluginClasspath()
           .build()
           .getOutput();
-
-        assertThat(output).contains("RESOLVED=" + expected);
     }
 
     private void publish(String... versions) throws IOException {

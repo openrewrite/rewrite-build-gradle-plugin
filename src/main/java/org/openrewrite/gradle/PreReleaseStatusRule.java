@@ -20,21 +20,17 @@ import org.gradle.api.artifacts.ComponentMetadataContext;
 import org.gradle.api.artifacts.ComponentMetadataDetails;
 import org.gradle.api.artifacts.ComponentMetadataRule;
 
-import java.util.regex.Pattern;
-
 /**
  * Maven repositories carry no release status, so Gradle takes every version that isn't a snapshot
- * for a release, milestones and release candidates included, and {@code latest.release} selects
+ * for a release, milestones, release candidates and betas included, and {@code latest.release} selects
  * them. Marked as milestones, they are passed over for the newest actual release.
  */
 @CacheableRule
 public class PreReleaseStatusRule implements ComponentMetadataRule {
-    private static final Pattern PRE_RELEASE = Pattern.compile("(?i).*[.-](m|rc)[.-]?\\d+");
-
     @Override
     public void execute(ComponentMetadataContext context) {
         ComponentMetadataDetails details = context.getDetails();
-        if (PRE_RELEASE.matcher(details.getId().getVersion()).matches()) {
+        if ("release".equals(details.getStatus()) && PreReleaseVersions.isPreRelease(details.getId().getVersion())) {
             details.setStatus("milestone");
         }
     }

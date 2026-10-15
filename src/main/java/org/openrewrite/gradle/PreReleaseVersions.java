@@ -20,8 +20,6 @@ import org.jspecify.annotations.Nullable;
 import java.util.regex.Pattern;
 
 final class PreReleaseVersions {
-    static final String RELEASE_CANDIDATE_REGEX = "(?i).+-rc[-]?[0-9]*";
-
     private static final Pattern PRE_RELEASE = Pattern.compile(
             "(?i).*[.-](snapshot|alpha|beta|preview|ea|m[.-]?\\d+|rc|cr)(?![a-z]).*");
 

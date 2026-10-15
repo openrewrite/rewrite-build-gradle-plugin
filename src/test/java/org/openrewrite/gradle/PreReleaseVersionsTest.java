@@ -69,10 +69,4 @@ class PreReleaseVersionsTest {
     void fixedVersions(String version) {
         assertThat(PreReleaseVersions.isDynamic(version)).isFalse();
     }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"6.0.0-rc1", "6.0.0-RC1", "6.0.0-Rc-2", "6.0.0-RC"})
-    void repositoriesExcludeReleaseCandidatesRegardlessOfCase(String version) {
-        assertThat(version).matches(PreReleaseVersions.RELEASE_CANDIDATE_REGEX);
-    }
 }
