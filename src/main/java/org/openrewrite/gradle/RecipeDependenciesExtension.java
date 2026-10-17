@@ -15,9 +15,12 @@
  */
 package org.openrewrite.gradle;
 
+import org.gradle.api.GradleException;
+import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.ExternalModuleDependency;
+import org.gradle.api.artifacts.ResolveException;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 
 import javax.inject.Inject;
@@ -26,6 +29,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 public class RecipeDependenciesExtension {
     private final ConfigurationContainer configurationContainer;
@@ -84,11 +88,40 @@ public class RecipeDependenciesExtension {
                 throw new IllegalArgumentException("Only external module dependencies are supported as recipe dependencies.");
             }
             ((ExternalModuleDependency) dependency).setTransitive(false);
-            for (File file : configurationContainer.detachedConfiguration(dependency).resolve()) {
+            for (File file : resolve(dependencyNotation, dependency)) {
                 resolved.put(dependency, file);
             }
         }
 
         return resolved;
+    }
+
+    /**
+     * A dynamic version would otherwise take the highest version across all repositories, which may well be a
+     * snapshot in {@code mavenLocal()} or a milestone on Maven Central, and bake it into the type table.
+     */
+    private Set<File> resolve(String dependencyNotation, Dependency dependency) {
+        Configuration configuration = configurationContainer.detachedConfiguration(dependency);
+        if (!PreReleaseVersions.isDynamic(dependency.getVersion())) {
+            return configuration.resolve();
+        }
+
+        Set<String> rejected = new TreeSet<>();
+        configuration.getResolutionStrategy().getComponentSelection().all(selection -> {
+            String version = selection.getCandidate().getVersion();
+            if (PreReleaseVersions.isPreRelease(version)) {
+                rejected.add(version);
+                selection.reject("pre-release versions are only used when pinned explicitly");
+            }
+        });
+        try {
+            return configuration.resolve();
+        } catch (ResolveException e) {
+            if (rejected.isEmpty()) {
+                throw e;
+            }
+            throw new GradleException("Could not resolve recipe dependency '" + dependencyNotation + "' to a release version. " +
+                                      "Pre-release versions " + rejected + " were skipped, as they are only used when pinned explicitly.", e);
+        }
     }
 }

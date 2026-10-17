@@ -34,13 +34,13 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
     @Override
     public void apply(Project project) {
         project.getPlugins().apply(RewriteArtifactoryMirrorPlugin.class);
+        project.getDependencies().getComponents().all(PreReleaseStatusRule.class);
 
         RepositoryHandler repos = project.getRepositories();
         boolean releasing = project.hasProperty("releasing");
 
         if (!releasing) {
-            repos.add(repos.mavenLocal(repo -> repo.content(content ->
-                    content.excludeVersionByRegex(".+", ".+", ".+-rc[-]?[0-9]*"))));
+            repos.add(repos.mavenLocal());
         }
 
         String cgpUsername = cgpUsername(project);
@@ -75,21 +75,22 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
             }));
         }
 
-        repos.add(repos.mavenCentral(repo -> repo.content(content -> {
-            content.excludeVersionByRegex(".+", ".+", ".+-rc[-]?[0-9]*");
+        repos.add(repos.mavenCentral(repo -> {
             if (cgpConfigured) {
-                content.excludeGroupAndSubgroups("org.openrewrite");
-                content.excludeGroupAndSubgroups("io.moderne");
+                repo.content(content -> {
+                    content.excludeGroupAndSubgroups("org.openrewrite");
+                    content.excludeGroupAndSubgroups("io.moderne");
+                });
             }
-        })));
+        }));
     }
 
     /**
      * The repositories {@link #apply} configures, modelled for OpenRewrite's {@code MavenPomDownloader}:
      * CGP first when credentials are configured, then always Maven Central, which everything CGP does not
      * host still comes from — by way of the Artifactory mirror when there are credentials for that.
-     * {@code mavenLocal()} is left out — the downloader has no equivalent of its release-candidate
-     * exclusion, so including it would resolve versions Gradle itself refuses.
+     * {@code mavenLocal()} is left out, so that alignment follows published versions rather than whatever
+     * local builds have installed.
      */
     static List<MavenRepository> pomDownloaderRepositories(Project project) {
         List<MavenRepository> repositories = new ArrayList<>();

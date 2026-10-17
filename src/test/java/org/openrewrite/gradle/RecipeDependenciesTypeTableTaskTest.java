@@ -34,6 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.jar.JarFile;
+import java.util.jar.JarOutputStream;
 
 import static java.util.Collections.singletonList;
 import static java.util.Objects.requireNonNull;
@@ -113,6 +114,70 @@ class RecipeDependenciesTypeTableTaskTest {
         // Load more specific `5.3` version from type table, which should not contain `5.+`
         TypeTable table = createTypeTable(tsvFile, "spring-core-5.3");
         assertJarContainsClass(table.load("spring-core-5.3"), "Order.class");
+    }
+
+    @Test
+    void dynamicVersionSkipsPreReleases() throws Exception {
+        publish("1.0.0", "1.1.0-M1", "1.1.0-SNAPSHOT");
+        createGradleBuildFiles("""
+          plugins {
+              id 'org.openrewrite.build.recipe-library-base'
+          }
+          repositories {
+              maven { url = uri('repo') }
+          }
+          recipeDependencies {
+              parserClasspath("com.example:lib:1.+")
+          }
+          """);
+
+        BuildResult result = runTypeTableTaskAndSucceed();
+
+        assertThat(result.getOutput())
+          .contains("Wrote com.example:lib:1.0.0 to")
+          .doesNotContain("Wrote com.example:lib:1.1.0");
+    }
+
+    @Test
+    void pinnedPreReleaseStillResolves() throws Exception {
+        publish("1.0.0", "1.1.0-M1", "1.1.0-SNAPSHOT");
+        createGradleBuildFiles("""
+          plugins {
+              id 'org.openrewrite.build.recipe-library-base'
+          }
+          repositories {
+              maven { url = uri('repo') }
+          }
+          recipeDependencies {
+              parserClasspath("com.example:lib:1.1.0-M1")
+          }
+          """);
+
+        BuildResult result = runTypeTableTaskAndSucceed();
+
+        assertThat(result.getOutput()).contains("Wrote com.example:lib:1.1.0-M1 to");
+    }
+
+    @Test
+    void dynamicVersionWithOnlyPreReleasesFails() throws Exception {
+        publish("1.0.0", "1.1.0-M1", "1.1.0-SNAPSHOT");
+        createGradleBuildFiles("""
+          plugins {
+              id 'org.openrewrite.build.recipe-library-base'
+          }
+          repositories {
+              maven { url = uri('repo') }
+          }
+          recipeDependencies {
+              parserClasspath("com.example:lib:1.1.+")
+          }
+          """);
+
+        BuildResult result = runTypeTableTaskAndFail();
+
+        assertThat(result.getOutput())
+          .contains("Could not resolve recipe dependency 'com.example:lib:1.1.+' to a release version")
+          .contains("[1.1.0-M1, 1.1.0-SNAPSHOT]");
     }
 
     @Test
@@ -306,6 +371,36 @@ class RecipeDependenciesTypeTableTaskTest {
     private void createGradleBuildFiles(@Language("gradle") String buildFileContent) throws IOException {
         Files.writeString(settingsFile.toPath(), "rootProject.name = 'my-project'");
         Files.writeString(buildFile.toPath(), buildFileContent);
+    }
+
+    private void publish(String... versions) throws IOException {
+        Path module = projectDir.toPath().resolve("repo/com/example/lib");
+        StringBuilder listed = new StringBuilder();
+        for (String version : versions) {
+            Path dir = module.resolve(version);
+            Files.createDirectories(dir);
+            Files.writeString(dir.resolve("lib-" + version + ".pom"),
+              //language=xml
+              """
+                <project>
+                  <modelVersion>4.0.0</modelVersion>
+                  <groupId>com.example</groupId>
+                  <artifactId>lib</artifactId>
+                  <version>%s</version>
+                </project>
+                """.formatted(version));
+            new JarOutputStream(Files.newOutputStream(dir.resolve("lib-" + version + ".jar"))).close();
+            listed.append("<version>").append(version).append("</version>");
+        }
+        Files.writeString(module.resolve("maven-metadata.xml"),
+          //language=xml
+          """
+            <metadata>
+              <groupId>com.example</groupId>
+              <artifactId>lib</artifactId>
+              <versioning><versions>%s</versions></versioning>
+            </metadata>
+            """.formatted(listed));
     }
 
     private BuildResult runTypeTableTaskAndSucceed() {
