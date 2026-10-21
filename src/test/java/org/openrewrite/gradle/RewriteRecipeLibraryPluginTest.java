@@ -67,7 +67,7 @@ class RewriteRecipeLibraryPluginTest {
 
         BuildResult result = GradleRunner.create()
                 .withProjectDir(projectDir)
-                .withArguments("downloadRecipeDependencies", "--stacktrace")
+                .withArguments("downloadRecipeDependencies", "--stacktrace", "--warning-mode=fail")
                 .withPluginClasspath()
                 .withDebug(true)
                 .build();
@@ -111,7 +111,7 @@ class RewriteRecipeLibraryPluginTest {
 
         BuildResult result = GradleRunner.create()
                 .withProjectDir(projectDir)
-                .withArguments("downloadRecipeDependencies", "--stacktrace")
+                .withArguments("downloadRecipeDependencies", "--stacktrace", "--warning-mode=fail")
                 .withPluginClasspath()
                 .withDebug(true)
                 .build();

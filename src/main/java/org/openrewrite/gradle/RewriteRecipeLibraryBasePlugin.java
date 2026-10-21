@@ -26,6 +26,8 @@ import org.gradle.jvm.toolchain.JavaLanguageVersion;
 import org.gradle.jvm.toolchain.JavaToolchainService;
 import org.gradle.testing.base.TestingExtension;
 
+import java.util.Map;
+
 import static org.openrewrite.internal.StringUtils.capitalize;
 
 @SuppressWarnings("UnstableApiUsage")
@@ -40,7 +42,7 @@ public class RewriteRecipeLibraryBasePlugin implements Plugin<Project> {
         project.getPlugins().apply(RewriteJavaPlugin.class);
         project.getPlugins().apply(RewriteRecipeMarketplacePlugin.class);
 
-        project.getExtensions().create("recipeDependencies", RecipeDependenciesExtension.class);
+        RecipeDependenciesExtension recipeDependencies = project.getExtensions().create("recipeDependencies", RecipeDependenciesExtension.class);
 
         // Register base tasks for backward compatibility
         project.getTasks().register("createTypeTable", RecipeDependenciesTypeTableTask.class, task -> {
@@ -50,7 +52,11 @@ public class RewriteRecipeLibraryBasePlugin implements Plugin<Project> {
                 project.provider(() -> extension.getResolvedForSourceSet("main").values())
             );
         });
-        project.getTasks().register("downloadRecipeDependencies", RecipeDependenciesDownloadTask.class);
+        project.getTasks().register("downloadRecipeDependencies", RecipeDependenciesDownloadTask.class, task -> {
+            task.getResourceDirectories().from(project.getExtensions().getByType(JavaPluginExtension.class)
+                    .getSourceSets().getByName("main").getResources().getSourceDirectories());
+            task.getRecipeDependencies().set(project.provider(recipeDependencies::getResolved));
+        });
 
         // Configure source set specific tasks when Java plugin is applied
         project.getPlugins().withType(JavaPlugin.class, javaPlugin -> {
@@ -122,7 +128,7 @@ public class RewriteRecipeLibraryBasePlugin implements Plugin<Project> {
             deps.add("cliCompatImplementation", "org.openrewrite:rewrite-java");
             deps.add("cliCompatImplementation", "org.openrewrite:rewrite-java-test");
             deps.add("cliCompatImplementation", "org.openrewrite:rewrite-maven");
-            deps.add("cliCompatImplementation", project);
+            deps.add("cliCompatImplementation", deps.project(Map.of("path", project.getPath())));
 
             suite.getTargets().all(target -> target.getTestTask().configure(test -> {
                 test.getJavaLauncher().set(toolchains.launcherFor(spec ->
