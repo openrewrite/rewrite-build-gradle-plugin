@@ -85,30 +85,6 @@ pluginManagement {
 }
 ```
 
-Alternatively, apply `org.openrewrite.build.settings` in `settings.gradle.kts` to add the Code Genome Project there. It
-is published as its own artifact and carries no `org.openrewrite` dependencies, which is what lets it resolve from the
-plugin portal alone and then make everything else resolvable:
-
-```kotlin
-pluginManagement {
-    repositories {
-        gradlePluginPortal()
-    }
-}
-
-plugins {
-    id("org.openrewrite.build.settings") version "latest.release"
-}
-
-rootProject.name = "..."
-```
-
-It reads the same two credential properties, and adds nothing when they are absent — a fork pull request has no way to
-resolve these artifacts, and failing outright would only replace one unhelpful error with another. Nothing is excluded
-from the repositories already declared: a plugin classpath is pinned to exact versions, so a hit anywhere is the same
-artifact, and releases before 2.27.4 have their plugin markers on the portal only, which excluding `org.openrewrite`
-there would hide.
-
 ## Artifactory mirror
 
 Maven Central rate limits by address, so builds that resolve from it directly start failing with HTTP 429 once enough
@@ -133,15 +109,14 @@ carries snapshots that neither of the two ever does.
 
 - Every `org.openrewrite.build.*` project plugin does this for the repositories of the project it is applied to,
   whether `recipe-repositories` added them or the build script did.
-- `org.openrewrite.build.settings` does it for `pluginManagement` and `dependencyResolutionManagement`, and for the
-  repositories of every project and of its `buildscript`. Only settings can reach the classpath the plugins themselves
-  are resolved onto, which by default comes off the plugin portal.
 - `org.openrewrite.build.java-base` (applied by the `recipe-library` and `language-library` plugins) hands every `Test`
   task the three environment variables, so that what tests resolve is mirrored too, along with any build they launch
   that applies these plugins.
 
-Two things are out of reach: the `plugins {}` block of `settings.gradle.kts` itself, which is resolved before the
-settings plugin can run, and `buildSrc` or included builds, which are builds of their own.
+Anything resolved before a project exists is out of reach: the classpath the plugins themselves are resolved onto,
+which comes from the `pluginManagement` repositories and by default off the plugin portal, and `buildSrc` or included
+builds, which are builds of their own. To have the plugin classpath mirrored too, redirect the plugin portal in
+`pluginManagement` the way this project's own `settings.gradle.kts` does.
 
 The mirror takes Maven Central's place rather than being tried ahead of it. A stale password fails the build with a
 401, and an artifact the mirror cannot serve is reported as not found, instead of either falling back.
