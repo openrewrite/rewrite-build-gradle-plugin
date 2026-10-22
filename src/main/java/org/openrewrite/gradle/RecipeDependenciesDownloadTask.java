@@ -20,8 +20,9 @@ import org.apache.ivy.plugins.latest.LatestLexicographicStrategy;
 import org.apache.ivy.plugins.version.*;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.artifacts.Dependency;
-import org.gradle.api.file.SourceDirectorySet;
-import org.gradle.api.plugins.JavaPluginExtension;
+import org.gradle.api.file.ConfigurableFileCollection;
+import org.gradle.api.provider.MapProperty;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.work.DisableCachingByDefault;
 
@@ -34,9 +35,15 @@ import java.util.Map;
 import static java.util.Objects.requireNonNull;
 
 @DisableCachingByDefault(because = "Resolves and downloads recipe dependencies from remote repositories")
-public class RecipeDependenciesDownloadTask extends DefaultTask {
+public abstract class RecipeDependenciesDownloadTask extends DefaultTask {
 
     private static final ChainVersionMatcher versionMatcher = new ChainVersionMatcher();
+
+    @Internal
+    public abstract ConfigurableFileCollection getResourceDirectories();
+
+    @Internal
+    public abstract MapProperty<Dependency, File> getRecipeDependencies();
 
     @Override
     public String getDescription() {
@@ -59,19 +66,14 @@ public class RecipeDependenciesDownloadTask extends DefaultTask {
 
     @TaskAction
     void download() throws IOException {
-        SourceDirectorySet resources = getProject().getExtensions().getByType(JavaPluginExtension.class)
-                .getSourceSets()
-                .getByName("main")
-                .getResources();
-
-        for (File sourceDirectory : resources.getSourceDirectories()) {
+        Map<Dependency, File> recipeDependencies = getRecipeDependencies().get();
+        for (File sourceDirectory : getResourceDirectories()) {
             File parserClasspath = new File(sourceDirectory, "META-INF/rewrite/classpath");
             if (!parserClasspath.exists() && !parserClasspath.mkdirs()) {
                 throw new IllegalStateException("Unable to create directory " + parserClasspath);
             }
 
-            RecipeDependenciesExtension extension = getProject().getExtensions().getByType(RecipeDependenciesExtension.class);
-            for (Map.Entry<Dependency, File> dependency : extension.getResolved().entrySet()) {
+            for (Map.Entry<Dependency, File> dependency : recipeDependencies.entrySet()) {
                 Path dependencyFile = dependency.getValue().toPath();
                 Path destination = parserClasspath.toPath().resolve(dependencyFile.getFileName());
 
