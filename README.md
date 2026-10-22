@@ -16,7 +16,6 @@
 
 <!-- Keep the gap above this line, otherwise they won't render correctly! -->
 [![ci](https://github.com/openrewrite/rewrite-build-gradle-plugin/actions/workflows/ci.yml/badge.svg)](https://github.com/openrewrite/rewrite-build-gradle-plugin/actions/workflows/ci.yml)
-[![Gradle Plugin Portal](https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/org.openrewrite/rewrite-build-gradle-plugin/maven-metadata.xml.svg?label=gradlePluginPortal)](https://plugins.gradle.org/plugin/org.openrewrite.build.root)
 [![Apache 2.0](https://img.shields.io/github/license/openrewrite/rewrite-build-gradle-plugin.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Contributing Guide](https://img.shields.io/badge/Contributing-Guide-informational)](https://github.com/openrewrite/.github/blob/main/CONTRIBUTING.md)
 </div>
@@ -127,5 +126,5 @@ Recipe and language libraries publish only to the Code Genome Project. `org.open
 the `recipe-library` and `language-library` plugins) adds the CGP bucket as a publishing repository, and stays inert
 unless `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` are set, so only CI publishes.
 
-This project's own plugins are released to the Code Genome Project, and for now also to the Gradle Plugin Portal;
-snapshots go to the Code Genome Project only.
+This project's own plugins, releases and snapshots alike, are published only to the Code Genome Project. Releases up
+to 2.27.4 remain on the Gradle Plugin Portal, but nothing newer is published there.

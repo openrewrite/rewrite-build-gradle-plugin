@@ -4,11 +4,12 @@ import nl.javadude.gradle.plugins.license.LicenseExtension
 import java.util.*
 
 plugins {
+    `java-gradle-plugin`
+    `maven-publish`
     id("com.netflix.nebula.release") version "21.0.2"
     id("org.owasp.dependencycheck") version "latest.release"
     id("com.netflix.nebula.maven-resolved-dependencies") version "latest.release"
     id("com.netflix.nebula.maven-apache-license") version "latest.release"
-    id("com.gradle.plugin-publish") version "latest.release"
     id("com.github.hierynomus.license") version "0.16.1"
 }
 
@@ -32,16 +33,18 @@ configure<org.owasp.dependencycheck.gradle.extension.DependencyCheckExtension> {
     suppressionFile = "suppressions.xml"
 }
 
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
 gradlePlugin {
-    website = "https://github.com/openrewrite/rewrite-build-gradle-plugin"
-    vcsUrl = "https://github.com/openrewrite/rewrite-build-gradle-plugin.git"
     plugins {
         create("build-language-library") {
             id = "org.openrewrite.build.language-library"
             displayName = "Rewrite language library"
             description = "Core language module"
             implementationClass = "org.openrewrite.gradle.RewriteLanguageLibraryPlugin"
-            tags = listOf("rewrite", "refactoring")
         }
         create("build-recipe-library-base") {
             id = "org.openrewrite.build.recipe-library-base"
@@ -51,14 +54,12 @@ gradlePlugin {
                         "Does not configure artifact repositories or publishing. " +
                         "Use org.openrewrite.build.recipe-library if you want to build a recipe library as OSS."
             implementationClass = "org.openrewrite.gradle.RewriteRecipeLibraryBasePlugin"
-            tags = listOf("rewrite", "refactoring")
         }
         create("build-recipe-marketplace") {
             id = "org.openrewrite.build.recipe-marketplace"
             displayName = "Rewrite recipe marketplace"
             description = "Provides tasks for generating and validating recipes.csv for the recipe marketplace"
             implementationClass = "org.openrewrite.gradle.RewriteRecipeMarketplacePlugin"
-            tags = listOf("rewrite", "refactoring")
         }
         create("build-recipe-repositories") {
             id = "org.openrewrite.build.recipe-repositories"
@@ -67,7 +68,6 @@ gradlePlugin {
                 "Configures the repositories that OpenRewrite modules in open source draw dependencies from: " +
                         "the Code Genome Project for org.openrewrite and io.moderne artifacts, Maven Central for the rest. "
             implementationClass = "org.openrewrite.gradle.RewriteDependencyRepositoriesPlugin"
-            tags = listOf("rewrite", "refactoring", "oss")
         }
         create("build-recipe-library") {
             id = "org.openrewrite.build.recipe-library"
@@ -77,28 +77,24 @@ gradlePlugin {
                         "Includes conventions around which repositories to draw from and publish to. " +
                         "Use org.openrewrite.build.recipe-library-base if you want to build a private recipe library."
             implementationClass = "org.openrewrite.gradle.RewriteRecipeLibraryPlugin"
-            tags = listOf("rewrite", "refactoring", "oss")
         }
         create("build-java-base") {
             id = "org.openrewrite.build.java-base"
             displayName = "Rewrite Java"
             description = "A module that is built with Java but does not publish artifacts"
             implementationClass = "org.openrewrite.gradle.RewriteJavaPlugin"
-            tags = listOf("rewrite", "refactoring")
         }
         create("build-publish") {
             id = "org.openrewrite.build.publish"
             displayName = "Rewrite Maven publishing"
             description = "Configures publishing to Maven repositories"
             implementationClass = "org.openrewrite.gradle.RewritePublishPlugin"
-            tags = listOf("rewrite", "refactoring")
         }
         create("build-publish-cgp") {
             id = "org.openrewrite.build.publish-cgp"
             displayName = "Rewrite Code Genome Project publishing"
             description = "Publishes recipe artifacts to the Code Genome Project"
             implementationClass = "org.openrewrite.gradle.RewriteCgpPublishPlugin"
-            tags = listOf("rewrite", "refactoring", "oss")
         }
         create("build-shadow") {
             id = "org.openrewrite.build.shadow"
@@ -106,42 +102,36 @@ gradlePlugin {
             description = "Configures the Gradle Shadow plugin to replace the normal jar task output with " +
                     "the shaded jar without a classifier"
             implementationClass = "org.openrewrite.gradle.RewriteShadowPlugin"
-            tags = listOf("rewrite", "refactoring")
         }
         create("build-metadata") {
             id = "org.openrewrite.build.metadata"
             displayName = "Rewrite metadata configuration"
             description = "Contacts and SCM data"
             implementationClass = "org.openrewrite.gradle.RewriteMetadataPlugin"
-            tags = listOf("rewrite", "refactoring")
         }
         create("build-java8-text-blocks") {
             id = "org.openrewrite.build.java8-text-blocks"
             displayName = "Java 8 text blocks"
             description = "Text blocks compiled to Java 8 bytecode"
             implementationClass = "org.openrewrite.gradle.RewriteJava8TextBlocksPlugin"
-            tags = listOf("rewrite", "refactoring")
         }
         create("build-root") {
             id = "org.openrewrite.build.root"
             displayName = "Rewrite root"
             description = "Configures the root project"
             implementationClass = "org.openrewrite.gradle.RewriteRootProjectPlugin"
-            tags = listOf("rewrite", "refactoring")
         }
         create("moderne-source-available-license") {
             id = "org.openrewrite.build.moderne-source-available-license"
             displayName = "Moderne Source Available License"
             description = "Applies the MSAL to the project"
             implementationClass = "org.openrewrite.gradle.ModerneSourceAvailableLicensePlugin"
-            tags = listOf("rewrite", "refactoring")
         }
         create("moderne-proprietary-license") {
             id = "org.openrewrite.build.moderne-proprietary-license"
             displayName = "Moderne Proprietary License"
             description = "Applies the Moderne Proprietary License to the project"
             implementationClass = "org.openrewrite.gradle.ModerneProprietaryLicensePlugin"
-            tags = listOf("rewrite", "refactoring")
         }
         create("build-bom-alignment") {
             id = "org.openrewrite.build.bom-alignment"
@@ -150,7 +140,6 @@ gradlePlugin {
                     "requests any org.openrewrite.* or io.moderne.* dependency at more than one version. " +
                     "Hooks into the check lifecycle and any AbstractPublishToMaven task."
             implementationClass = "org.openrewrite.gradle.RewriteBomAlignmentPlugin"
-            tags = listOf("rewrite", "refactoring", "bom")
         }
     }
 }
