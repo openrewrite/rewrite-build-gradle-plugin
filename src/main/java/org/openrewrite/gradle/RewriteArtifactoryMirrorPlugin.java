@@ -25,7 +25,7 @@ import org.gradle.api.Project;
  * {@link RewriteDependencyRepositoriesPlugin} adds.
  * <p>
  * It has no say over the classpath of the plugins themselves, which is resolved from the repositories settings
- * declares before any project exists. {@code org.openrewrite.build.settings} covers that.
+ * declares before any project exists.
  */
 public class RewriteArtifactoryMirrorPlugin implements Plugin<Project> {
 

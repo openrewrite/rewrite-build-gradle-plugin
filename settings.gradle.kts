@@ -1,4 +1,4 @@
-// Mirrors RewriteSettingsPlugin, which this build cannot apply to itself
+// Routes this build's own plugin classpath through the Artifactory cache, which no project plugin can reach
 pluginManagement {
     val artifactoryUsername = providers.gradleProperty("artifactoryUsername").getOrElse("")
     val artifactoryPassword = providers.gradleProperty("artifactoryPassword").getOrElse("")
@@ -19,8 +19,6 @@ pluginManagement {
 }
 
 rootProject.name = "rewrite-build-gradle-plugin"
-
-include("rewrite-build-settings-plugin")
 
 plugins {
     id("com.gradle.develocity") version "latest.release"

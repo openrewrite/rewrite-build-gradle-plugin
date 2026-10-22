@@ -216,24 +216,22 @@ val artifactoryUsername = providers.gradleProperty("artifactoryUsername").getOrE
 val artifactoryPassword = providers.gradleProperty("artifactoryPassword").getOrElse("")
 if (artifactoryUsername.isNotEmpty() && artifactoryPassword.isNotEmpty()) {
     val artifactoryMirrorUrl = "https://artifactory.moderne.ninja/artifactory/moderne-cache-3/"
-    allprojects {
-        repositories.withType<MavenArtifactRepository>().configureEach {
-            // The plugin portal answers for anything it does not host with a redirect to Maven Central
-            if (url.host in setOf("repo.maven.apache.org", "repo1.maven.org", "plugins.gradle.org")) {
-                setUrl(artifactoryMirrorUrl)
-                credentials {
-                    username = artifactoryUsername
-                    password = artifactoryPassword
-                }
-                mavenContent { releasesOnly() }
+    repositories.withType<MavenArtifactRepository>().configureEach {
+        // The plugin portal answers for anything it does not host with a redirect to Maven Central
+        if (url.host in setOf("repo.maven.apache.org", "repo1.maven.org", "plugins.gradle.org")) {
+            setUrl(artifactoryMirrorUrl)
+            credentials {
+                username = artifactoryUsername
+                password = artifactoryPassword
             }
+            mavenContent { releasesOnly() }
         }
-        // As RewriteJavaPlugin does, which is how the builds these tests launch come to be mirrored too
-        tasks.withType<Test>().configureEach {
-            environment("REWRITE_GRADLE_MIRROR_URL", artifactoryMirrorUrl)
-            environment("REWRITE_GRADLE_MIRROR_USERNAME", artifactoryUsername)
-            environment("REWRITE_GRADLE_MIRROR_PASSWORD", artifactoryPassword)
-        }
+    }
+    // As RewriteJavaPlugin does, which is how the builds these tests launch come to be mirrored too
+    tasks.withType<Test>().configureEach {
+        environment("REWRITE_GRADLE_MIRROR_URL", artifactoryMirrorUrl)
+        environment("REWRITE_GRADLE_MIRROR_USERNAME", artifactoryUsername)
+        environment("REWRITE_GRADLE_MIRROR_PASSWORD", artifactoryPassword)
     }
 }
 
@@ -361,18 +359,16 @@ dependencies {
 // Mirrors RewriteCgpPublishPlugin, which this build cannot apply to itself
 val awsAccessKeyId = System.getenv("AWS_ACCESS_KEY_ID").orEmpty()
 if (awsAccessKeyId.isNotEmpty()) {
-    allprojects {
-        pluginManager.withPlugin("maven-publish") {
-            configure<PublishingExtension> {
-                repositories {
-                    maven {
-                        name = "cgp"
-                        url = uri("s3://codegenome-artifacts.s3.us-west-2.amazonaws.com/maven")
-                        credentials(AwsCredentials::class) {
-                            accessKey = awsAccessKeyId
-                            secretKey = System.getenv("AWS_SECRET_ACCESS_KEY")
-                            sessionToken = System.getenv("AWS_SESSION_TOKEN")?.ifEmpty { null }
-                        }
+    pluginManager.withPlugin("maven-publish") {
+        configure<PublishingExtension> {
+            repositories {
+                maven {
+                    name = "cgp"
+                    url = uri("s3://codegenome-artifacts.s3.us-west-2.amazonaws.com/maven")
+                    credentials(AwsCredentials::class) {
+                        accessKey = awsAccessKeyId
+                        secretKey = System.getenv("AWS_SECRET_ACCESS_KEY")
+                        sessionToken = System.getenv("AWS_SESSION_TOKEN")?.ifEmpty { null }
                     }
                 }
             }
