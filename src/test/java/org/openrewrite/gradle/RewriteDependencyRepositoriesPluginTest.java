@@ -66,6 +66,23 @@ class RewriteDependencyRepositoriesPluginTest {
     }
 
     @Test
+    void registersCodegenomeRepositoryWithCodeGenomeProjectSetupPropertyNames(@TempDir File projectDir) throws IOException {
+        writeProject(projectDir);
+
+        BuildResult result = GradleRunner.create()
+                .withProjectDir(projectDir)
+                .withPluginClasspath()
+                .withArguments("printRepositories",
+                        "-PcodegenomeUsername=",
+                        "-PcodegenomePassword=",
+                        "-PcodeGenomeUsername=test-user",
+                        "-PcodeGenomeToken=cgp_test-token")
+                .build();
+
+        assertThat(result.getOutput()).contains("repo:codegenome=https://artifacts.codegenomeproject.org/maven");
+    }
+
+    @Test
     void codegenomeResolvedBeforeMavenCentral(@TempDir File projectDir) throws IOException {
         writeProject(projectDir);
 
@@ -197,6 +214,21 @@ class RewriteDependencyRepositoriesPluginTest {
                 .containsExactly("codegenome", "central");
         assertThat(repositories).first().satisfies(codegenome -> {
             assertThat(codegenome.getUri()).isEqualTo("https://artifacts.codegenomeproject.org/maven");
+            assertThat(codegenome.getUsername()).isEqualTo("test-user");
+            assertThat(codegenome.getPassword()).isEqualTo("cgp_test-token");
+        });
+    }
+
+    @Test
+    void pomDownloaderRepositoriesPreferCodegenomeOverCodeGenomeProjectSetupPropertyNames(@TempDir File projectDir) {
+        Project project = projectWithGradleProperties(projectDir, Map.of(
+                "codegenomeUsername", "test-user",
+                "codegenomePassword", "",
+                "codeGenomeUsername", "other-user",
+                "codeGenomeToken", "cgp_test-token"));
+
+        assertThat(RewriteDependencyRepositoriesPlugin.pomDownloaderRepositories(project)).first().satisfies(codegenome -> {
+            assertThat(codegenome.getId()).isEqualTo("codegenome");
             assertThat(codegenome.getUsername()).isEqualTo("test-user");
             assertThat(codegenome.getPassword()).isEqualTo("cgp_test-token");
         });
