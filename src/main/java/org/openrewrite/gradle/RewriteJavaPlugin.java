@@ -17,6 +17,7 @@ package org.openrewrite.gradle;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.ModuleDependency;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.attributes.Attribute;
 import org.gradle.api.file.DuplicatesStrategy;
@@ -62,6 +63,12 @@ public class RewriteJavaPlugin implements Plugin<Project> {
         project.getConfigurations().all(config -> {
             config.getResolutionStrategy().cacheChangingModulesFor(0, TimeUnit.SECONDS);
             config.getResolutionStrategy().cacheDynamicVersionsFor(0, TimeUnit.SECONDS);
+            // Recipes only need the Refaster API; its dependencies may require a JVM newer than Java 8
+            config.getDependencies().withType(ModuleDependency.class).configureEach(dep -> {
+                if ("com.google.errorprone".equals(dep.getGroup()) && "error_prone_core".equals(dep.getName())) {
+                    dep.setTransitive(false);
+                }
+            });
         });
 
         project.getExtensions().configure(JavaPluginExtension.class, java ->
