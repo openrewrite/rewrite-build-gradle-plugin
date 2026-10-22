@@ -59,8 +59,8 @@ applying any of these plugins started failing on the `org.openrewrite` artifacts
       - https://plugins.gradle.org/m2/org/openrewrite/rewrite-core/8.91.4/rewrite-core-8.91.4.pom
 ```
 
-From 2.27.4 on, these plugins are published to the Code Genome Project as well as to the plugin portal, so declaring it
-in `pluginManagement` resolves the plugins and everything they are built on:
+These plugins are published to the Code Genome Project, so declaring it in `pluginManagement` resolves the plugins and
+everything they are built on:
 
 ```kotlin
 pluginManagement {
@@ -149,5 +149,5 @@ Recipe and language libraries publish only to the Code Genome Project. `org.open
 the `recipe-library` and `language-library` plugins) adds the CGP bucket as a publishing repository, and stays inert
 unless `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` are set, so only CI publishes.
 
-This project's own plugins are released to both the Code Genome Project and the Gradle Plugin Portal; snapshots go to
-the Code Genome Project only.
+This project's own plugins are released to the Code Genome Project, and for now also to the Gradle Plugin Portal;
+snapshots go to the Code Genome Project only.
