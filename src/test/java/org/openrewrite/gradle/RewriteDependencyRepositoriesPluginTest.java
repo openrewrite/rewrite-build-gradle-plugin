@@ -35,19 +35,18 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 class RewriteDependencyRepositoriesPluginTest {
 
     @Test
-    void codegenomeAbsentWithoutCredentials(@TempDir File projectDir) throws IOException {
-        String username = System.getenv("ORG_GRADLE_PROJECT_codegenomeUsername");
-        assumeTrue(username == null || username.isEmpty(), "CGP credentials present — repository activates");
+    void codegenomeRegisteredWithoutCredentials(@TempDir File projectDir) throws IOException {
         writeProject(projectDir);
 
         BuildResult result = GradleRunner.create()
                 .withProjectDir(projectDir)
                 .withPluginClasspath()
-                .withArguments("printRepositories")
+                .withArguments("printRepositories", "-PcodegenomeUsername=", "-PcodegenomePassword=")
                 .build();
 
-        assertThat(result.getOutput()).doesNotContain("repo:codegenome");
-        assertThat(result.getOutput()).contains("repo:MavenRepo");
+        assertThat(result.getOutput())
+                .contains("repo:codegenome=https://artifacts.codegenomeproject.org/maven")
+                .contains("repo:MavenRepo");
     }
 
     @Test
@@ -135,7 +134,7 @@ class RewriteDependencyRepositoriesPluginTest {
     @Test
     void rewriteArtifactsIncludingToolsForksResolveFromCodegenome(@TempDir File projectDir) throws IOException {
         String username = System.getenv("ORG_GRADLE_PROJECT_codegenomeUsername");
-        assumeTrue(username != null && !username.isEmpty(), "CGP credentials absent — Maven Central stays the fallback");
+        assumeTrue(username != null && !username.isEmpty(), "CGP credentials absent — maven-metadata.xml needs them");
         writeFile(new File(projectDir, "settings.gradle"), "rootProject.name = 'cgp-consumer'");
         //language=groovy
         writeFile(new File(projectDir, "build.gradle"), """
@@ -165,36 +164,6 @@ class RewriteDependencyRepositoriesPluginTest {
         assertThat(output).contains("https://artifacts.codegenomeproject.org/maven/org/openrewrite/rewrite-bom");
         assertThat(output).contains("https://artifacts.codegenomeproject.org/maven/org/openrewrite/tools/java-object-diff");
         assertThat(output).doesNotContain("https://repo.maven.apache.org/maven2/org/openrewrite");
-    }
-
-    @Test
-    void releasingWithoutCredentialsFails(@TempDir File projectDir) throws IOException {
-        writeProject(projectDir);
-
-        BuildResult result = GradleRunner.create()
-                .withProjectDir(projectDir)
-                .withPluginClasspath()
-                .withArguments("printRepositories", "-Preleasing",
-                        "-PcodegenomeUsername=", "-PcodegenomePassword=")
-                .buildAndFail();
-
-        assertThat(result.getOutput())
-                .contains("Code Genome Project credentials are required to release");
-    }
-
-    @Test
-    void releasingWithCredentialsSucceeds(@TempDir File projectDir) throws IOException {
-        writeProject(projectDir);
-
-        BuildResult result = GradleRunner.create()
-                .withProjectDir(projectDir)
-                .withPluginClasspath()
-                .withArguments("printRepositories", "-Preleasing",
-                        "-PcodegenomeUsername=test-user",
-                        "-PcodegenomePassword=cgp_test-token")
-                .build();
-
-        assertThat(result.getOutput()).contains("repo:codegenome=https://artifacts.codegenomeproject.org/maven");
     }
 
     @Test
@@ -235,12 +204,17 @@ class RewriteDependencyRepositoriesPluginTest {
     }
 
     @Test
-    void pomDownloaderRepositoriesOmitCodegenomeWithoutCredentials(@TempDir File projectDir) {
+    void pomDownloaderRepositoriesKeepCodegenomeWithoutCredentials(@TempDir File projectDir) {
         Project project = projectWithCodegenomeCredentials(projectDir, "", "");
 
-        assertThat(RewriteDependencyRepositoriesPlugin.pomDownloaderRepositories(project))
-                .extracting(MavenRepository::getId)
-                .containsExactly("central");
+        List<MavenRepository> repositories = RewriteDependencyRepositoriesPlugin.pomDownloaderRepositories(project);
+
+        assertThat(repositories).extracting(MavenRepository::getId)
+                .containsExactly("codegenome", "central");
+        assertThat(repositories).first().satisfies(codegenome -> {
+            assertThat(codegenome.getUsername()).isNull();
+            assertThat(codegenome.getPassword()).isNull();
+        });
     }
 
     @Test
@@ -252,7 +226,7 @@ class RewriteDependencyRepositoriesPluginTest {
                 "artifactoryPassword", "test-token"));
 
         // Still under Central's id, which is what keeps the downloader from adding the real one behind it
-        assertThat(RewriteDependencyRepositoriesPlugin.pomDownloaderRepositories(project)).singleElement().satisfies(central -> {
+        assertThat(RewriteDependencyRepositoriesPlugin.pomDownloaderRepositories(project)).last().satisfies(central -> {
             assertThat(central.getId()).isEqualTo("central");
             assertThat(central.getUri()).isEqualTo("https://artifactory.moderne.ninja/artifactory/moderne-cache-3/");
             assertThat(central.getUsername()).isEqualTo("test-user");

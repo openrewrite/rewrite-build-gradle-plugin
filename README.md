@@ -43,10 +43,9 @@ instructions give, work too.
 In CI, expose the same values as the `ORG_GRADLE_PROJECT_codegenomeUsername` and `ORG_GRADLE_PROJECT_codegenomePassword`
 environment variables.
 
-Ordinary builds still fall back to Maven Central when credentials are absent, so fork pull requests keep working, but
-a release build (`-Preleasing`) fails at configuration time rather than releasing against whatever versions Maven
-Central happens to carry. This project's own build draws `org.openrewrite` artifacts from the Code Genome Project, and
-fails the same way when releasing without credentials.
+There is no fallback to Maven Central, which stopped receiving new `org.openrewrite` releases: without credentials,
+resolving a dynamic version such as `latest.release` fails with a 401 from the Code Genome Project. This project's own
+build resolves `org.openrewrite` artifacts the same way.
 
 ### Settings
 

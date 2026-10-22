@@ -15,7 +15,6 @@
  */
 package org.openrewrite.gradle;
 
-import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.dsl.RepositoryHandler;
@@ -45,50 +44,31 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
 
         String cgpUsername = cgpUsername(project);
         String cgpPassword = cgpPassword(project);
-        boolean cgpConfigured = cgpConfigured(cgpUsername, cgpPassword);
-        if (!cgpConfigured && releasing) {
-            throw new GradleException(
-                    "Code Genome Project credentials are required to release " + project.getPath() + ", so that its\n" +
-                    "org.openrewrite and io.moderne dependencies resolve from " + CGP_URL + "\n" +
-                    "rather than falling back to older versions on Maven Central.\n" +
-                    "\n" +
-                    "Set them in ~/.gradle/gradle.properties:\n" +
-                    "\n" +
-                    "    codegenomeUsername=you@example.com\n" +
-                    "    codegenomePassword=cgp_...\n" +
-                    "\n" +
-                    "(codeGenomeUsername and codeGenomeToken work too), or expose them as the\n" +
-                    "ORG_GRADLE_PROJECT_codegenomeUsername and ORG_GRADLE_PROJECT_codegenomePassword environment variables.");
-        }
-        if (cgpConfigured) {
-            repos.add(repos.maven(repo -> {
-                repo.setName(CGP_ID);
-                repo.setUrl(CGP_URL);
+        repos.add(repos.maven(repo -> {
+            repo.setName(CGP_ID);
+            repo.setUrl(CGP_URL);
+            if (cgpConfigured(cgpUsername, cgpPassword)) {
                 repo.credentials(creds -> {
                     creds.setUsername(cgpUsername);
                     creds.setPassword(cgpPassword);
                 });
-                repo.content(content -> {
-                    content.includeGroupAndSubgroups("org.openrewrite");
-                    content.includeGroupAndSubgroups("io.moderne");
-                });
-            }));
-        }
-
-        repos.add(repos.mavenCentral(repo -> {
-            if (cgpConfigured) {
-                repo.content(content -> {
-                    content.excludeGroupAndSubgroups("org.openrewrite");
-                    content.excludeGroupAndSubgroups("io.moderne");
-                });
             }
+            repo.content(content -> {
+                content.includeGroupAndSubgroups("org.openrewrite");
+                content.includeGroupAndSubgroups("io.moderne");
+            });
         }));
+
+        repos.add(repos.mavenCentral(repo -> repo.content(content -> {
+            content.excludeGroupAndSubgroups("org.openrewrite");
+            content.excludeGroupAndSubgroups("io.moderne");
+        })));
     }
 
     /**
      * The repositories {@link #apply} configures, modelled for OpenRewrite's {@code MavenPomDownloader}:
-     * CGP first when credentials are configured, then always Maven Central, which everything CGP does not
-     * host still comes from — by way of the Artifactory mirror when there are credentials for that.
+     * CGP first, then Maven Central, which everything CGP does not host still comes from — by way of the
+     * Artifactory mirror when there are credentials for that.
      * {@code mavenLocal()} is left out, so that alignment follows published versions rather than whatever
      * local builds have installed.
      */
@@ -96,9 +76,9 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
         List<MavenRepository> repositories = new ArrayList<>();
         String cgpUsername = cgpUsername(project);
         String cgpPassword = cgpPassword(project);
-        if (cgpConfigured(cgpUsername, cgpPassword)) {
-            repositories.add(new MavenRepository(CGP_ID, CGP_URL, "true", "true", true, cgpUsername, cgpPassword, null, false));
-        }
+        boolean cgpConfigured = cgpConfigured(cgpUsername, cgpPassword);
+        repositories.add(new MavenRepository(CGP_ID, CGP_URL, "true", "true", true,
+                cgpConfigured ? cgpUsername : null, cgpConfigured ? cgpPassword : null, null, false));
         ArtifactoryMirror mirror = ArtifactoryMirror.ifAvailable(project.getProviders());
         repositories.add(mirror == null ? MavenRepository.MAVEN_CENTRAL : mirror.asMavenCentral());
         return repositories;
