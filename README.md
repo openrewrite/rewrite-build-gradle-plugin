@@ -59,8 +59,31 @@ applying any of these plugins started failing on the `org.openrewrite` artifacts
       - https://plugins.gradle.org/m2/org/openrewrite/rewrite-core/8.91.4/rewrite-core-8.91.4.pom
 ```
 
-Apply `org.openrewrite.build.settings` in `settings.gradle.kts` to add the Code Genome Project there too. It is
-published as its own artifact and carries no `org.openrewrite` dependencies, which is what lets it resolve from the
+These plugins are published to the Code Genome Project, so declaring it in `pluginManagement` resolves the plugins and
+everything they are built on:
+
+```kotlin
+pluginManagement {
+    repositories {
+        maven {
+            name = "codegenome"
+            url = uri("https://artifacts.codegenomeproject.org/maven")
+            credentials {
+                username = providers.gradleProperty("codegenomeUsername").get()
+                password = providers.gradleProperty("codegenomePassword").get()
+            }
+            content {
+                includeGroupAndSubgroups("org.openrewrite")
+                includeGroupAndSubgroups("io.moderne")
+            }
+        }
+        gradlePluginPortal()
+    }
+}
+```
+
+Alternatively, apply `org.openrewrite.build.settings` in `settings.gradle.kts` to add the Code Genome Project there. It
+is published as its own artifact and carries no `org.openrewrite` dependencies, which is what lets it resolve from the
 plugin portal alone and then make everything else resolvable:
 
 ```kotlin
@@ -80,7 +103,8 @@ rootProject.name = "..."
 It reads the same two credential properties, and adds nothing when they are absent — a fork pull request has no way to
 resolve these artifacts, and failing outright would only replace one unhelpful error with another. Nothing is excluded
 from the repositories already declared: a plugin classpath is pinned to exact versions, so a hit anywhere is the same
-artifact, and excluding `org.openrewrite` from the portal would take the plugin markers with it.
+artifact, and releases before 2.27.4 have their plugin markers on the portal only, which excluding `org.openrewrite`
+there would hide.
 
 ## Artifactory mirror
 
@@ -124,3 +148,6 @@ The mirror takes Maven Central's place rather than being tried ahead of it. A st
 Recipe and language libraries publish only to the Code Genome Project. `org.openrewrite.build.publish-cgp` (applied by
 the `recipe-library` and `language-library` plugins) adds the CGP bucket as a publishing repository, and stays inert
 unless `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` are set, so only CI publishes.
+
+This project's own plugins are released to the Code Genome Project, and for now also to the Gradle Plugin Portal;
+snapshots go to the Code Genome Project only.

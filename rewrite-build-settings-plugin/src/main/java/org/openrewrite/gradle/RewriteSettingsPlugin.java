@@ -95,8 +95,8 @@ public class RewriteSettingsPlugin implements Plugin<Settings> {
         }
         // Appended rather than prepended, which a RepositoryHandler cannot do. Nothing is excluded from
         // the repositories already there: a plugin's classpath is pinned to exact versions, so a hit
-        // anywhere is the same artifact, and excluding org.openrewrite from the portal would take the
-        // plugin markers with it.
+        // anywhere is the same artifact, and releases before 2.27.4 have their plugin markers on the
+        // portal only, which excluding org.openrewrite there would hide.
         repositories.maven(repo -> {
             repo.setName(CGP_ID);
             repo.setUrl(CGP_URL);
