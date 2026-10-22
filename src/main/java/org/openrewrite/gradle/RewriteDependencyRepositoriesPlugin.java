@@ -57,8 +57,8 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
                     "    codegenomeUsername=you@example.com\n" +
                     "    codegenomePassword=cgp_...\n" +
                     "\n" +
-                    "or expose them as the ORG_GRADLE_PROJECT_codegenomeUsername and ORG_GRADLE_PROJECT_codegenomePassword\n" +
-                    "environment variables.");
+                    "(codeGenomeUsername and codeGenomeToken work too), or expose them as the\n" +
+                    "ORG_GRADLE_PROJECT_codegenomeUsername and ORG_GRADLE_PROJECT_codegenomePassword environment variables.");
         }
         if (cgpConfigured) {
             repos.add(repos.maven(repo -> {
@@ -104,17 +104,25 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
         return repositories;
     }
 
+    // codeGenomeUsername and codeGenomeToken are the names docs.openrewrite.org and the Code Genome Project's
+    // own setup instructions give, so a build set up from either finds its credentials here too
     private static String cgpUsername(Project project) {
-        return gradleProperty(project, "codegenomeUsername");
+        return firstGradleProperty(project, "codegenomeUsername", "codeGenomeUsername");
     }
 
     private static String cgpPassword(Project project) {
-        return gradleProperty(project, "codegenomePassword");
+        return firstGradleProperty(project, "codegenomePassword", "codeGenomeToken");
     }
 
-    private static String gradleProperty(Project project, String name) {
+    private static String firstGradleProperty(Project project, String... names) {
         ProviderFactory providers = project.getProviders();
-        return providers.gradleProperty(name).getOrElse("");
+        for (String name : names) {
+            String value = providers.gradleProperty(name).getOrElse("");
+            if (!value.isEmpty()) {
+                return value;
+            }
+        }
+        return "";
     }
 
     private static boolean cgpConfigured(String cgpUsername, String cgpPassword) {

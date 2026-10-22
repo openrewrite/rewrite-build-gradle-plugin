@@ -73,15 +73,17 @@ public class RewriteSettingsPlugin implements Plugin<Settings> {
     }
 
     private static void addCodegenome(Settings settings) {
-        String username = gradleProperty(settings, "codegenomeUsername");
-        String password = gradleProperty(settings, "codegenomePassword");
+        // The second names are the ones docs.openrewrite.org and the Code Genome Project's own setup instructions give
+        String username = firstGradleProperty(settings, "codegenomeUsername", "codeGenomeUsername");
+        String password = firstGradleProperty(settings, "codegenomePassword", "codeGenomeToken");
         if (username.isEmpty() || password.isEmpty()) {
             // Fork pull requests cannot see repository secrets. Nothing here can make their builds
             // resolve, but failing outright would only replace one unhelpful error with another.
             logger.warn("Code Genome Project credentials are absent, so " + CGP_URL + " is not among the\n" +
                         "repositories plugins resolve from. An org.openrewrite build plugin will fail to resolve its\n" +
-                        "own dependencies. Set codegenomeUsername and codegenomePassword in ~/.gradle/gradle.properties,\n" +
-                        "or expose them as ORG_GRADLE_PROJECT_codegenomeUsername and ORG_GRADLE_PROJECT_codegenomePassword.");
+                        "own dependencies. Set codegenomeUsername and codegenomePassword (or codeGenomeUsername and\n" +
+                        "codeGenomeToken) in ~/.gradle/gradle.properties, or expose them as\n" +
+                        "ORG_GRADLE_PROJECT_codegenomeUsername and ORG_GRADLE_PROJECT_codegenomePassword.");
             return;
         }
 
@@ -113,6 +115,16 @@ public class RewriteSettingsPlugin implements Plugin<Settings> {
 
     private static String gradleProperty(Settings settings, String name) {
         return settings.getProviders().gradleProperty(name).getOrElse("");
+    }
+
+    private static String firstGradleProperty(Settings settings, String... names) {
+        for (String name : names) {
+            String value = gradleProperty(settings, name);
+            if (!value.isEmpty()) {
+                return value;
+            }
+        }
+        return "";
     }
 
     private static String environmentVariable(Settings settings, String name) {

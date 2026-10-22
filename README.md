@@ -38,6 +38,9 @@ codegenomeUsername=you@example.com
 codegenomePassword=cgp_...
 ```
 
+`codeGenomeUsername` and `codeGenomeToken`, the names docs.openrewrite.org and the Code Genome Project's own setup
+instructions give, work too.
+
 In CI, expose the same values as the `ORG_GRADLE_PROJECT_codegenomeUsername` and `ORG_GRADLE_PROJECT_codegenomePassword`
 environment variables.
 

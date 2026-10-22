@@ -44,6 +44,18 @@ class RewriteSettingsPluginTest {
     }
 
     @Test
+    void registersCodegenomeWithCodeGenomeProjectSetupPropertyNames(@TempDir File projectDir) throws IOException {
+        writeProject(projectDir, "gradlePluginPortal()");
+
+        assertThat(pluginRepositories(projectDir, asList("printPluginRepositories",
+                "-PcodegenomeUsername=",
+                "-PcodegenomePassword=",
+                "-PcodeGenomeUsername=test-user",
+                "-PcodeGenomeToken=cgp_test-token")))
+                .containsExactly("Gradle Central Plugin Repository", "codegenome");
+    }
+
+    @Test
     void keepsThePluginPortalWhenSettingsDeclaresNoRepositories(@TempDir File projectDir) throws IOException {
         // An empty handler is what makes Gradle fall back to the portal, so adding to one has to restore it
         writeProject(projectDir, "");
