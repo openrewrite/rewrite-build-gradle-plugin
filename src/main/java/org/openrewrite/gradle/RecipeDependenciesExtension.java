@@ -25,11 +25,7 @@ import org.gradle.api.artifacts.dsl.DependencyHandler;
 
 import javax.inject.Inject;
 import java.io.File;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 public class RecipeDependenciesExtension {
     private final ConfigurationContainer configurationContainer;
