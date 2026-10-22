@@ -34,6 +34,7 @@ import org.gradle.jvm.tasks.Jar;
 import org.gradle.jvm.toolchain.JavaLanguageVersion;
 import org.gradle.testing.base.TestingExtension;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class RewriteJavaPlugin implements Plugin<Project> {
@@ -63,10 +64,11 @@ public class RewriteJavaPlugin implements Plugin<Project> {
         project.getConfigurations().all(config -> {
             config.getResolutionStrategy().cacheChangingModulesFor(0, TimeUnit.SECONDS);
             config.getResolutionStrategy().cacheDynamicVersionsFor(0, TimeUnit.SECONDS);
-            // Recipes only need the Refaster API; its dependencies may require a JVM newer than Java 8
+            // Error Prone 2.51.0+ depends on versions of these that require Java 9 and 11
             config.getDependencies().withType(ModuleDependency.class).configureEach(dep -> {
                 if ("com.google.errorprone".equals(dep.getGroup()) && "error_prone_core".equals(dep.getName())) {
-                    dep.setTransitive(false);
+                    dep.exclude(Map.of("group", "org.pcollections", "module", "pcollections"));
+                    dep.exclude(Map.of("group", "com.github.ben-manes.caffeine", "module", "caffeine"));
                 }
             });
         });
