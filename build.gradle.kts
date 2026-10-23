@@ -133,14 +133,6 @@ gradlePlugin {
             description = "Applies the Moderne Proprietary License to the project"
             implementationClass = "org.openrewrite.gradle.ModerneProprietaryLicensePlugin"
         }
-        create("build-bom-alignment") {
-            id = "org.openrewrite.build.bom-alignment"
-            displayName = "BOM dependency version alignment check"
-            description = "Adds a checkBomAlignment task that fails the build if the BOM's transitive graph " +
-                    "requests any org.openrewrite.* or io.moderne.* dependency at more than one version. " +
-                    "Hooks into the check lifecycle and any AbstractPublishToMaven task."
-            implementationClass = "org.openrewrite.gradle.RewriteBomAlignmentPlugin"
-        }
     }
 }
 
