@@ -141,9 +141,9 @@ class RewriteArtifactoryMirrorPluginTest {
     void takesTheMirrorCiExportsWhenThereAreNoGradleProperties(@TempDir File projectDir) throws IOException {
         writeMavenCentralConsumer(projectDir);
         Map<String, String> env = environmentWithoutMirror();
-        env.put("REWRITE_GRADLE_MIRROR_URL", "https://mirror.example.com/maven/");
-        env.put("REWRITE_GRADLE_MIRROR_USERNAME", "ci-user");
-        env.put("REWRITE_GRADLE_MIRROR_PASSWORD", "ci-token");
+        env.put("MAVEN_CENTRAL_MIRROR_URL", "https://mirror.example.com/maven/");
+        env.put("MAVEN_CENTRAL_MIRROR_USERNAME", "ci-user");
+        env.put("MAVEN_CENTRAL_MIRROR_PASSWORD", "ci-token");
 
         assertThat(repositories(runner(projectDir, "printRepositories").withEnvironment(env)))
           .containsExactly("MavenRepo=https://mirror.example.com/maven/");
@@ -154,9 +154,9 @@ class RewriteArtifactoryMirrorPluginTest {
         // A fork's pull request: the workflow still sets the variables, to secrets that come out empty
         writeMavenCentralConsumer(projectDir);
         Map<String, String> env = environmentWithoutMirror();
-        env.put("REWRITE_GRADLE_MIRROR_URL", MIRROR);
-        env.put("REWRITE_GRADLE_MIRROR_USERNAME", "");
-        env.put("REWRITE_GRADLE_MIRROR_PASSWORD", "");
+        env.put("MAVEN_CENTRAL_MIRROR_URL", MIRROR);
+        env.put("MAVEN_CENTRAL_MIRROR_USERNAME", "");
+        env.put("MAVEN_CENTRAL_MIRROR_PASSWORD", "");
 
         assertThat(repositories(runner(projectDir, "printRepositories").withEnvironment(env)))
           .containsExactly("MavenRepo=" + MAVEN_CENTRAL);
@@ -271,7 +271,7 @@ class RewriteArtifactoryMirrorPluginTest {
     /** Whatever this build was itself given, which would otherwise decide the outcome in the test's place. */
     private static Map<String, String> environmentWithoutMirror() {
         Map<String, String> env = new HashMap<>(System.getenv());
-        env.keySet().removeIf(name -> name.startsWith("REWRITE_GRADLE_MIRROR_") ||
+        env.keySet().removeIf(name -> name.startsWith("MAVEN_CENTRAL_MIRROR_") ||
                                       name.startsWith("ORG_GRADLE_PROJECT_artifactory"));
         return env;
     }

@@ -56,7 +56,7 @@ final class ArtifactoryMirror {
 
     /**
      * Credentials are the {@code artifactoryUsername} and {@code artifactoryPassword} Gradle properties, or
-     * failing those the {@code REWRITE_GRADLE_MIRROR_*} environment variables. CI exports the latter, and so
+     * failing those the {@code MAVEN_CENTRAL_MIRROR_*} environment variables. CI exports the latter, and so
      * does {@link #environment()} to the tests of a build that is itself mirrored, which is how a build those
      * tests go on to launch comes to be mirrored as well.
      *
@@ -68,9 +68,9 @@ final class ArtifactoryMirror {
         if (!username.isEmpty() && !password.isEmpty()) {
             return new ArtifactoryMirror(URL, username, password);
         }
-        String url = providers.environmentVariable("REWRITE_GRADLE_MIRROR_URL").getOrElse("");
-        username = providers.environmentVariable("REWRITE_GRADLE_MIRROR_USERNAME").getOrElse("");
-        password = providers.environmentVariable("REWRITE_GRADLE_MIRROR_PASSWORD").getOrElse("");
+        String url = providers.environmentVariable("MAVEN_CENTRAL_MIRROR_URL").getOrElse("");
+        username = providers.environmentVariable("MAVEN_CENTRAL_MIRROR_USERNAME").getOrElse("");
+        password = providers.environmentVariable("MAVEN_CENTRAL_MIRROR_PASSWORD").getOrElse("");
         if (!url.isEmpty() && !username.isEmpty() && !password.isEmpty()) {
             return new ArtifactoryMirror(url, username, password);
         }
@@ -123,8 +123,8 @@ final class ArtifactoryMirror {
      */
     Map<String, String> environment() {
         return Map.of(
-                "REWRITE_GRADLE_MIRROR_URL", url,
-                "REWRITE_GRADLE_MIRROR_USERNAME", username,
-                "REWRITE_GRADLE_MIRROR_PASSWORD", password);
+                "MAVEN_CENTRAL_MIRROR_URL", url,
+                "MAVEN_CENTRAL_MIRROR_USERNAME", username,
+                "MAVEN_CENTRAL_MIRROR_PASSWORD", password);
     }
 }
