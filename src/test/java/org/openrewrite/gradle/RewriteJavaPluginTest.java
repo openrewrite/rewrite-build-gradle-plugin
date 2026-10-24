@@ -146,9 +146,9 @@ class RewriteJavaPluginTest {
           .withPluginClasspath()
           .build()
           .getOutput())
-          .contains("REWRITE_GRADLE_MIRROR_URL=https://artifactory.moderne.ninja/artifactory/moderne-cache-3/")
-          .contains("REWRITE_GRADLE_MIRROR_USERNAME=test-user")
-          .contains("REWRITE_GRADLE_MIRROR_PASSWORD=test-token");
+          .contains("MAVEN_CENTRAL_MIRROR_URL=https://artifactory.moderne.ninja/artifactory/moderne-cache-3/")
+          .contains("MAVEN_CENTRAL_MIRROR_USERNAME=test-user")
+          .contains("MAVEN_CENTRAL_MIRROR_PASSWORD=test-token");
     }
 
     @Test
@@ -162,7 +162,7 @@ class RewriteJavaPluginTest {
           .withPluginClasspath()
           .build()
           .getOutput())
-          .doesNotContain("REWRITE_GRADLE_MIRROR_");
+          .doesNotContain("MAVEN_CENTRAL_MIRROR_");
     }
 
     private void writeMirrorProbe() throws IOException {
@@ -175,7 +175,7 @@ class RewriteJavaPluginTest {
             }
 
             tasks.register('printMirror') {
-                def mirror = tasks.named('test', Test).get().environment.findAll { it.key.startsWith('REWRITE_GRADLE_MIRROR_') }
+                def mirror = tasks.named('test', Test).get().environment.findAll { it.key.startsWith('MAVEN_CENTRAL_MIRROR_') }
                 doLast {
                     mirror.each { name, value -> println "$name=$value" }
                 }
@@ -186,7 +186,7 @@ class RewriteJavaPluginTest {
     /** CI exports these itself, which would otherwise show up whether or not the plugin set them. */
     private static Map<String, String> environmentWithoutMirror() {
         Map<String, String> env = new HashMap<>(System.getenv());
-        env.keySet().removeIf(name -> name.startsWith("REWRITE_GRADLE_MIRROR_") ||
+        env.keySet().removeIf(name -> name.startsWith("MAVEN_CENTRAL_MIRROR_") ||
                                       name.startsWith("ORG_GRADLE_PROJECT_artifactory"));
         return env;
     }

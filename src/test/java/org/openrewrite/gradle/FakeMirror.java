@@ -63,11 +63,11 @@ final class FakeMirror implements AutoCloseable {
     /** The variables CI exports, in place of whatever this build was itself given. */
     Map<String, String> environment() {
         Map<String, String> env = new HashMap<>(System.getenv());
-        env.keySet().removeIf(name -> name.startsWith("REWRITE_GRADLE_MIRROR_") ||
+        env.keySet().removeIf(name -> name.startsWith("MAVEN_CENTRAL_MIRROR_") ||
                                       name.startsWith("ORG_GRADLE_PROJECT_artifactory"));
-        env.put("REWRITE_GRADLE_MIRROR_URL", url());
-        env.put("REWRITE_GRADLE_MIRROR_USERNAME", USERNAME);
-        env.put("REWRITE_GRADLE_MIRROR_PASSWORD", PASSWORD);
+        env.put("MAVEN_CENTRAL_MIRROR_URL", url());
+        env.put("MAVEN_CENTRAL_MIRROR_USERNAME", USERNAME);
+        env.put("MAVEN_CENTRAL_MIRROR_PASSWORD", PASSWORD);
         return env;
     }
 

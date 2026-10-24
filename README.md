@@ -94,8 +94,8 @@ artifactoryUsername=you@example.com
 artifactoryPassword=...
 ```
 
-CI exports the same thing as the `REWRITE_GRADLE_MIRROR_URL`, `REWRITE_GRADLE_MIRROR_USERNAME` and
-`REWRITE_GRADLE_MIRROR_PASSWORD` environment variables, which are read when the properties are absent. With neither —
+CI exports the same thing as the `MAVEN_CENTRAL_MIRROR_URL`, `MAVEN_CENTRAL_MIRROR_USERNAME` and
+`MAVEN_CENTRAL_MIRROR_PASSWORD` environment variables, which are read when the properties are absent. With neither —
 or with the variables set to secrets that come out empty, as in a fork's pull request — every repository stays where
 it was declared.
 

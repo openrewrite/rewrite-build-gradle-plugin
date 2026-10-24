@@ -188,9 +188,9 @@ if (artifactoryUsername.isNotEmpty() && artifactoryPassword.isNotEmpty()) {
     }
     // As RewriteJavaPlugin does, which is how the builds these tests launch come to be mirrored too
     tasks.withType<Test>().configureEach {
-        environment("REWRITE_GRADLE_MIRROR_URL", artifactoryMirrorUrl)
-        environment("REWRITE_GRADLE_MIRROR_USERNAME", artifactoryUsername)
-        environment("REWRITE_GRADLE_MIRROR_PASSWORD", artifactoryPassword)
+        environment("MAVEN_CENTRAL_MIRROR_URL", artifactoryMirrorUrl)
+        environment("MAVEN_CENTRAL_MIRROR_USERNAME", artifactoryUsername)
+        environment("MAVEN_CENTRAL_MIRROR_PASSWORD", artifactoryPassword)
     }
 }
 
