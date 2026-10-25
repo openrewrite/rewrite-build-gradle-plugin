@@ -33,6 +33,8 @@ import org.gradle.external.javadoc.CoreJavadocOptions;
 import org.gradle.jvm.tasks.Jar;
 import org.gradle.jvm.toolchain.JavaLanguageVersion;
 import org.gradle.testing.base.TestingExtension;
+import org.gradle.testretry.TestRetryPlugin;
+import org.gradle.testretry.TestRetryTaskExtension;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -146,10 +148,8 @@ public class RewriteJavaPlugin implements Plugin<Project> {
                                     "org.junit:junit-bom:" + pickBomVersion(project))));
                 }));
 
-//        project.getTasks().withType(Test.class).configureEach(task ->
-//                project.getExtensions().configure(TestRetryTaskExtension.class, ext ->
-//                        ext.getMaxFailures().set(4))
-//        );
+        project.getPlugins().apply(TestRetryPlugin.class);
+        boolean ci = System.getenv("CI") != null;
 
         ArtifactoryMirror mirror = ArtifactoryMirror.ifAvailable(project.getProviders());
 
@@ -159,7 +159,22 @@ public class RewriteJavaPlugin implements Plugin<Project> {
                 task.environment(mirror.environment());
             }
 
-            if (System.getenv("CI") == null) {
+            // On CI a test that fails runs once more, in a new test JVM, and fails the task only if it fails again,
+            // unless ten or more of the task's tests failed: that is a break, not a flaky test. Off CI nothing runs
+            // again, so a flaky test shows itself to whoever is working on it. Neither number is an input of the
+            // task, so CI and developers' machines share its build cache entries. If an init script applied its own
+            // copy of the plugin first, the task's extension is of that copy's type, and its settings stand.
+            TestRetryTaskExtension retry = task.getExtensions().findByType(TestRetryTaskExtension.class);
+            if (retry != null) {
+                retry.getMaxRetries().convention(ci ? 1 : 0);
+                retry.getMaxFailures().convention(10);
+                retry.getFailOnPassedAfterRetry().convention(false);
+            }
+            // Each attempt stays a testcase of its own in the JUnit XML, the retry after the first round's, which is
+            // how a report tells a test that passed on its retry from one that passed the first time
+            task.getReports().getJunitXml().getMergeReruns().convention(false);
+
+            if (!ci) {
                 // Developer machines typically use CPUs with hyper-threading, so the logical core count is double
                 // what is useful to enable
                 task.setMaxParallelForks(

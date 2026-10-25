@@ -235,6 +235,7 @@ dependencies {
     implementation("com.netflix.nebula:nebula-publishing-plugin:latest.release")
     implementation("com.netflix.nebula:nebula-project-plugin:latest.release")
     implementation("com.gradleup.shadow:com.gradleup.shadow.gradle.plugin:9.0.0-beta7") // Latest supporting Java 8
+    implementation("org.gradle:test-retry-gradle-plugin:latest.release")
 
     implementation("org.jspecify:jspecify:1.0.0")
     implementation(platform("com.fasterxml.jackson:jackson-bom:2.21.7"))
