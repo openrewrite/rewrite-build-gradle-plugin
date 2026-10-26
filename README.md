@@ -119,6 +119,29 @@ builds, which are builds of their own. To have the plugin classpath mirrored too
 The mirror takes Maven Central's place rather than being tried ahead of it. A stale password fails the build with a
 401, and an artifact the mirror cannot serve is reported as not found, instead of either falling back.
 
+## Test retries
+
+`org.openrewrite.build.java-base` (applied by the `recipe-library` and `language-library` plugins) applies Gradle's
+[test-retry plugin](https://github.com/gradle/test-retry-gradle-plugin) to every `Test` task. On CI, wherever the `CI`
+environment variable is set, as it is on the Code Genome Project, a test that fails runs once more in a new test JVM,
+and fails the task only if it fails again. When ten or more of a task's tests fail, none of them runs again: that is a
+break, not a flaky test. On a developer's machine nothing runs again, so a flaky test shows itself to whoever is
+working on it.
+
+A test that failed and then passed appears twice in the JUnit XML report, as two `testcase`s with the same name, the
+failed one first. The retries run once the task's other tests are done, so they come after the rest of their class. A
+parameterized test is retried whole: all of its invocations run again, the ones that passed too.
+
+A build can change either number for a task, or turn retries off:
+
+```kotlin
+tasks.named<Test>("test") {
+    retry {
+        maxRetries = 0
+    }
+}
+```
+
 ## Publishing
 
 Recipe and language libraries publish only to the Code Genome Project. `org.openrewrite.build.publish-cgp` (applied by
