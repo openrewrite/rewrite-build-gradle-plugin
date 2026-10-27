@@ -238,7 +238,7 @@ dependencies {
     implementation("org.gradle:test-retry-gradle-plugin:latest.release")
 
     implementation("org.jspecify:jspecify:1.0.0")
-    implementation(platform("com.fasterxml.jackson:jackson-bom:2.21.7"))
+    implementation(platform("com.fasterxml.jackson:jackson-bom:2.21.8"))
     implementation("com.fasterxml.jackson.core:jackson-core")
     implementation("com.fasterxml.jackson.core:jackson-databind")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml")
@@ -282,6 +282,9 @@ dependencies {
         }
         implementation("org.apache.httpcomponents.client5:httpclient5:5.6.4") {
             because("CVE-2026-40542, CVE-2026-64607")
+        }
+        implementation("com.fasterxml.jackson:jackson-bom:2.22.4") {
+            because("CVE-2026-110879: open-vulnerability-clients brings the 2.22 line, which outranks our 2.21 platform")
         }
         implementation("org.apache.httpcomponents.client5:httpclient5-cache:5.6.4") {
             because("CVE-2026-40542, CVE-2026-64607")
