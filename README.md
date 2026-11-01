@@ -118,6 +118,22 @@ The Code Genome Project serves the backpatches its own artifacts depend on to an
 
 Without the credentials, neither the alliance's repository nor its platform is added.
 
+### npm packages
+
+A project that packs an npm package in a `Tar` task named `npmPack`, as the recipe repositories do, also takes the
+alliance's npm backpatches. With the same credentials, `npmBackpatches` reads the alliance's npm index and the package's
+`package-lock.json`. An installed production dependency takes a backpatch on its own line: the same major version,
+fixing a version at or after the installed one.
+
+When something does, the package bundles it. The task installs the production dependencies in a staging copy with the
+backpatches in place, and `npmPack` takes what npm bundles of the direct dependencies that lead to one. The packed
+`package.json` lists those in `bundleDependencies` and names a direct dependency at its backpatch. Whoever installs the
+package gets the backpatches from the package itself, since the alliance serves them only to its customers.
+
+Our own `@openrewrite` and `@moderne` packages are never bundled: each bundles its own. The task needs `npm` on the
+path. A bundled package that reaches a backpatch through another package's range runs with it, but `npm ls` reports it
+as invalid, because npm's ranges never match a prerelease.
+
 ## Artifactory mirror
 
 Maven Central rate limits by address, so builds that resolve from it directly start failing with HTTP 429 once enough
