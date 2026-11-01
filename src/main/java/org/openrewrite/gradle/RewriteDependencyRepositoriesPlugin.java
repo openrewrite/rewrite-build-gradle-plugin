@@ -42,6 +42,13 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
             repos.add(repos.mavenLocal());
         }
 
+        // Ahead of CGP, which has only the backpatches its own artifacts depend on
+        BackpatchAlliance alliance = BackpatchAlliance.ifConfigured(project.getProviders());
+        if (alliance != null) {
+            alliance.addRepository(repos);
+            BackpatchAlliance.applyPlatform(project);
+        }
+
         String cgpUsername = cgpUsername(project);
         String cgpPassword = cgpPassword(project);
         repos.add(repos.maven(repo -> {
@@ -56,6 +63,8 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
             repo.content(content -> {
                 content.includeGroupAndSubgroups("org.openrewrite");
                 content.includeGroupAndSubgroups("io.moderne");
+                // The backpatches CGP's own artifacts depend on, which it serves whether or not the build can reach the alliance
+                content.includeVersionByRegex(".*", ".*", BackpatchAlliance.VERSIONS);
             });
         }));
 
