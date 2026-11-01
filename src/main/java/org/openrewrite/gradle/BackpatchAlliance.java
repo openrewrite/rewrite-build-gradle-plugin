@@ -33,6 +33,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
+import java.net.URI;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -89,6 +90,21 @@ final class BackpatchAlliance {
             return null;
         }
         return new BackpatchAlliance(providers.gradleProperty("backpatchUrl").getOrElse(URL), username, password);
+    }
+
+    /** The alliance's npm registry, beside its Maven repository. */
+    String npmUrl() {
+        return URI.create(url).resolve("/npm/").toString();
+    }
+
+    /** The alliance's npm index: for each package, each fixed upstream version and its newest backpatch. */
+    String npmIndexUrl() {
+        return URI.create(url).resolve("/feeds/index/npm.json").toString();
+    }
+
+    /** The npm backpatches an npm package's production dependencies take, bundled into it ({@link NpmBackpatches}). */
+    void bundleNpmBackpatches(Project project) {
+        NpmBackpatches.apply(project, npmUrl(), npmIndexUrl(), username, password);
     }
 
     /** The alliance's repository, asked for backpatches alone, and the only one asked for its platform. */

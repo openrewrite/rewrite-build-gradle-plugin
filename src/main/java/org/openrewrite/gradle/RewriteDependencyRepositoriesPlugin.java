@@ -47,6 +47,7 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
         if (alliance != null) {
             alliance.addRepository(repos);
             BackpatchAlliance.applyPlatform(project);
+            alliance.bundleNpmBackpatches(project);
         }
 
         String cgpUsername = cgpUsername(project);
