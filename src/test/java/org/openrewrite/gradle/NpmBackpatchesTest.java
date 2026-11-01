@@ -91,8 +91,9 @@ class NpmBackpatchesTest {
         NpmBackpatches.Plan plan = NpmBackpatches.plan(lockfile, index, name -> name.startsWith("@openrewrite/"));
 
         assertThat(plan.direct()).containsExactly(Map.entry("lib", "1.0.1-backpatch-00001"));
-        assertThat(plan.overrides()).containsExactly(
-          Map.entry("lib@1.0.0", "1.0.1-backpatch-00001"), Map.entry("util@2.0.5", "2.1.1-backpatch-00001"));
+        assertThat(plan.swaps()).containsExactly(
+          Map.entry("node_modules/deep/node_modules/util", "2.1.1-backpatch-00001"),
+          Map.entry("node_modules/lib", "1.0.1-backpatch-00001"));
         // wrapper resolves lib from the root, so it is bundled to take the bundled lib. other bundles its own lib, the
         // hoisted util is only @openrewrite/rewrite's and the tool's, and peer is the installer's.
         assertThat(plan.bundled()).containsExactly("deep", "lib", "wrapper");

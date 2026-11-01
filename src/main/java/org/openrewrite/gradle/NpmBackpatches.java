@@ -66,15 +66,14 @@ final class NpmBackpatches {
     }
 
     /**
-     * What to change in a staging copy of the package to install its production dependencies with their backpatches.
+     * What to change in a staging install of the package's production dependencies.
      *
-     * @param direct    each direct dependency that takes a backpatch itself, with the backpatch's version
-     * @param overrides each install that takes one, as an npm override selector ({@code name@installed}), with the
-     *                  backpatch's version
-     * @param bundled   the direct dependencies to bundle, whose part of the tree takes a backpatch
-     * @param fixed     what takes a backpatch, as {@code name installed → backpatch}, for the build's log
+     * @param direct  each direct dependency that takes a backpatch itself, with the backpatch's version
+     * @param swaps   each install that takes one, by where the lockfile installs it, with the backpatch's version
+     * @param bundled the direct dependencies to bundle, whose part of the tree takes a backpatch
+     * @param fixed   what takes a backpatch, as {@code name installed → backpatch}, for the build's log
      */
-    record Plan(SortedMap<String, String> direct, SortedMap<String, String> overrides, SortedSet<String> bundled,
+    record Plan(SortedMap<String, String> direct, SortedMap<String, String> swaps, SortedSet<String> bundled,
                 SortedSet<String> fixed) {
 
         boolean isEmpty() {
@@ -126,7 +125,7 @@ final class NpmBackpatches {
         Set<String> directNames = dependencyNames(packages.path(""), false);
 
         SortedMap<String, String> direct = new TreeMap<>();
-        SortedMap<String, String> overrides = new TreeMap<>();
+        SortedMap<String, String> swaps = new TreeMap<>();
         SortedSet<String> bundled = new TreeSet<>();
         SortedSet<String> fixed = new TreeSet<>();
         for (String name : directNames) {
@@ -146,12 +145,12 @@ final class NpmBackpatches {
                 if (reached.equals(NODE_MODULES + reachedName) && directNames.contains(reachedName)) {
                     direct.put(reachedName, backpatch);
                 }
-                // A backpatch is a prerelease, which no range a dependent asks for takes on its own, so every install of
-                // what it fixes is overridden, a direct dependency's too.
-                overrides.put(reachedName + "@" + installed, backpatch);
+                // Swapped where it is installed, so that whatever requires it from there takes the backpatch: a backpatch
+                // is a prerelease, which no range a dependent asks for would resolve to on its own.
+                swaps.put(reached, backpatch);
             }
         }
-        return new Plan(direct, overrides, bundled, fixed);
+        return new Plan(direct, swaps, bundled, fixed);
     }
 
     /**
@@ -198,7 +197,7 @@ final class NpmBackpatches {
         return nested < 0 ? "" : at.substring(0, nested);
     }
 
-    private static String nameAt(String at) {
+    static String nameAt(String at) {
         return at.substring(at.lastIndexOf(NODE_MODULES) + NODE_MODULES.length());
     }
 

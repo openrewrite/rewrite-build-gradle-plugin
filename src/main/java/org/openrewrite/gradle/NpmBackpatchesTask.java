@@ -25,6 +25,7 @@ import org.gradle.api.file.ArchiveOperations;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileSystemOperations;
 import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.file.RelativePath;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
@@ -53,8 +54,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Stream;
@@ -135,28 +138,27 @@ public abstract class NpmBackpatchesTask extends DefaultTask {
             return;
         }
 
-        File staging = getTemporaryDir();
-        getFileSystemOperations().delete(spec -> spec.delete((Object[]) staging.listFiles()));
-        String npmUrl = getNpmUrl().get();
+        // The lockfile's own production tree, as npm ci installs it, which asks npm to resolve nothing.
+        File temporary = getTemporaryDir();
+        getFileSystemOperations().delete(spec -> spec.delete((Object[]) temporary.listFiles()));
+        File staging = new File(temporary, "staging");
+        Files.createDirectories(staging.toPath());
         ObjectNode staged = packageJson.deepCopy();
-        staged.remove("devDependencies");
-        staged.remove("scripts");
-        plan.direct().forEach((dependency, version) ->
-                setSpec(staged, dependency, NpmBackpatches.tarball(npmUrl, dependency, version)));
-        ObjectNode overrides = staged.has("overrides") ? (ObjectNode) staged.get("overrides") : staged.putObject("overrides");
-        plan.overrides().forEach((selector, version) -> {
-            String dependency = selector.substring(0, selector.lastIndexOf('@'));
-            // npm takes no override of a direct dependency other than a reference to it.
-            overrides.put(selector, version.equals(plan.direct().get(dependency)) ? "$" + dependency :
-                    NpmBackpatches.tarball(npmUrl, dependency, version));
-        });
         ArrayNode bundled = staged.putArray("bundleDependencies");
         plan.bundled().forEach(bundled::add);
         JSON.writerWithDefaultPrettyPrinter().writeValue(new File(staging, "package.json"), staged);
         Files.copy(getLockfile().get().getAsFile().toPath(), staging.toPath().resolve("package-lock.json"));
+        npm(staging, "ci", "--omit=dev", "--ignore-scripts", "--no-audit", "--no-fund", "--loglevel=error");
 
-        npm(staging, "install", "--omit=dev", "--ignore-scripts", "--no-audit", "--no-fund", "--loglevel=error");
-        File packed = new File(staging, "packed");
+        // Each backpatch where its upstream version is installed, so that whatever requires it from there takes it.
+        for (Map.Entry<String, String> swap : plan.swaps().entrySet()) {
+            swap(staging.toPath().resolve(swap.getKey()), NpmBackpatches.nameAt(swap.getKey()), swap.getValue(),
+                    new File(temporary, "backpatches").toPath());
+        }
+        // What npm pack would otherwise take the installed versions from
+        Files.deleteIfExists(staging.toPath().resolve("node_modules/.package-lock.json"));
+
+        File packed = new File(temporary, "packed");
         Files.createDirectories(packed.toPath());
         npm(staging, "pack", "--ignore-scripts", "--loglevel=error", "--pack-destination", packed.getAbsolutePath());
         File[] tarballs = packed.listFiles((dir, file) -> file.endsWith(".tgz"));
@@ -202,19 +204,81 @@ public abstract class NpmBackpatchesTask extends DefaultTask {
         return JSON.readTree(response.body());
     }
 
-    /** npm in {@code dir}, with the alliance's credentials for its registry and nothing else of the build's. */
+    /** npm in {@code dir}, as the build would run it. */
     private void npm(File dir, String... args) {
-        URI registry = URI.create(getNpmUrl().get());
-        String auth = Base64.getEncoder().encodeToString((getUsername().get() + ":" + getPassword().get())
-                .getBytes(StandardCharsets.UTF_8));
         List<String> command = new ArrayList<>();
         command.add(System.getProperty("os.name", "").toLowerCase().contains("win") ? "npm.cmd" : "npm");
         command.addAll(List.of(args));
         getExecOperations().exec(spec -> {
             spec.setWorkingDir(dir);
             spec.commandLine(command);
-            spec.environment("npm_config_//" + registry.getAuthority() + registry.getPath() + ":_auth", auth);
         });
+    }
+
+    /**
+     * The alliance's tarball of a backpatch in place of what is installed at {@code installed}, keeping what is
+     * installed beneath it in its own node_modules.
+     */
+    private void swap(Path installed, String name, String version, Path tarballs) throws IOException, InterruptedException {
+        Path tarball = tarballs.resolve(name.replace('/', '+') + "-" + version + ".tgz");
+        Files.createDirectories(tarballs);
+        Files.write(tarball, download(NpmBackpatches.tarball(getNpmUrl().get(), name, version)));
+        if (Files.isDirectory(installed)) {
+            try (Stream<Path> children = Files.list(installed)) {
+                for (Path child : children.filter(c -> !"node_modules".equals(c.getFileName().toString())).toList()) {
+                    getFileSystemOperations().delete(spec -> spec.delete(child.toFile()));
+                }
+            }
+        }
+        getFileSystemOperations().copy(spec -> {
+            spec.from(getArchiveOperations().tarTree(tarball.toFile()));
+            // A package's tarball holds it under one top directory, package/ by npm's convention.
+            spec.eachFile(details -> {
+                String[] segments = details.getRelativePath().getSegments();
+                if (segments.length < 2) {
+                    details.exclude();
+                } else {
+                    details.setRelativePath(new RelativePath(true, Arrays.copyOfRange(segments, 1, segments.length)));
+                }
+            });
+            spec.setIncludeEmptyDirs(false);
+            spec.into(installed);
+        });
+        String swapped = JSON.readTree(installed.resolve("package.json").toFile()).path("version").asText();
+        if (!version.equals(swapped)) {
+            throw new GradleException("The Backpatch Alliance's tarball of " + name + " " + version + " holds " + swapped);
+        }
+    }
+
+    /**
+     * A tarball from the alliance's npm registry, with the alliance's credentials, which go only to the alliance: it
+     * sends a download on to a URL it signed, which takes none.
+     */
+    private byte[] download(String url) throws IOException, InterruptedException {
+        HttpClient client = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(30))
+                .followRedirects(HttpClient.Redirect.NEVER)
+                .build();
+        String auth = "Basic " + Base64.getEncoder().encodeToString((getUsername().get() + ":" + getPassword().get())
+                .getBytes(StandardCharsets.UTF_8));
+        URI at = URI.create(url);
+        HttpResponse<byte[]> response = client.send(HttpRequest.newBuilder(at)
+                .timeout(Duration.ofMinutes(5))
+                .header("Authorization", auth)
+                .GET()
+                .build(), HttpResponse.BodyHandlers.ofByteArray());
+        for (int hops = 0; response.statusCode() / 100 == 3 && hops < 5; hops++) {
+            at = at.resolve(response.headers().firstValue("Location")
+                    .orElseThrow(() -> new GradleException("The Backpatch Alliance redirected " + url + " nowhere")));
+            response = client.send(HttpRequest.newBuilder(at)
+                    .timeout(Duration.ofMinutes(5))
+                    .GET()
+                    .build(), HttpResponse.BodyHandlers.ofByteArray());
+        }
+        if (response.statusCode() != 200) {
+            throw new GradleException("The Backpatch Alliance answered " + response.statusCode() + " for " + url);
+        }
+        return response.body();
     }
 
     /** That every backpatch is in the bundle: each direct one where the package requires it from, each other somewhere. */
@@ -234,10 +298,11 @@ public abstract class NpmBackpatchesTask extends DefaultTask {
                 throw new GradleException("npm bundled no " + dependency + " " + version + " where the package requires it");
             }
         });
-        plan.overrides().forEach((selector, version) -> {
-            String wanted = selector.substring(0, selector.lastIndexOf('@')) + "@" + version;
-            if (installed.stream().noneMatch(at -> at.equals(wanted) || at.endsWith("/node_modules/" + wanted))) {
-                throw new GradleException("npm bundled no " + wanted.replace("@" + version, " " + version));
+        plan.swaps().forEach((at, version) -> {
+            String name = NpmBackpatches.nameAt(at);
+            String wanted = name + "@" + version;
+            if (installed.stream().noneMatch(bundled -> bundled.equals(wanted) || bundled.endsWith("/node_modules/" + wanted))) {
+                throw new GradleException("npm bundled no " + name + " " + version);
             }
         });
     }
