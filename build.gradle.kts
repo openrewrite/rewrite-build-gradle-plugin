@@ -153,6 +153,8 @@ repositories {
         content {
             includeGroupAndSubgroups("org.openrewrite")
             includeGroupAndSubgroups("io.moderne")
+            // The Backpatch Alliance's backpatches that CGP's own artifacts depend on, which it serves
+            includeVersionByRegex(".*", ".*", ".*-backpatch-.*")
         }
     }
     // The plugin portal proxies Maven Central, so it needs the same exclusion to keep these groups on CGP

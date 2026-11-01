@@ -28,7 +28,8 @@ This project provides a Gradle plugin that provides common build opinions to rep
 
 `org.openrewrite.build.recipe-repositories` (applied by the `recipe-library` and `language-library` plugins) adds
 https://artifacts.codegenomeproject.org/maven as a dependency repository for the `org.openrewrite` and `io.moderne`
-groups, and excludes those same groups from Maven Central, to avoid downloading older versions.
+groups, and excludes those same groups from Maven Central, to avoid downloading older versions. It also asks the Code
+Genome Project for [backpatches](#backpatches) of any group.
 
 Set credentials as Gradle properties in `~/.gradle/gradle.properties` — never in a file under source control:
 
@@ -76,12 +77,46 @@ pluginManagement {
             content {
                 includeGroupAndSubgroups("org.openrewrite")
                 includeGroupAndSubgroups("io.moderne")
+                includeVersionByRegex(".*", ".*", ".*-backpatch-.*")
             }
         }
         gradlePluginPortal()
     }
 }
 ```
+
+The last `include` is for the [backpatches](#backpatches) that the plugins' dependencies name.
+
+## Backpatches
+
+The [Moderne Backpatch Alliance](https://backpatch.moderne.io) publishes upstream releases with a security fix ported
+onto them, at versions such as `2.6.0.1-backpatch-00001`. With credentials for the alliance's repository,
+`recipe-repositories` adds that repository for backpatch versions. It also adds the alliance's Gradle platform,
+`io.moderne.backpatch:backpatch-platform`, which only that repository is asked for:
+
+```properties
+backpatchUsername=you
+backpatchPassword=bpa_...
+```
+
+In CI, expose the same values as `ORG_GRADLE_PROJECT_backpatchUsername` and `ORG_GRADLE_PROJECT_backpatchPassword`.
+`backpatchUrl` points at another copy of the alliance's repository.
+
+The platform raises each module on a project's main compile and runtime classpaths, transitive ones included, to the
+alliance's newest backpatch when that is later than what the build would otherwise select. The module then compiles
+against, shades and publishes the backpatches. Tests and the recipe parser classpath keep the versions they ask for,
+since the newest backpatch may be on a line a test means to stay off.
+
+The published POM names every module the runtime classpath took at a backpatch. A declared dependency appears at its
+backpatch. Any other module is added as a dependency of the module's own. Its scope is `compile` when consumers compile
+against it through one of the module's `api` dependencies, and `runtime` otherwise. A `dependencyManagement` entry
+would not do: Gradle, Maven 3 and OpenRewrite ignore a dependency's `dependencyManagement` when they pick versions of
+what it depends on. The POM never names the platform.
+
+The Code Genome Project serves the backpatches its own artifacts depend on to anyone with a token for it. That is why
+`recipe-repositories` asks it for backpatches, with or without credentials for the alliance.
+
+Without the credentials, neither the alliance's repository nor its platform is added.
 
 ## Artifactory mirror
 

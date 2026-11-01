@@ -115,6 +115,12 @@ public class RewritePublishPlugin implements Plugin<Project> {
                                 break;
                             }
                         }
+                        // Looked up here, since the Java plugin may make them after this one is applied.
+                        Configuration compileClasspath = configurations.findByName("compileClasspath");
+                        Configuration runtimeClasspath = configurations.findByName("runtimeClasspath");
+                        if (compileClasspath != null && runtimeClasspath != null) {
+                            BackpatchAlliance.nameBackpatches(xml.asElement(), compileClasspath, runtimeClasspath);
+                        }
                     }));
                 })
         );
