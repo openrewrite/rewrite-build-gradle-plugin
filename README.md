@@ -25,6 +25,15 @@
 
 This project provides a Gradle plugin that provides common build opinions to repositories in the openrewrite GitHub organization.organization's source code.
 
+## Java toolchain
+
+Projects compile and test on a Java 25 toolchain, so building them needs a JDK 25 installed where Gradle can find it;
+nothing downloads one. Main sources still compile with `--release 8`. A project whose tests need another JDK sets
+`java.toolchain` in its own build script, which takes precedence.
+
+Recipe libraries whose dependencies include an OpenRewrite or Moderne BOM also get `rewrite-java-25` on their test
+runtime classpath, so that `JavaParser.fromJavaVersion()` picks the parser matching the JDK the tests run on.
+
 ## Code Genome Project artifacts
 
 `org.openrewrite.build.recipe-repositories` (applied by the `recipe-library` and `language-library` plugins) adds
