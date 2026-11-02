@@ -17,10 +17,14 @@ package org.openrewrite.gradle;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.gradle.api.Project;
+import org.gradle.api.Task;
+import org.gradle.testfixtures.ProjectBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 import java.util.SortedMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -119,6 +123,24 @@ class NpmBackpatchesTest {
           """);
 
         assertThat(NpmBackpatches.plan(lockfile, index, name -> false).isEmpty()).isTrue();
+    }
+
+    @Test
+    void dependsOnTheNpmTasksWithoutCreatingAnyOther() {
+        Project project = ProjectBuilder.builder().build();
+        AtomicBoolean configured = new AtomicBoolean();
+        // As nebula.release registers finalSetup, whose configuration sets every project's status to release.
+        project.getTasks().register("finalSetup", task -> configured.set(true));
+        project.getTasks().register("npmInstall");
+        NpmBackpatches.apply(project, "https://backpatch.moderne.io/npm/",
+          "https://backpatch.moderne.io/feeds/index/npm.json", "user", "password");
+
+        Task backpatches = project.getTasks().getByName("npmBackpatches");
+
+        assertThat(backpatches.getTaskDependencies().getDependencies(backpatches))
+          .extracting(Task::getName)
+          .containsExactly("npmInstall");
+        assertThat(configured).isFalse();
     }
 
     @Test
