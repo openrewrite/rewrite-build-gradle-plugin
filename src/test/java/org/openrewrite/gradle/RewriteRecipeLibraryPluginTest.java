@@ -122,13 +122,13 @@ class RewriteRecipeLibraryPluginTest {
     }
 
     @Test
-    void addsJava25ParserToTestsAlignedByRewriteBom() throws Exception {
+    void addsRewriteJava25ParserToTestsAlignedByRewriteBom() throws Exception {
         assertThat(testRuntimeDependencies("implementation platform('org.openrewrite:rewrite-bom:8.0.0')"))
           .contains("org.openrewrite:rewrite-java-25");
     }
 
     @Test
-    void noJava25ParserWithoutRewriteBom() throws Exception {
+    void noRewriteJava25ParserWithoutRewriteBom() throws Exception {
         assertThat(testRuntimeDependencies("implementation 'org.openrewrite:rewrite-yaml:8.0.0'"))
           .doesNotContain("org.openrewrite:rewrite-java-25");
     }
