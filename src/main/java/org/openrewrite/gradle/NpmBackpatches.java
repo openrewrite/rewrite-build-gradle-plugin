@@ -38,7 +38,9 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.Callable;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 /**
  * The Moderne Backpatch Alliance's npm backpatches that a package's production dependencies take, bundled into the
@@ -284,9 +286,14 @@ final class NpmBackpatches {
                     task.getPassword().set(password);
                     task.getOwnScopes().set(OWN_SCOPES);
                     task.getOutputDirectory().set(project.getLayout().getBuildDirectory().dir("npm-backpatches"));
-                    // npmVersion stamps the package.json packed; npmInstall's outputs include the lockfile.
-                    task.dependsOn(project.getTasks().matching(t ->
-                            "npmVersion".equals(t.getName()) || "npmInstall".equals(t.getName())));
+                    // npmVersion stamps the package.json packed; npmInstall's outputs include the lockfile. By name, so
+                    // that no other task is created: matching on the tasks themselves creates every task registered,
+                    // nebula.release's finalSetup among them, whose configuration sets every project's status to
+                    // release, and a snapshot's verifyPublicationReport then refuses its snapshot dependencies.
+                    task.dependsOn((Callable<List<TaskProvider<Task>>>) () -> Stream.of("npmVersion", "npmInstall")
+                            .filter(project.getTasks().getNames()::contains)
+                            .map(name -> project.getTasks().named(name))
+                            .toList());
                 });
         project.getTasks().withType(Tar.class).configureEach(tar -> {
             if (!"npmPack".equals(tar.getName())) {
