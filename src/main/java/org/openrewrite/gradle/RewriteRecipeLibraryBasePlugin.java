@@ -17,7 +17,10 @@ package org.openrewrite.gradle;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.artifacts.ModuleDependency;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
+import org.gradle.api.attributes.Category;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.plugins.JvmTestSuitePlugin;
@@ -84,7 +87,36 @@ public class RewriteRecipeLibraryBasePlugin implements Plugin<Project> {
             });
 
             configureCliCompatSuite(project);
+            addJava25Parser(project);
         });
+    }
+
+    /**
+     * Tests run on the Java 25 toolchain, where {@code JavaParser.fromJavaVersion()} would otherwise fall back to
+     * an older parser running against JDK 25's compiler. Added without a version, so only to projects whose tests
+     * already align {@code org.openrewrite} versions through a BOM.
+     */
+    private static void addJava25Parser(Project project) {
+        project.getConfigurations().named(JavaPlugin.TEST_RUNTIME_ONLY_CONFIGURATION_NAME, testRuntimeOnly ->
+                testRuntimeOnly.withDependencies(dependencies -> {
+                    boolean rewriteBom = project.getConfigurations()
+                            .getByName(JavaPlugin.TEST_RUNTIME_CLASSPATH_CONFIGURATION_NAME)
+                            .getAllDependencies().stream()
+                            .anyMatch(RewriteRecipeLibraryBasePlugin::isRewritePlatform);
+                    if (rewriteBom) {
+                        dependencies.add(project.getDependencies().create("org.openrewrite:rewrite-java-25"));
+                    }
+                }));
+    }
+
+    private static boolean isRewritePlatform(Dependency dependency) {
+        if (!(dependency instanceof ModuleDependency module) || module.getGroup() == null ||
+            !(module.getGroup().startsWith("org.openrewrite") || module.getGroup().startsWith("io.moderne"))) {
+            return false;
+        }
+        Category category = module.getAttributes().getAttribute(Category.CATEGORY_ATTRIBUTE);
+        return category != null && (Category.REGULAR_PLATFORM.equals(category.getName()) ||
+                                    Category.ENFORCED_PLATFORM.equals(category.getName()));
     }
 
     /**

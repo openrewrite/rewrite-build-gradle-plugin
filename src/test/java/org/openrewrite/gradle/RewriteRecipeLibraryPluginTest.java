@@ -121,6 +121,44 @@ class RewriteRecipeLibraryPluginTest {
         assertThat(cp.list()).containsExactlyInAnyOrder("guava-30.1-jre.jar", "guava-31.1-jre.jar");
     }
 
+    @Test
+    void addsJava25ParserToTestsAlignedByRewriteBom() throws Exception {
+        assertThat(testRuntimeDependencies("implementation platform('org.openrewrite:rewrite-bom:8.0.0')"))
+          .contains("org.openrewrite:rewrite-java-25");
+    }
+
+    @Test
+    void noJava25ParserWithoutRewriteBom() throws Exception {
+        assertThat(testRuntimeDependencies("implementation 'org.openrewrite:rewrite-yaml:8.0.0'"))
+          .doesNotContain("org.openrewrite:rewrite-java-25");
+    }
+
+    private String testRuntimeDependencies(String dependency) throws IOException {
+        writeFile(settingsFile, "rootProject.name = 'my-project'");
+        //language=groovy
+        writeFile(buildFile, """
+                plugins {
+                    id 'org.openrewrite.build.recipe-library-base'
+                }
+                dependencies {
+                    %s
+                }
+                tasks.register('printTestRuntimeDependencies') {
+                    def dependencies = configurations.testRuntimeClasspath.incoming.dependencies
+                    doLast {
+                        dependencies.each { println "TEST_RUNTIME=${it.group}:${it.name}" }
+                    }
+                }
+                """.formatted(dependency));
+
+        return GradleRunner.create()
+                .withProjectDir(projectDir)
+                .withArguments("printTestRuntimeDependencies", "--stacktrace")
+                .withPluginClasspath()
+                .build()
+                .getOutput();
+    }
+
     private void writeFile(File destination, String content) throws IOException {
         Files.write(destination.toPath(), content.getBytes());
     }

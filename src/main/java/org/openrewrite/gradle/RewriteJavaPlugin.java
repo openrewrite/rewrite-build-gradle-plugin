@@ -24,6 +24,8 @@ import org.gradle.api.file.DuplicatesStrategy;
 import org.gradle.api.plugins.JavaLibraryPlugin;
 import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.plugins.jvm.JvmTestSuite;
+import org.gradle.api.provider.Provider;
+import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.javadoc.Javadoc;
 import org.gradle.api.tasks.testing.Test;
@@ -32,10 +34,12 @@ import org.gradle.api.tasks.testing.logging.TestLoggingContainer;
 import org.gradle.external.javadoc.CoreJavadocOptions;
 import org.gradle.jvm.tasks.Jar;
 import org.gradle.jvm.toolchain.JavaLanguageVersion;
+import org.gradle.process.CommandLineArgumentProvider;
 import org.gradle.testing.base.TestingExtension;
 import org.gradle.testretry.TestRetryPlugin;
 import org.gradle.testretry.TestRetryTaskExtension;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -76,7 +80,7 @@ public class RewriteJavaPlugin implements Plugin<Project> {
         });
 
         project.getExtensions().configure(JavaPluginExtension.class, java ->
-                java.toolchain(toolchain -> toolchain.getLanguageVersion().set(JavaLanguageVersion.of(21))));
+                java.toolchain(toolchain -> toolchain.getLanguageVersion().set(JavaLanguageVersion.of(25))));
 
         project.getConfigurations().all(config -> config.resolutionStrategy(strategy ->
                 strategy.cacheDynamicVersionsFor(0, "seconds")));
@@ -125,6 +129,8 @@ public class RewriteJavaPlugin implements Plugin<Project> {
             task.getOptions().setEncoding("UTF-8");
             task.getOptions().getCompilerArgs().add("-parameters");
             task.getOptions().setFork(true);
+            task.getOptions().getForkOptions().getJvmArgumentProviders().add(new AllowSunMiscUnsafe(
+                    task.getJavaCompiler().map(compiler -> compiler.getMetadata().getLanguageVersion().asInt())));
         });
     }
 
@@ -189,6 +195,8 @@ public class RewriteJavaPlugin implements Plugin<Project> {
                     "-XX:+UnlockDiagnosticVMOptions",
                     "-XX:+ShowHiddenFrames"
             );
+            task.getJvmArgumentProviders().add(new AllowSunMiscUnsafe(
+                    task.getJavaLauncher().map(launcher -> launcher.getMetadata().getLanguageVersion().asInt())));
 
             TestLoggingContainer log = task.getTestLogging();
             log.setShowExceptions(true);
@@ -196,5 +204,25 @@ public class RewriteJavaPlugin implements Plugin<Project> {
             log.setShowCauses(true);
             log.setShowStackTraces(true);
         });
+    }
+
+    // Lombok calls sun.misc.Unsafe, which JDK 24+ warns about in every compiler and test JVM that loads it. Only JDK 23+
+    // knows the option, and modules may pin a toolchain older than the default.
+    static class AllowSunMiscUnsafe implements CommandLineArgumentProvider {
+        private final Provider<Integer> javaVersion;
+
+        AllowSunMiscUnsafe(Provider<Integer> javaVersion) {
+            this.javaVersion = javaVersion;
+        }
+
+        @Input
+        public Provider<Integer> getJavaVersion() {
+            return javaVersion;
+        }
+
+        @Override
+        public Iterable<String> asArguments() {
+            return javaVersion.get() >= 23 ? List.of("--sun-misc-unsafe-memory-access=allow") : List.of();
+        }
     }
 }

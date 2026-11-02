@@ -384,6 +384,38 @@ class RewriteJavaPluginTest {
     }
 
     @Test
+    void allowSunMiscUnsafeOnlyWhereTheJdkKnowsTheOption() throws Exception {
+        assertThat(testJvmArgs("")).contains("--sun-misc-unsafe-memory-access=allow");
+        assertThat(testJvmArgs("java { toolchain { languageVersion = JavaLanguageVersion.of(21) } }"))
+          .doesNotContain("--sun-misc-unsafe-memory-access");
+    }
+
+    private String testJvmArgs(String toolchain) throws IOException {
+        Files.writeString(settingsFile.toPath(), "rootProject.name = 'unsafe'");
+        Files.writeString(buildFile.toPath(),
+          //language=gradle
+          """
+            plugins {
+                id 'org.openrewrite.build.language-library'
+            }
+            %s
+            tasks.register('printTestJvmArgs') {
+                def test = tasks.named('test')
+                doLast {
+                    println "TEST_JVM_ARGS=${test.get().allJvmArgs}"
+                }
+            }
+            """.formatted(toolchain));
+
+        return GradleRunner.create()
+          .withProjectDir(testProjectDir)
+          .withArguments("printTestJvmArgs")
+          .withPluginClasspath()
+          .build()
+          .getOutput();
+    }
+
+    @Test
     void artifactoryCredentialsRouteTestsThroughMirror() throws Exception {
         writeMirrorProbe();
 
