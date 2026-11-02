@@ -87,7 +87,7 @@ public class RewriteRecipeLibraryBasePlugin implements Plugin<Project> {
             });
 
             configureCliCompatSuite(project);
-            addJava25Parser(project);
+            addRewriteJava25Parser(project);
         });
     }
 
@@ -96,7 +96,7 @@ public class RewriteRecipeLibraryBasePlugin implements Plugin<Project> {
      * an older parser running against JDK 25's compiler. Added without a version, so only to projects whose tests
      * already align {@code org.openrewrite} versions through a BOM.
      */
-    private static void addJava25Parser(Project project) {
+    private static void addRewriteJava25Parser(Project project) {
         project.getConfigurations().named(JavaPlugin.TEST_RUNTIME_ONLY_CONFIGURATION_NAME, testRuntimeOnly ->
                 testRuntimeOnly.withDependencies(dependencies -> {
                     boolean rewriteBom = project.getConfigurations()
