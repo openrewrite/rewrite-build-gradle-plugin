@@ -16,6 +16,7 @@
 
 <!-- Keep the gap above this line, otherwise they won't render correctly! -->
 [![ci](https://codegenomeproject.org/ci/modules/openrewrite/rewrite-build-gradle-plugin/badge.svg)](https://codegenomeproject.org/ci/modules/openrewrite/rewrite-build-gradle-plugin/builds/latest)
+[![Latest release](https://img.shields.io/github/v/release/openrewrite/rewrite-build-gradle-plugin?label=latest)](https://github.com/openrewrite/rewrite-build-gradle-plugin/releases/latest)
 [![Apache 2.0](https://img.shields.io/github/license/openrewrite/rewrite-build-gradle-plugin.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Contributing Guide](https://img.shields.io/badge/Contributing-Guide-informational)](https://github.com/openrewrite/.github/blob/main/CONTRIBUTING.md)
 </div>
