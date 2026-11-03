@@ -238,6 +238,52 @@ class RewriteJavaPluginTest {
         assertThat(requireNonNull(offCi.task(":test")).getOutcome()).isEqualTo(FROM_CACHE);
     }
 
+    @Test
+    void junitExtensionsRegisteredThroughServicesRun() throws Exception {
+        writeTestProject();
+        Path services = testProjectDir.toPath()
+          .resolve("src/test/resources/META-INF/services/org.junit.jupiter.api.extension.Extension");
+        Files.createDirectories(services.getParent());
+        Files.writeString(services, "org.openrewrite.sample.MarkingExtension\n");
+        writeTest("MarkingExtension",
+          //language=java
+          """
+            package org.openrewrite.sample;
+
+            import org.junit.jupiter.api.extension.BeforeAllCallback;
+            import org.junit.jupiter.api.extension.ExtensionContext;
+
+            public class MarkingExtension implements BeforeAllCallback {
+                static boolean ran;
+
+                @Override
+                public void beforeAll(ExtensionContext context) {
+                    ran = true;
+                }
+            }
+            """);
+        writeTest("AutodetectedTest",
+          //language=java
+          """
+            package org.openrewrite.sample;
+
+            import org.junit.jupiter.api.Test;
+
+            import static org.junit.jupiter.api.Assertions.assertTrue;
+
+            class AutodetectedTest {
+                @Test
+                void extensionRan() {
+                    assertTrue(MarkingExtension.ran);
+                }
+            }
+            """);
+
+        BuildResult result = testRunner(false).build();
+
+        assertThat(requireNonNull(result.task(":test")).getOutcome()).isEqualTo(SUCCESS);
+    }
+
     //language=java
     private static final String FLAKY_TEST = """
       package org.openrewrite.sample;
