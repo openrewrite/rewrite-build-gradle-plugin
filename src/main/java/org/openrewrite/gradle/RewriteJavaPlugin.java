@@ -191,6 +191,9 @@ public class RewriteJavaPlugin implements Plugin<Project> {
                 task.setMaxParallelForks(Runtime.getRuntime().availableProcessors());
             }
             task.useJUnitPlatform(junit -> junit.excludeTags("debug"));
+            // Lets libraries on the test classpath register JUnit extensions through META-INF/services, such as
+            // rewrite-maven's, which shares downloaded POMs among the tests in a test JVM
+            task.systemProperty("junit.jupiter.extensions.autodetection.enabled", "true");
             task.jvmArgs(
                     "-XX:+UnlockDiagnosticVMOptions",
                     "-XX:+ShowHiddenFrames"
