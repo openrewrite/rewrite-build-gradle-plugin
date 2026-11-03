@@ -26,6 +26,7 @@ import org.openrewrite.maven.tree.MavenRepository;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -79,6 +80,37 @@ class RewriteDependencyRepositoriesPluginTest {
                 .build();
 
         assertThat(result.getOutput()).contains("repo:codegenome=https://artifacts.codegenomeproject.org/maven");
+    }
+
+    @Test
+    void registersCodegenomeRepositoryWithEnvironmentCredentials(@TempDir File projectDir) throws IOException {
+        writeFile(new File(projectDir, "settings.gradle"), "rootProject.name = 'cgp-consumer'");
+        //language=groovy
+        writeFile(new File(projectDir, "build.gradle"), """
+                plugins {
+                    id 'org.openrewrite.build.recipe-repositories'
+                }
+                tasks.register('printCodegenomeCredentials') {
+                    def repo = repositories.getByName('codegenome')
+                    def user = repo.credentials.username
+                    def hasPassword = repo.credentials.password != null
+                    doLast { println "cgp-user=${user} cgp-password=${hasPassword}" }
+                }
+                """);
+        Map<String, String> environment = new HashMap<>(System.getenv());
+        environment.keySet().removeIf(name -> name.startsWith("ORG_GRADLE_PROJECT_codegenome") ||
+                                              name.startsWith("ORG_GRADLE_PROJECT_codeGenome"));
+        environment.put("CODEGENOME_USERNAME", "env-user");
+        environment.put("CODEGENOME_TOKEN", "cgp_env-token");
+
+        BuildResult result = GradleRunner.create()
+                .withProjectDir(projectDir)
+                .withPluginClasspath()
+                .withEnvironment(environment)
+                .withArguments("printCodegenomeCredentials")
+                .build();
+
+        assertThat(result.getOutput()).contains("cgp-user=env-user cgp-password=true");
     }
 
     @Test
