@@ -52,7 +52,8 @@ codegenomePassword=cgp_...
 instructions give, work too.
 
 In CI, expose the same values as the `ORG_GRADLE_PROJECT_codegenomeUsername` and `ORG_GRADLE_PROJECT_codegenomePassword`
-environment variables.
+environment variables. When none of those properties is set, the `CODEGENOME_USERNAME` and `CODEGENOME_TOKEN` environment
+variables are used, the ones a recipe repository's `settings.gradle.kts` reads for its plugins.
 
 There is no fallback to Maven Central, which stopped receiving new `org.openrewrite` releases: without credentials,
 resolving a dynamic version such as `latest.release` fails with a 401 from the Code Genome Project. This project's own

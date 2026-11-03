@@ -95,24 +95,32 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
     }
 
     // codeGenomeUsername and codeGenomeToken are the names docs.openrewrite.org and the Code Genome Project's
-    // own setup instructions give, so a build set up from either finds its credentials here too
+    // own setup instructions give, so a build set up from either finds its credentials here too. CODEGENOME_USERNAME
+    // and CODEGENOME_TOKEN are what the recipe repositories' settings.gradle.kts read for pluginManagement, and what
+    // devpods and CI set, so dependencies resolve with the same credential the plugins resolved with.
     private static String cgpUsername(Project project) {
-        return firstGradleProperty(project, "codegenomeUsername", "codeGenomeUsername");
+        return firstGradlePropertyOrEnvironment(project, "CODEGENOME_USERNAME", "codegenomeUsername", "codeGenomeUsername");
     }
 
     private static String cgpPassword(Project project) {
-        return firstGradleProperty(project, "codegenomePassword", "codeGenomeToken");
+        return firstGradlePropertyOrEnvironment(project, "CODEGENOME_TOKEN", "codegenomePassword", "codeGenomeToken");
     }
 
-    private static String firstGradleProperty(Project project, String... names) {
+    // A property set to the empty string still means "no credentials", so the environment is read only when none of
+    // the properties is set at all
+    private static String firstGradlePropertyOrEnvironment(Project project, String environmentVariable, String... names) {
         ProviderFactory providers = project.getProviders();
+        boolean anySet = false;
         for (String name : names) {
-            String value = providers.gradleProperty(name).getOrElse("");
-            if (!value.isEmpty()) {
-                return value;
+            String value = providers.gradleProperty(name).getOrNull();
+            if (value != null) {
+                anySet = true;
+                if (!value.isEmpty()) {
+                    return value;
+                }
             }
         }
-        return "";
+        return anySet ? "" : providers.environmentVariable(environmentVariable).getOrElse("");
     }
 
     private static boolean cgpConfigured(String cgpUsername, String cgpPassword) {
