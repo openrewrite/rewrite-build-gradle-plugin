@@ -180,16 +180,9 @@ public class RewriteJavaPlugin implements Plugin<Project> {
             // how a report tells a test that passed on its retry from one that passed the first time
             task.getReports().getJunitXml().getMergeReruns().convention(false);
 
-            if (!ci) {
-                // Developer machines typically use CPUs with hyper-threading, so the logical core count is double
-                // what is useful to enable
-                task.setMaxParallelForks(
-                        Runtime.getRuntime().availableProcessors() / 2 > 0 ?
-                                Runtime.getRuntime().availableProcessors() / 2 : 1
-                );
-            } else {
-                task.setMaxParallelForks(Runtime.getRuntime().availableProcessors());
-            }
+            // Each fork warms up its own JVM, javac and parser. Past half the processors, that warm-up costs more
+            // than running the tests in more forks saves.
+            task.setMaxParallelForks(Math.max(1, Runtime.getRuntime().availableProcessors() / 2));
             task.useJUnitPlatform(junit -> junit.excludeTags("debug"));
             task.jvmArgs(
                     "-XX:+UnlockDiagnosticVMOptions",
