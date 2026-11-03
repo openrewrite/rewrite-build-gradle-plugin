@@ -255,6 +255,12 @@ dependencies {
     testImplementation(gradleTestKit())
 
     constraints {
+        implementation("com.google.guava:guava:33.8.0-jre") {
+            because("CVE-2026-102554, fixed in Guava 33.7.2")
+        }
+        implementation("org.jsoup:jsoup:1.24.1") {
+            because("CVE-2026-75140, fixed in jsoup 1.23.2")
+        }
         implementation("com.mycila:license-maven-plugin") {
             version { strictly("4.0") }
             because("license-gradle-plugin 0.16.1 resolves 3.0, whose Document needs Spring's " +
