@@ -17,19 +17,39 @@ package org.openrewrite.gradle;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.ModuleDependency;
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
+import org.gradle.api.artifacts.result.ResolvedComponentResult;
+import org.gradle.api.attributes.Attribute;
+import org.gradle.api.attributes.AttributeContainer;
 import org.gradle.api.attributes.Category;
+import org.gradle.api.file.FileCollection;
+import org.gradle.api.file.RegularFile;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.plugins.JvmTestSuitePlugin;
 import org.gradle.api.plugins.jvm.JvmTestSuite;
+import org.gradle.api.provider.Provider;
+import org.gradle.api.tasks.Classpath;
+import org.gradle.api.tasks.Internal;
+import org.gradle.api.tasks.testing.Test;
 import org.gradle.jvm.toolchain.JavaLanguageVersion;
 import org.gradle.jvm.toolchain.JavaToolchainService;
+import org.gradle.process.CommandLineArgumentProvider;
 import org.gradle.testing.base.TestingExtension;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 import static org.openrewrite.internal.StringUtils.capitalize;
 
@@ -88,7 +108,89 @@ public class RewriteRecipeLibraryBasePlugin implements Plugin<Project> {
 
             configureCliCompatSuite(project);
             addRewriteJava25Parser(project);
+            handTestsTheToolingPlugin(project);
         });
+    }
+
+    /**
+     * A test that calls rewrite's {@code withToolingApi()} starts a Gradle build of its own, which loads the tooling
+     * plugin at the model's version. This build resolves that plugin consistently with the tests' classpath, and the
+     * test hands the plugin's files to the build it starts.
+     */
+    private static void handTestsTheToolingPlugin(Project project) {
+        Configuration testRuntimeClasspath = project.getConfigurations()
+                .getByName(JavaPlugin.TEST_RUNTIME_CLASSPATH_CONFIGURATION_NAME);
+        Configuration toolingPlugin = project.getConfigurations().create("rewriteToolingPlugin", configuration -> {
+            configuration.setCanBeConsumed(false);
+            configuration.shouldResolveConsistentlyWith(testRuntimeClasspath);
+            configuration.attributes(attributes -> {
+                AttributeContainer testAttributes = testRuntimeClasspath.getAttributes();
+                testAttributes.keySet().forEach(key -> copyAttribute(key, testAttributes, attributes));
+            });
+            configuration.withDependencies(dependencies -> toolingModelVersion(testRuntimeClasspath).ifPresent(version ->
+                    dependencies.add(project.getDependencies().create("org.openrewrite.gradle.tooling:plugin:" + version))));
+        });
+        project.getTasks().named(JavaPlugin.TEST_TASK_NAME, Test.class, test ->
+                test.getJvmArgumentProviders().add(new ToolingPluginClasspath(toolingPlugin,
+                        project.getLayout().getBuildDirectory().file("tmp/" + test.getName() + "/tooling-plugin-classpath.txt"))));
+    }
+
+    private static Optional<String> toolingModelVersion(Configuration testRuntimeClasspath) {
+        return testRuntimeClasspath.getIncoming().getResolutionResult().getAllComponents().stream()
+                .map(ResolvedComponentResult::getId)
+                .filter(ModuleComponentIdentifier.class::isInstance)
+                .map(ModuleComponentIdentifier.class::cast)
+                .filter(id -> "org.openrewrite.gradle.tooling".equals(id.getGroup()) && "model".equals(id.getModule()))
+                .map(ModuleComponentIdentifier::getVersion)
+                .findFirst();
+    }
+
+    private static <T> void copyAttribute(Attribute<T> key, AttributeContainer from, AttributeContainer to) {
+        T value = from.getAttribute(key);
+        if (value != null) {
+            to.attribute(key, value);
+        }
+    }
+
+    /**
+     * Passes the tooling plugin's files to the test JVM in the manifest that rewrite's {@code OpenRewriteModelBuilder}
+     * reads when {@code org.openrewrite.gradle.local.use-embedded-classpath} names one.
+     */
+    static class ToolingPluginClasspath implements CommandLineArgumentProvider {
+        private final FileCollection classpath;
+        private final Provider<RegularFile> manifest;
+
+        ToolingPluginClasspath(FileCollection classpath, Provider<RegularFile> manifest) {
+            this.classpath = classpath;
+            this.manifest = manifest;
+        }
+
+        @Classpath
+        public FileCollection getClasspath() {
+            return classpath;
+        }
+
+        // It lists absolute paths, so the build cache keys on the classpath above
+        @Internal
+        public Provider<RegularFile> getManifest() {
+            return manifest;
+        }
+
+        @Override
+        public Iterable<String> asArguments() {
+            Set<File> files = classpath.getFiles();
+            if (files.isEmpty()) {
+                return List.of();
+            }
+            Path path = manifest.get().getAsFile().toPath();
+            try {
+                Files.createDirectories(path.getParent());
+                Files.write(path, files.stream().map(File::getAbsolutePath).toList());
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+            return List.of("-Dorg.openrewrite.gradle.local.use-embedded-classpath=" + path);
+        }
     }
 
     /**

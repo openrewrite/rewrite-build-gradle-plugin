@@ -24,8 +24,10 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Arrays;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.joining;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS;
 
@@ -131,6 +133,69 @@ class RewriteRecipeLibraryPluginTest {
     void noRewriteJava25ParserWithoutRewriteBom() throws Exception {
         assertThat(testRuntimeDependencies("implementation 'org.openrewrite:rewrite-yaml:8.0.0'"))
           .doesNotContain("org.openrewrite:rewrite-java-25");
+    }
+
+    @Test
+    void handsTestsTheToolingPluginAtTheModelsVersion() throws Exception {
+        File repository = new File(projectDir, "repository");
+        publish(repository, "model", "1.0.0", "");
+        publish(repository, "plugin", "1.0.0", "model");
+        publish(repository, "plugin", "1.1.0", "model");
+        writeFile(settingsFile, "rootProject.name = 'my-project'");
+        //language=groovy
+        writeFile(buildFile, """
+                plugins {
+                    id 'org.openrewrite.build.recipe-library-base'
+                }
+                repositories {
+                    maven { url = file('repository') }
+                }
+                dependencies {
+                    testImplementation 'org.openrewrite.gradle.tooling:model:1.0.0'
+                }
+                tasks.register('printToolingPluginClasspath') {
+                    doLast {
+                        def property = '-Dorg.openrewrite.gradle.local.use-embedded-classpath='
+                        def manifest = tasks.test.allJvmArgs.find { it.startsWith(property) }.substring(property.length())
+                        new File(manifest).eachLine { println "TOOLING_PLUGIN_CLASSPATH=${new File(it).name}" }
+                    }
+                }
+                """);
+
+        String output = GradleRunner.create()
+                .withProjectDir(projectDir)
+                .withArguments("printToolingPluginClasspath", "--stacktrace")
+                .withPluginClasspath()
+                .build()
+                .getOutput();
+
+        assertThat(output.lines().filter(line -> line.startsWith("TOOLING_PLUGIN_CLASSPATH=")))
+          .containsExactlyInAnyOrder("TOOLING_PLUGIN_CLASSPATH=plugin-1.0.0.jar", "TOOLING_PLUGIN_CLASSPATH=model-1.0.0.jar");
+    }
+
+    private static void publish(File repository, String artifactId, String version, String dependsOn) throws IOException {
+        File artifact = new File(repository, "org/openrewrite/gradle/tooling/" + artifactId);
+        File directory = new File(artifact, version);
+        assertThat(directory.mkdirs()).isTrue();
+        String versions = Arrays.stream(requireNonNull(artifact.listFiles(File::isDirectory)))
+          .map(published -> "<version>" + published.getName() + "</version>")
+          .collect(joining());
+        Files.writeString(new File(artifact, "maven-metadata.xml").toPath(), """
+                <metadata>
+                  <groupId>org.openrewrite.gradle.tooling</groupId><artifactId>%s</artifactId>
+                  <versioning><versions>%s</versions></versioning>
+                </metadata>""".formatted(artifactId, versions));
+        String dependencies = dependsOn.isEmpty() ? "" : """
+                <dependencies><dependency>
+                  <groupId>org.openrewrite.gradle.tooling</groupId><artifactId>%s</artifactId><version>%s</version>
+                </dependency></dependencies>""".formatted(dependsOn, version);
+        Files.writeString(new File(directory, artifactId + "-" + version + ".pom").toPath(), """
+                <project>
+                  <modelVersion>4.0.0</modelVersion>
+                  <groupId>org.openrewrite.gradle.tooling</groupId><artifactId>%s</artifactId><version>%s</version>
+                  %s
+                </project>""".formatted(artifactId, version, dependencies));
+        Files.write(new File(directory, artifactId + "-" + version + ".jar").toPath(), new byte[0]);
     }
 
     private String testRuntimeDependencies(String dependency) throws IOException {
