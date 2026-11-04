@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
+import java.util.List;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
@@ -138,9 +139,23 @@ class RewriteRecipeLibraryPluginTest {
     @Test
     void handsTestsTheToolingPluginAtTheModelsVersion() throws Exception {
         File repository = new File(projectDir, "repository");
-        publish(repository, "model", "1.0.0", "");
-        publish(repository, "plugin", "1.0.0", "model");
-        publish(repository, "plugin", "1.1.0", "model");
+        publish(repository, "model", "1.0.0", "1.0.0", "");
+        publish(repository, "plugin", "1.0.0", "1.0.0", "model");
+        publish(repository, "plugin", "1.1.0", "1.1.0", "model");
+
+        assertThat(toolingPluginClasspath("1.0.0")).containsExactlyInAnyOrder("plugin-1.0.0.jar", "model-1.0.0.jar");
+    }
+
+    @Test
+    void handsTestsTheToolingPluginSnapshotWhenTheModelIsPinnedToATimestamp() throws Exception {
+        File repository = new File(projectDir, "repository");
+        publish(repository, "model", "1.0.0-SNAPSHOT", "1.0.0-20261104.000001-1", "");
+        publish(repository, "plugin", "1.0.0-SNAPSHOT", "1.0.0-20261104.000002-2", "");
+
+        assertThat(toolingPluginClasspath("1.0.0-20261104.000001-1")).containsExactly("plugin-1.0.0-20261104.000002-2.jar");
+    }
+
+    private List<String> toolingPluginClasspath(String modelVersion) throws IOException {
         writeFile(settingsFile, "rootProject.name = 'my-project'");
         //language=groovy
         writeFile(buildFile, """
@@ -151,7 +166,7 @@ class RewriteRecipeLibraryPluginTest {
                     maven { url = file('repository') }
                 }
                 dependencies {
-                    testImplementation 'org.openrewrite.gradle.tooling:model:1.0.0'
+                    testImplementation 'org.openrewrite.gradle.tooling:model:%s'
                 }
                 tasks.register('printToolingPluginClasspath') {
                     doLast {
@@ -160,20 +175,22 @@ class RewriteRecipeLibraryPluginTest {
                         new File(manifest).eachLine { println "TOOLING_PLUGIN_CLASSPATH=${new File(it).name}" }
                     }
                 }
-                """);
+                """.formatted(modelVersion));
 
-        String output = GradleRunner.create()
+        return GradleRunner.create()
                 .withProjectDir(projectDir)
                 .withArguments("printToolingPluginClasspath", "--stacktrace")
                 .withPluginClasspath()
                 .build()
-                .getOutput();
-
-        assertThat(output.lines().filter(line -> line.startsWith("TOOLING_PLUGIN_CLASSPATH=")))
-          .containsExactlyInAnyOrder("TOOLING_PLUGIN_CLASSPATH=plugin-1.0.0.jar", "TOOLING_PLUGIN_CLASSPATH=model-1.0.0.jar");
+                .getOutput()
+                .lines()
+                .filter(line -> line.startsWith("TOOLING_PLUGIN_CLASSPATH="))
+                .map(line -> line.substring("TOOLING_PLUGIN_CLASSPATH=".length()))
+                .toList();
     }
 
-    private static void publish(File repository, String artifactId, String version, String dependsOn) throws IOException {
+    private static void publish(File repository, String artifactId, String version, String fileVersion,
+                                String dependsOn) throws IOException {
         File artifact = new File(repository, "org/openrewrite/gradle/tooling/" + artifactId);
         File directory = new File(artifact, version);
         assertThat(directory.mkdirs()).isTrue();
@@ -185,17 +202,32 @@ class RewriteRecipeLibraryPluginTest {
                   <groupId>org.openrewrite.gradle.tooling</groupId><artifactId>%s</artifactId>
                   <versioning><versions>%s</versions></versioning>
                 </metadata>""".formatted(artifactId, versions));
+        if (!version.equals(fileVersion)) {
+            String[] timestampAndBuild = fileVersion.substring(version.length() - "SNAPSHOT".length()).split("-");
+            Files.writeString(new File(directory, "maven-metadata.xml").toPath(), """
+                    <metadata>
+                      <groupId>org.openrewrite.gradle.tooling</groupId><artifactId>%s</artifactId><version>%s</version>
+                      <versioning>
+                        <snapshot><timestamp>%s</timestamp><buildNumber>%s</buildNumber></snapshot>
+                        <snapshotVersions>
+                          <snapshotVersion><extension>jar</extension><value>%s</value></snapshotVersion>
+                          <snapshotVersion><extension>pom</extension><value>%s</value></snapshotVersion>
+                        </snapshotVersions>
+                      </versioning>
+                    </metadata>""".formatted(artifactId, version, timestampAndBuild[0], timestampAndBuild[1],
+                    fileVersion, fileVersion));
+        }
         String dependencies = dependsOn.isEmpty() ? "" : """
                 <dependencies><dependency>
                   <groupId>org.openrewrite.gradle.tooling</groupId><artifactId>%s</artifactId><version>%s</version>
                 </dependency></dependencies>""".formatted(dependsOn, version);
-        Files.writeString(new File(directory, artifactId + "-" + version + ".pom").toPath(), """
+        Files.writeString(new File(directory, artifactId + "-" + fileVersion + ".pom").toPath(), """
                 <project>
                   <modelVersion>4.0.0</modelVersion>
                   <groupId>org.openrewrite.gradle.tooling</groupId><artifactId>%s</artifactId><version>%s</version>
                   %s
                 </project>""".formatted(artifactId, version, dependencies));
-        Files.write(new File(directory, artifactId + "-" + version + ".jar").toPath(), new byte[0]);
+        Files.write(new File(directory, artifactId + "-" + fileVersion + ".jar").toPath(), new byte[0]);
     }
 
     private String testRuntimeDependencies(String dependency) throws IOException {

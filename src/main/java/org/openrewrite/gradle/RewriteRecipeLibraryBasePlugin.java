@@ -142,6 +142,9 @@ public class RewriteRecipeLibraryBasePlugin implements Plugin<Project> {
                 .map(ModuleComponentIdentifier.class::cast)
                 .filter(id -> "org.openrewrite.gradle.tooling".equals(id.getGroup()) && "model".equals(id.getModule()))
                 .map(ModuleComponentIdentifier::getVersion)
+                // A lock pins a snapshot by its timestamp, which the plugin's snapshot need not share. Asked for by
+                // its base version, the plugin gets the lock's own pin.
+                .map(version -> version.replaceFirst("-\\d{8}\\.\\d{6}-\\d+$", "-SNAPSHOT"))
                 .findFirst();
     }
 
