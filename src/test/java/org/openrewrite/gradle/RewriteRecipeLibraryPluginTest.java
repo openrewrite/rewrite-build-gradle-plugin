@@ -155,6 +155,36 @@ class RewriteRecipeLibraryPluginTest {
         assertThat(toolingPluginClasspath("1.0.0-20261104.000001-1")).containsExactly("plugin-1.0.0-20261104.000002-2.jar");
     }
 
+    @Test
+    void buildScriptSetsTheToolchain() throws Exception {
+        writeFile(settingsFile, "rootProject.name = 'my-project'");
+        //language=groovy
+        writeFile(buildFile, """
+                plugins {
+                    id 'org.openrewrite.build.recipe-library-base'
+                }
+                java {
+                    toolchain {
+                        languageVersion = JavaLanguageVersion.of(17)
+                    }
+                }
+                tasks.register('printToolchain') {
+                    def languageVersion = java.toolchain.languageVersion
+                    doLast {
+                        println "TOOLCHAIN=${languageVersion.get()}"
+                    }
+                }
+                """);
+
+        assertThat(GradleRunner.create()
+                .withProjectDir(projectDir)
+                .withArguments("printToolchain", "--stacktrace")
+                .withPluginClasspath()
+                .build()
+                .getOutput())
+          .contains("TOOLCHAIN=17");
+    }
+
     private List<String> toolingPluginClasspath(String modelVersion) throws IOException {
         writeFile(settingsFile, "rootProject.name = 'my-project'");
         //language=groovy
