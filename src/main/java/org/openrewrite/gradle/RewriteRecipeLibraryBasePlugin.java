@@ -125,7 +125,7 @@ public class RewriteRecipeLibraryBasePlugin implements Plugin<Project> {
             configuration.shouldResolveConsistentlyWith(testRuntimeClasspath);
             configuration.attributes(attributes -> {
                 AttributeContainer testAttributes = testRuntimeClasspath.getAttributes();
-                testAttributes.keySet().forEach(key -> copyAttribute(key, testAttributes, attributes));
+                testAttributes.keySet().forEach(key -> copyAttribute(project, key, testAttributes, attributes));
             });
             configuration.withDependencies(dependencies -> toolingModelVersion(testRuntimeClasspath).ifPresent(version ->
                     dependencies.add(project.getDependencies().create("org.openrewrite.gradle.tooling:plugin:" + version))));
@@ -148,11 +148,10 @@ public class RewriteRecipeLibraryBasePlugin implements Plugin<Project> {
                 .findFirst();
     }
 
-    private static <T> void copyAttribute(Attribute<T> key, AttributeContainer from, AttributeContainer to) {
-        T value = from.getAttribute(key);
-        if (value != null) {
-            to.attribute(key, value);
-        }
+    // Read lazily: the target JVM version attribute comes from the toolchain, and reading it while the plugin is
+    // applied finalizes java.toolchain before the build script can set it
+    private static <T> void copyAttribute(Project project, Attribute<T> key, AttributeContainer from, AttributeContainer to) {
+        to.attributeProvider(key, project.provider(() -> from.getAttribute(key)));
     }
 
     /**
