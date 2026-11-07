@@ -38,7 +38,7 @@ public class RewriteJava8TextBlocksPlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
-        project.getPlugins().apply(RewriteArtifactoryMirrorPlugin.class);
+        project.getPlugins().apply(RewriteMavenCentralMirrorPlugin.class);
 
         project.getTasks().withType(JavaCompile.class).configureEach(task -> {
             task.getOptions().getRelease().set((Integer) null);

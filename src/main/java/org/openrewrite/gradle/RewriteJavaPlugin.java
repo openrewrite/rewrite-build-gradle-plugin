@@ -54,7 +54,7 @@ public class RewriteJavaPlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
-        project.getPlugins().apply(RewriteArtifactoryMirrorPlugin.class);
+        project.getPlugins().apply(RewriteMavenCentralMirrorPlugin.class);
         project.getPlugins().apply(RewriteDependencyCheckPlugin.class);
 
         RewriteJavaExtension ext = project.getExtensions().create("rewriteJava", RewriteJavaExtension.class);
@@ -157,7 +157,7 @@ public class RewriteJavaPlugin implements Plugin<Project> {
         project.getPlugins().apply(TestRetryPlugin.class);
         boolean ci = System.getenv("CI") != null;
 
-        ArtifactoryMirror mirror = ArtifactoryMirror.ifAvailable(project.getProviders());
+        MavenCentralMirror mirror = MavenCentralMirror.ifAvailable(project.getProviders());
 
         project.getTasks().withType(Test.class).configureEach(task -> {
             // The same variables CI sets, so local test runs resolve through the mirror rather than Maven Central

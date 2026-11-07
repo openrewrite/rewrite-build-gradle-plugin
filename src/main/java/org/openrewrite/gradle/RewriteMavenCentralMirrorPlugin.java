@@ -19,19 +19,19 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 
 /**
- * Routes whatever a project would resolve from Maven Central through {@link ArtifactoryMirror} instead, when
- * credentials for it are available. Every other plugin here applies this one, so that holds wherever any of
+ * Routes whatever a project would resolve from Maven Central through {@link MavenCentralMirror} instead, when
+ * there are credentials for one. Every other plugin here applies this one, so that holds wherever any of
  * them is applied, and for the repositories a build script declares itself as much as for the ones
  * {@link RewriteDependencyRepositoriesPlugin} adds.
  * <p>
  * It has no say over the classpath of the plugins themselves, which is resolved from the repositories settings
  * declares before any project exists.
  */
-public class RewriteArtifactoryMirrorPlugin implements Plugin<Project> {
+public class RewriteMavenCentralMirrorPlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
-        ArtifactoryMirror mirror = ArtifactoryMirror.ifAvailable(project.getProviders());
+        MavenCentralMirror mirror = MavenCentralMirror.ifAvailable(project.getProviders());
         if (mirror != null) {
             mirror.redirect(project.getRepositories());
         }

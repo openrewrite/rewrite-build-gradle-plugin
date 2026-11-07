@@ -32,7 +32,7 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
-        project.getPlugins().apply(RewriteArtifactoryMirrorPlugin.class);
+        project.getPlugins().apply(RewriteMavenCentralMirrorPlugin.class);
         project.getDependencies().getComponents().all(PreReleaseStatusRule.class);
 
         RepositoryHandler repos = project.getRepositories();
@@ -50,8 +50,8 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
             alliance.bundleNpmBackpatches(project);
         }
 
-        String cgpUsername = cgpUsername(project);
-        String cgpPassword = cgpPassword(project);
+        String cgpUsername = cgpUsername(project.getProviders());
+        String cgpPassword = cgpPassword(project.getProviders());
         repos.add(repos.maven(repo -> {
             repo.setName(CGP_ID);
             repo.setUrl(CGP_URL);
@@ -77,19 +77,19 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
 
     /**
      * The repositories {@link #apply} configures, modelled for OpenRewrite's {@code MavenPomDownloader}:
-     * CGP first, then Maven Central, which everything CGP does not host still comes from — by way of the
-     * Artifactory mirror when there are credentials for that.
+     * CGP first, then Maven Central, which everything CGP does not host still comes from — by way of
+     * {@link MavenCentralMirror} when there are credentials for one.
      * {@code mavenLocal()} is left out, so that alignment follows published versions rather than whatever
      * local builds have installed.
      */
     static List<MavenRepository> pomDownloaderRepositories(Project project) {
         List<MavenRepository> repositories = new ArrayList<>();
-        String cgpUsername = cgpUsername(project);
-        String cgpPassword = cgpPassword(project);
+        String cgpUsername = cgpUsername(project.getProviders());
+        String cgpPassword = cgpPassword(project.getProviders());
         boolean cgpConfigured = cgpConfigured(cgpUsername, cgpPassword);
         repositories.add(new MavenRepository(CGP_ID, CGP_URL, "true", "true", true,
                 cgpConfigured ? cgpUsername : null, cgpConfigured ? cgpPassword : null, null, false));
-        ArtifactoryMirror mirror = ArtifactoryMirror.ifAvailable(project.getProviders());
+        MavenCentralMirror mirror = MavenCentralMirror.ifAvailable(project.getProviders());
         repositories.add(mirror == null ? MavenRepository.MAVEN_CENTRAL : mirror.asMavenCentral());
         return repositories;
     }
@@ -98,18 +98,18 @@ public class RewriteDependencyRepositoriesPlugin implements Plugin<Project> {
     // own setup instructions give, so a build set up from either finds its credentials here too. CODEGENOME_USERNAME
     // and CODEGENOME_TOKEN are what the recipe repositories' settings.gradle.kts read for pluginManagement, and what
     // devpods and CI set, so dependencies resolve with the same credential the plugins resolved with.
-    private static String cgpUsername(Project project) {
-        return firstGradlePropertyOrEnvironment(project, "CODEGENOME_USERNAME", "codegenomeUsername", "codeGenomeUsername");
+    // MavenCentralMirror reads CGP's Maven cache with it too.
+    static String cgpUsername(ProviderFactory providers) {
+        return firstGradlePropertyOrEnvironment(providers, "CODEGENOME_USERNAME", "codegenomeUsername", "codeGenomeUsername");
     }
 
-    private static String cgpPassword(Project project) {
-        return firstGradlePropertyOrEnvironment(project, "CODEGENOME_TOKEN", "codegenomePassword", "codeGenomeToken");
+    static String cgpPassword(ProviderFactory providers) {
+        return firstGradlePropertyOrEnvironment(providers, "CODEGENOME_TOKEN", "codegenomePassword", "codeGenomeToken");
     }
 
     // A property set to the empty string still means "no credentials", so the environment is read only when none of
     // the properties is set at all
-    private static String firstGradlePropertyOrEnvironment(Project project, String environmentVariable, String... names) {
-        ProviderFactory providers = project.getProviders();
+    private static String firstGradlePropertyOrEnvironment(ProviderFactory providers, String environmentVariable, String... names) {
         boolean anySet = false;
         for (String name : names) {
             String value = providers.gradleProperty(name).getOrNull();

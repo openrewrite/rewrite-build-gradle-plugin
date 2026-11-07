@@ -172,27 +172,34 @@ repositories {
     }
 }
 
-// Mirrors RewriteArtifactoryMirrorPlugin, which this build cannot apply to itself
-val artifactoryUsername = providers.gradleProperty("artifactoryUsername").getOrElse("")
-val artifactoryPassword = providers.gradleProperty("artifactoryPassword").getOrElse("")
-if (artifactoryUsername.isNotEmpty() && artifactoryPassword.isNotEmpty()) {
-    val artifactoryMirrorUrl = "https://artifactory.moderne.ninja/artifactory/moderne-cache-3/"
+// Mirrors RewriteMavenCentralMirrorPlugin, which this build cannot apply to itself: the mirror CI names, or else CGP's
+// Maven cache, read with the CGP credentials above
+val ciMirrorUrl = providers.environmentVariable("MAVEN_CENTRAL_MIRROR_URL").getOrElse("")
+val ciMirrorUsername = providers.environmentVariable("MAVEN_CENTRAL_MIRROR_USERNAME").getOrElse("")
+val ciMirrorPassword = providers.environmentVariable("MAVEN_CENTRAL_MIRROR_PASSWORD").getOrElse("")
+val ciNamesMirror = ciMirrorUrl.isNotEmpty() && ciMirrorUsername.isNotEmpty() && ciMirrorPassword.isNotEmpty()
+val mirrorUrl = if (ciNamesMirror) ciMirrorUrl else "https://artifacts.codegenomeproject.org/maven-public/"
+// The portal's own repository beside maven-public, whose version lists are Central's for a plugin both list
+val pluginPortalMirrorUrl = mirrorUrl.replace(Regex("/maven-public/?$"), "/gradle-plugins/")
+val mirrorUsername = if (ciNamesMirror) ciMirrorUsername else codegenomeUsername
+val mirrorPassword = if (ciNamesMirror) ciMirrorPassword else codegenomePassword
+if (mirrorUsername.isNotEmpty() && mirrorPassword.isNotEmpty()) {
     repositories.withType<MavenArtifactRepository>().configureEach {
         // The plugin portal answers for anything it does not host with a redirect to Maven Central
         if (url.host in setOf("repo.maven.apache.org", "repo1.maven.org", "plugins.gradle.org")) {
-            setUrl(artifactoryMirrorUrl)
+            setUrl(if (url.host == "plugins.gradle.org") pluginPortalMirrorUrl else mirrorUrl)
             credentials {
-                username = artifactoryUsername
-                password = artifactoryPassword
+                username = mirrorUsername
+                password = mirrorPassword
             }
             mavenContent { releasesOnly() }
         }
     }
     // As RewriteJavaPlugin does, which is how the builds these tests launch come to be mirrored too
     tasks.withType<Test>().configureEach {
-        environment("MAVEN_CENTRAL_MIRROR_URL", artifactoryMirrorUrl)
-        environment("MAVEN_CENTRAL_MIRROR_USERNAME", artifactoryUsername)
-        environment("MAVEN_CENTRAL_MIRROR_PASSWORD", artifactoryPassword)
+        environment("MAVEN_CENTRAL_MIRROR_URL", mirrorUrl)
+        environment("MAVEN_CENTRAL_MIRROR_USERNAME", mirrorUsername)
+        environment("MAVEN_CENTRAL_MIRROR_PASSWORD", mirrorPassword)
     }
 }
 
