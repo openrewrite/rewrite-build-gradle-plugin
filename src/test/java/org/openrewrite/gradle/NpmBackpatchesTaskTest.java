@@ -185,8 +185,7 @@ class NpmBackpatchesTaskTest {
     private static BuildResult gradle(File project, FakeNpm server, Map<String, String> npmEnv, boolean credentials) {
         Map<String, String> env = new HashMap<>(System.getenv());
         env.keySet().removeIf(name -> name.startsWith("MAVEN_CENTRAL_MIRROR_") ||
-                                      name.startsWith("ORG_GRADLE_PROJECT_backpatch") ||
-                                      name.startsWith("ORG_GRADLE_PROJECT_artifactory"));
+                                      name.startsWith("ORG_GRADLE_PROJECT_backpatch"));
         env.putAll(npmEnv);
         List<String> arguments = new ArrayList<>(List.of("npmPack", "-PcodegenomeUsername=", "-PcodegenomePassword=",
           "-PbackpatchUrl=" + server.url() + "maven/"));

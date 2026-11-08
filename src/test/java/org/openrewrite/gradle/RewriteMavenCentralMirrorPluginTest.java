@@ -38,9 +38,10 @@ import java.util.stream.Stream;
 import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 
-class RewriteArtifactoryMirrorPluginTest {
+class RewriteMavenCentralMirrorPluginTest {
 
-    private static final String MIRROR = "https://artifactory.moderne.ninja/artifactory/moderne-cache-3/";
+    private static final String CGP_MAVEN_CACHE = "https://artifacts.codegenomeproject.org/maven-public/";
+    private static final String CGP_PLUGIN_PORTAL = "https://artifacts.codegenomeproject.org/gradle-plugins/";
     private static final String MAVEN_CENTRAL = "https://repo.maven.apache.org/maven2/";
 
     //language=groovy
@@ -54,19 +55,22 @@ class RewriteArtifactoryMirrorPluginTest {
     @ParameterizedTest
     @MethodSource("pluginIds")
     void everyPluginRoutesMavenCentralThroughTheMirror(String pluginId, @TempDir File projectDir) {
-        Project project = projectWithArtifactoryCredentials(projectDir);
+        Project project = projectWithCodeGenomeProjectCredentials(projectDir);
         // What a few of the plugins expect to find already applied
         project.getPluginManager().apply("java-library");
         project.getPluginManager().apply("maven-publish");
 
         project.getPluginManager().apply(pluginId);
 
-        assertThat(project.getRepositories().mavenCentral().getUrl()).hasToString(MIRROR);
+        // The mirror CI names when this build runs on one, which no test can take out of its own environment, and
+        // CGP's Maven cache otherwise
+        MavenCentralMirror mirror = requireNonNull(MavenCentralMirror.ifAvailable(project.getProviders()));
+        assertThat(mirror.serves(project.getRepositories().mavenCentral())).isTrue();
     }
 
     /** Every plugin this build registers, so that one added later is held to the same rule. */
     static Stream<String> pluginIds() throws URISyntaxException {
-        URL descriptor = requireNonNull(RewriteArtifactoryMirrorPluginTest.class.getClassLoader()
+        URL descriptor = requireNonNull(RewriteMavenCentralMirrorPluginTest.class.getClassLoader()
           .getResource("META-INF/gradle-plugins/" + RewriteDependencyRepositoriesPlugin.ID + ".properties"));
         return Arrays.stream(requireNonNull(new File(descriptor.toURI()).getParentFile().list()))
           .map(name -> name.substring(0, name.length() - ".properties".length()));
@@ -90,15 +94,40 @@ class RewriteArtifactoryMirrorPluginTest {
           """ + PRINT_REPOSITORIES);
 
         List<String> repositories = repositories(runner(projectDir, "printRepositories",
-          "-PartifactoryUsername=test-user", "-PartifactoryPassword=test-token"));
+          "-PcodegenomeUsername=test-user", "-PcodegenomePassword=cgp_test-token")
+          .withEnvironment(environmentWithoutMirror()));
 
         assertThat(repositories).hasSize(5);
         assertThat(repositories.getFirst()).startsWith("MavenLocal=file:");
         assertThat(repositories.subList(1, 5)).containsExactly(
-          "MavenRepo=" + MIRROR,
-          "Gradle Central Plugin Repository=" + MIRROR,
-          "byItsOtherName=" + MIRROR,
+          "MavenRepo=" + CGP_MAVEN_CACHE,
+          // Whose version lists are the portal's own, which maven-public's are not for a plugin Central lists too
+          "Gradle Central Plugin Repository=" + CGP_PLUGIN_PORTAL,
+          "byItsOtherName=" + CGP_MAVEN_CACHE,
           "elsewhere=https://repo.gradle.org/gradle/libs-releases/");
+    }
+
+    @Test
+    void pointsThePluginPortalAtThePortalsOwnRepositoryBesideAMavenPublicCiNames(@TempDir File projectDir) throws IOException {
+        writeFile(new File(projectDir, "settings.gradle"), "rootProject.name = 'mirrored'");
+        //language=groovy
+        writeFile(new File(projectDir, "build.gradle"), """
+          plugins {
+              id 'org.openrewrite.build.metadata'
+          }
+          repositories {
+              gradlePluginPortal()
+              mavenCentral()
+          }
+          """ + PRINT_REPOSITORIES);
+        Map<String, String> env = environmentWithoutMirror();
+        env.put("MAVEN_CENTRAL_MIRROR_URL", "https://mirror.example.com/maven-public/");
+        env.put("MAVEN_CENTRAL_MIRROR_USERNAME", "ci-user");
+        env.put("MAVEN_CENTRAL_MIRROR_PASSWORD", "ci-token");
+
+        assertThat(repositories(runner(projectDir, "printRepositories").withEnvironment(env))).containsExactly(
+          "Gradle Central Plugin Repository=https://mirror.example.com/gradle-plugins/",
+          "MavenRepo=https://mirror.example.com/maven-public/");
     }
 
     @Test
@@ -124,8 +153,21 @@ class RewriteArtifactoryMirrorPluginTest {
           """ + PRINT_REPOSITORIES);
 
         assertThat(repositories(runner(projectDir, ":sub:printRepositories",
-          "-PartifactoryUsername=test-user", "-PartifactoryPassword=test-token")))
-          .containsExactly("MavenRepo=" + MIRROR);
+          "-PcodegenomeUsername=test-user", "-PcodegenomePassword=cgp_test-token")
+          .withEnvironment(environmentWithoutMirror())))
+          .containsExactly("MavenRepo=" + CGP_MAVEN_CACHE);
+    }
+
+    @Test
+    void readsCodeGenomeProjectCredentialsFromTheEnvironment(@TempDir File projectDir) throws IOException {
+        // As devpods and CI set them, which the recipe repositories' settings read for pluginManagement too
+        writeMavenCentralConsumer(projectDir);
+        Map<String, String> env = environmentWithoutMirror();
+        env.put("CODEGENOME_USERNAME", "env-user");
+        env.put("CODEGENOME_TOKEN", "cgp_env-token");
+
+        assertThat(repositories(runner(projectDir, "printRepositories").withEnvironment(env)))
+          .containsExactly("MavenRepo=" + CGP_MAVEN_CACHE);
     }
 
     @Test
@@ -138,7 +180,17 @@ class RewriteArtifactoryMirrorPluginTest {
     }
 
     @Test
-    void takesTheMirrorCiExportsWhenThereAreNoGradleProperties(@TempDir File projectDir) throws IOException {
+    void noLongerReadsArtifactoryCredentials(@TempDir File projectDir) throws IOException {
+        writeMavenCentralConsumer(projectDir);
+
+        assertThat(repositories(runner(projectDir, "printRepositories",
+          "-PartifactoryUsername=test-user", "-PartifactoryPassword=test-token")
+          .withEnvironment(environmentWithoutMirror())))
+          .containsExactly("MavenRepo=" + MAVEN_CENTRAL);
+    }
+
+    @Test
+    void takesTheMirrorCiExports(@TempDir File projectDir) throws IOException {
         writeMavenCentralConsumer(projectDir);
         Map<String, String> env = environmentWithoutMirror();
         env.put("MAVEN_CENTRAL_MIRROR_URL", "https://mirror.example.com/maven/");
@@ -150,13 +202,29 @@ class RewriteArtifactoryMirrorPluginTest {
     }
 
     @Test
+    void prefersTheMirrorCiExportsToCodeGenomeProjectCredentials(@TempDir File projectDir) throws IOException {
+        // A CI whose builds read with a credential of their own, while the Code Genome Project's is a person's
+        writeMavenCentralConsumer(projectDir);
+        Map<String, String> env = environmentWithoutMirror();
+        env.put("MAVEN_CENTRAL_MIRROR_URL", "https://mirror.example.com/maven/");
+        env.put("MAVEN_CENTRAL_MIRROR_USERNAME", "ci-user");
+        env.put("MAVEN_CENTRAL_MIRROR_PASSWORD", "ci-token");
+
+        assertThat(repositories(runner(projectDir, "printRepositories",
+          "-PcodegenomeUsername=test-user", "-PcodegenomePassword=cgp_test-token").withEnvironment(env)))
+          .containsExactly("MavenRepo=https://mirror.example.com/maven/");
+    }
+
+    @Test
     void leavesRepositoriesAloneWhenCiHasNoSecretsToExport(@TempDir File projectDir) throws IOException {
         // A fork's pull request: the workflow still sets the variables, to secrets that come out empty
         writeMavenCentralConsumer(projectDir);
         Map<String, String> env = environmentWithoutMirror();
-        env.put("MAVEN_CENTRAL_MIRROR_URL", MIRROR);
+        env.put("MAVEN_CENTRAL_MIRROR_URL", CGP_MAVEN_CACHE);
         env.put("MAVEN_CENTRAL_MIRROR_USERNAME", "");
         env.put("MAVEN_CENTRAL_MIRROR_PASSWORD", "");
+        env.put("CODEGENOME_USERNAME", "");
+        env.put("CODEGENOME_TOKEN", "");
 
         assertThat(repositories(runner(projectDir, "printRepositories").withEnvironment(env)))
           .containsExactly("MavenRepo=" + MAVEN_CENTRAL);
@@ -201,11 +269,11 @@ class RewriteArtifactoryMirrorPluginTest {
     }
 
     /** System properties rather than {@code gradle.properties}, which {@code ORG_GRADLE_PROJECT_} environment variables outrank. */
-    private static Project projectWithArtifactoryCredentials(File projectDir) {
-        String usernameProperty = "org.gradle.project.artifactoryUsername";
-        String passwordProperty = "org.gradle.project.artifactoryPassword";
+    private static Project projectWithCodeGenomeProjectCredentials(File projectDir) {
+        String usernameProperty = "org.gradle.project.codegenomeUsername";
+        String passwordProperty = "org.gradle.project.codegenomePassword";
         System.setProperty(usernameProperty, "test-user");
-        System.setProperty(passwordProperty, "test-token");
+        System.setProperty(passwordProperty, "cgp_test-token");
         try {
             return ProjectBuilder.builder()
               .withProjectDir(projectDir)
@@ -268,11 +336,17 @@ class RewriteArtifactoryMirrorPluginTest {
           .toList();
     }
 
-    /** Whatever this build was itself given, which would otherwise decide the outcome in the test's place. */
-    private static Map<String, String> environmentWithoutMirror() {
+    /**
+     * Whatever this build was itself given, a mirror or Code Genome Project credentials, which would otherwise decide
+     * the outcome in the test's place.
+     */
+    static Map<String, String> environmentWithoutMirror() {
         Map<String, String> env = new HashMap<>(System.getenv());
         env.keySet().removeIf(name -> name.startsWith("MAVEN_CENTRAL_MIRROR_") ||
-                                      name.startsWith("ORG_GRADLE_PROJECT_artifactory"));
+                                      name.startsWith("ORG_GRADLE_PROJECT_codegenome") ||
+                                      name.startsWith("ORG_GRADLE_PROJECT_codeGenome") ||
+                                      "CODEGENOME_USERNAME".equals(name) ||
+                                      "CODEGENOME_TOKEN".equals(name));
         return env;
     }
 

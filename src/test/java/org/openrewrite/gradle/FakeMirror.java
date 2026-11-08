@@ -31,10 +31,10 @@ import java.util.Map;
 import static java.util.Objects.requireNonNull;
 
 /**
- * A Maven repository on the loopback address, to stand in for the Artifactory mirror in the builds a test
- * launches, so that what they resolve through it can be asserted without the network. Like Artifactory, it
- * answers a request that comes without credentials with a challenge, so a build only gets anything out of
- * it by presenting the ones it was given.
+ * A Maven repository on the loopback address, to stand in for the mirror CI names in the builds a test
+ * launches, so that what they resolve through it can be asserted without the network. Like the Code Genome
+ * Project's Maven cache, it answers a request that comes without credentials with a challenge, so a build only
+ * gets anything out of it by presenting the ones it was given.
  * <p>
  * Plain HTTP because Gradle makes an exception for 127.0.0.1 to its insistence on HTTPS, and a file
  * repository would not do: Gradle refuses to give one credentials.
@@ -63,8 +63,7 @@ final class FakeMirror implements AutoCloseable {
     /** The variables CI exports, in place of whatever this build was itself given. */
     Map<String, String> environment() {
         Map<String, String> env = new HashMap<>(System.getenv());
-        env.keySet().removeIf(name -> name.startsWith("MAVEN_CENTRAL_MIRROR_") ||
-                                      name.startsWith("ORG_GRADLE_PROJECT_artifactory"));
+        env.keySet().removeIf(name -> name.startsWith("MAVEN_CENTRAL_MIRROR_"));
         env.put("MAVEN_CENTRAL_MIRROR_URL", url());
         env.put("MAVEN_CENTRAL_MIRROR_USERNAME", USERNAME);
         env.put("MAVEN_CENTRAL_MIRROR_PASSWORD", PASSWORD);

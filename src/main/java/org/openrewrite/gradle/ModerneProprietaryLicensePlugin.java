@@ -34,7 +34,7 @@ public class ModerneProprietaryLicensePlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
-        project.getPlugins().apply(RewriteArtifactoryMirrorPlugin.class);
+        project.getPlugins().apply(RewriteMavenCentralMirrorPlugin.class);
 
         // Empty JARs are OK: https://central.sonatype.org/publish/requirements/#supply-javadoc-and-sources
         Jar emptySourcesJar = replaceWithEmptyJar(project, "sourcesJar", "emptySourceJar", "sources");

@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -131,7 +132,7 @@ class RewriteDependencyRepositoriesPluginTest {
     }
 
     @Test
-    void mavenCentralGoesThroughArtifactoryWithCredentials(@TempDir File projectDir) throws IOException {
+    void mavenCentralGoesThroughTheCodeGenomeProjectsMavenCacheWithItsCredentials(@TempDir File projectDir) throws IOException {
         writeProject(projectDir);
 
         BuildResult result = GradleRunner.create()
@@ -139,14 +140,13 @@ class RewriteDependencyRepositoriesPluginTest {
                 .withPluginClasspath()
                 .withArguments("printRepositories",
                         "-PcodegenomeUsername=test-user",
-                        "-PcodegenomePassword=cgp_test-token",
-                        "-PartifactoryUsername=test-user",
-                        "-PartifactoryPassword=test-token")
+                        "-PcodegenomePassword=cgp_test-token")
+                .withEnvironment(RewriteMavenCentralMirrorPluginTest.environmentWithoutMirror())
                 .build();
 
         assertThat(result.getOutput())
                 .contains("repo:codegenome=https://artifacts.codegenomeproject.org/maven")
-                .contains("repo:MavenRepo=https://artifactory.moderne.ninja/artifactory/moderne-cache-3/")
+                .contains("repo:MavenRepo=https://artifacts.codegenomeproject.org/maven-public/")
                 .doesNotContain("https://repo.maven.apache.org");
     }
 
@@ -250,19 +250,18 @@ class RewriteDependencyRepositoriesPluginTest {
     }
 
     @Test
-    void pomDownloaderRepositoriesGoThroughArtifactoryWithCredentials(@TempDir File projectDir) {
-        Project project = projectWithGradleProperties(projectDir, Map.of(
-                "codegenomeUsername", "",
-                "codegenomePassword", "",
-                "artifactoryUsername", "test-user",
-                "artifactoryPassword", "test-token"));
+    void pomDownloaderRepositoriesGoThroughTheMirror(@TempDir File projectDir) {
+        Project project = projectWithCodegenomeCredentials(projectDir, "test-user", "cgp_test-token");
+        // The mirror CI names when this build runs on one, which no test can take out of its own environment, and
+        // CGP's Maven cache otherwise
+        MavenRepository mirror = requireNonNull(MavenCentralMirror.ifAvailable(project.getProviders())).asMavenCentral();
 
         // Still under Central's id, which is what keeps the downloader from adding the real one behind it
         assertThat(RewriteDependencyRepositoriesPlugin.pomDownloaderRepositories(project)).last().satisfies(central -> {
             assertThat(central.getId()).isEqualTo("central");
-            assertThat(central.getUri()).isEqualTo("https://artifactory.moderne.ninja/artifactory/moderne-cache-3/");
-            assertThat(central.getUsername()).isEqualTo("test-user");
-            assertThat(central.getPassword()).isEqualTo("test-token");
+            assertThat(central.getUri()).isEqualTo(mirror.getUri()).isNotEqualTo(MavenRepository.MAVEN_CENTRAL.getUri());
+            assertThat(central.getUsername()).isEqualTo(mirror.getUsername());
+            assertThat(central.getPassword()).isEqualTo(mirror.getPassword());
         });
     }
 

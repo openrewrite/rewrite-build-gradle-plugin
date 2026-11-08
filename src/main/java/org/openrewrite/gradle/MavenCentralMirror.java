@@ -27,13 +27,20 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Moderne's Artifactory cache of Maven Central and the Gradle Plugin Portal, which takes the place of both
- * wherever credentials for it are available. Maven Central rate limits by address, so a build that resolves
- * from it directly starts failing with HTTP 429 once enough builds behind the same address have done so.
+ * What takes the place of Maven Central and the Gradle Plugin Portal wherever a build has credentials for it: the
+ * mirror CI names, or else the Code Genome Project's Maven cache. Maven Central rate limits by address, so a build
+ * that resolves from it directly starts failing with HTTP 429 once enough builds behind the same address have done so.
  */
-final class ArtifactoryMirror {
+final class MavenCentralMirror {
 
-    static final String URL = "https://artifactory.moderne.ninja/artifactory/moderne-cache-3/";
+    /**
+     * The Code Genome Project's pull-through cache of Maven Central, the Gradle Plugin Portal and a few other public
+     * repositories, which fetches each file from them once and which any Code Genome Project token reads. The plugin
+     * portal goes to the portal's own repository beside it.
+     */
+    static final String CGP_URL = "https://artifacts.codegenomeproject.org/maven-public/";
+
+    private static final String PLUGIN_PORTAL_HOST = "plugins.gradle.org";
 
     /**
      * The plugin portal belongs here because it answers for anything it does not host itself with a redirect
@@ -42,37 +49,44 @@ final class ArtifactoryMirror {
     private static final Set<String> MAVEN_CENTRAL_HOSTS = Set.of(
             "repo.maven.apache.org",
             "repo1.maven.org",
-            "plugins.gradle.org");
+            PLUGIN_PORTAL_HOST);
 
     private final String url;
+    private final String pluginPortalUrl;
     private final String username;
     private final String password;
 
-    private ArtifactoryMirror(String url, String username, String password) {
+    private MavenCentralMirror(String url, String username, String password) {
         this.url = url;
+        // CGP's maven-public serves a module's version list from the first repository that lists it, Central's ahead
+        // of the portal's, so a plugin both list would resolve as Central has it: dependency-check's stops at 10.0.3
+        // there and is at 13.0.0 on the portal. The portal alone is beside it, as gradle-plugins, which follows the
+        // portal's redirects to Central. Any other mirror takes the portal's place too.
+        this.pluginPortalUrl = url.replaceFirst("/maven-public/?$", "/gradle-plugins/");
         this.username = username;
         this.password = password;
     }
 
     /**
-     * Credentials are the {@code artifactoryUsername} and {@code artifactoryPassword} Gradle properties, or
-     * failing those the {@code MAVEN_CENTRAL_MIRROR_*} environment variables. CI exports the latter, and so
-     * does {@link #environment()} to the tests of a build that is itself mirrored, which is how a build those
-     * tests go on to launch comes to be mirrored as well.
+     * The mirror the {@code MAVEN_CENTRAL_MIRROR_*} environment variables name, or failing that the Code Genome
+     * Project's Maven cache, read with the credentials {@link RewriteDependencyRepositoriesPlugin} reads the Code
+     * Genome Project with. CI exports the variables when it means a mirror and credentials of its own, and so does
+     * {@link #environment()} to the tests of a build that is itself mirrored, which is how a build those tests go on
+     * to launch comes to be mirrored as well.
      *
-     * @return {@code null} when neither is set, which leaves every repository where it was declared.
+     * @return {@code null} when neither is available, which leaves every repository where it was declared.
      */
-    static @Nullable ArtifactoryMirror ifAvailable(ProviderFactory providers) {
-        String username = providers.gradleProperty("artifactoryUsername").getOrElse("");
-        String password = providers.gradleProperty("artifactoryPassword").getOrElse("");
-        if (!username.isEmpty() && !password.isEmpty()) {
-            return new ArtifactoryMirror(URL, username, password);
-        }
+    static @Nullable MavenCentralMirror ifAvailable(ProviderFactory providers) {
         String url = providers.environmentVariable("MAVEN_CENTRAL_MIRROR_URL").getOrElse("");
-        username = providers.environmentVariable("MAVEN_CENTRAL_MIRROR_USERNAME").getOrElse("");
-        password = providers.environmentVariable("MAVEN_CENTRAL_MIRROR_PASSWORD").getOrElse("");
+        String username = providers.environmentVariable("MAVEN_CENTRAL_MIRROR_USERNAME").getOrElse("");
+        String password = providers.environmentVariable("MAVEN_CENTRAL_MIRROR_PASSWORD").getOrElse("");
         if (!url.isEmpty() && !username.isEmpty() && !password.isEmpty()) {
-            return new ArtifactoryMirror(url, username, password);
+            return new MavenCentralMirror(url, username, password);
+        }
+        username = RewriteDependencyRepositoriesPlugin.cgpUsername(providers);
+        password = RewriteDependencyRepositoriesPlugin.cgpPassword(providers);
+        if (!username.isEmpty() && !password.isEmpty()) {
+            return new MavenCentralMirror(CGP_URL, username, password);
         }
         return null;
     }
@@ -87,13 +101,13 @@ final class ArtifactoryMirror {
             if (!reachesMavenCentral(repo)) {
                 return;
             }
-            repo.setUrl(url);
+            repo.setUrl(PLUGIN_PORTAL_HOST.equals(repo.getUrl().getHost()) ? pluginPortalUrl : url);
             repo.credentials(credentials -> {
                 credentials.setUsername(username);
                 credentials.setPassword(password);
             });
-            // The mirror also carries snapshots, which neither repository it stands in for ever does. Gradle
-            // knows that of mavenCentral() already, but not of the plugin portal or of a Central URL spelled out.
+            // Neither repository it stands in for ever carries snapshots, and a mirror CI names may. Gradle knows
+            // that of mavenCentral() already, but not of the plugin portal or of a Central URL spelled out.
             repo.mavenContent(MavenRepositoryContentDescriptor::releasesOnly);
         });
     }
@@ -106,7 +120,7 @@ final class ArtifactoryMirror {
     }
 
     boolean serves(MavenArtifactRepository repo) {
-        return URI.create(url).equals(repo.getUrl());
+        return URI.create(url).equals(repo.getUrl()) || URI.create(pluginPortalUrl).equals(repo.getUrl());
     }
 
     /**

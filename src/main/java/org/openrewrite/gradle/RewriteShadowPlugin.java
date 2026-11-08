@@ -28,7 +28,7 @@ public class RewriteShadowPlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
-        project.getPlugins().apply(RewriteArtifactoryMirrorPlugin.class);
+        project.getPlugins().apply(RewriteMavenCentralMirrorPlugin.class);
         project.getPlugins().apply(JavaLibraryPlugin.class);
         project.getPlugins().apply(ShadowPlugin.class);
 

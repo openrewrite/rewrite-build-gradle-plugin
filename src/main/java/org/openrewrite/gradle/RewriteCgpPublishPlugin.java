@@ -33,7 +33,7 @@ public class RewriteCgpPublishPlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
-        project.getPlugins().apply(RewriteArtifactoryMirrorPlugin.class);
+        project.getPlugins().apply(RewriteMavenCentralMirrorPlugin.class);
 
         String accessKey = System.getenv("AWS_ACCESS_KEY_ID");
         if (accessKey == null || accessKey.isEmpty()) {

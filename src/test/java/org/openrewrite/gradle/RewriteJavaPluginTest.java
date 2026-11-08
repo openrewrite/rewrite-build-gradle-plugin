@@ -462,23 +462,23 @@ class RewriteJavaPluginTest {
     }
 
     @Test
-    void artifactoryCredentialsRouteTestsThroughMirror() throws Exception {
+    void codeGenomeProjectCredentialsRouteTestsThroughItsMavenCache() throws Exception {
         writeMirrorProbe();
 
         assertThat(GradleRunner.create()
           .withProjectDir(testProjectDir)
-          .withArguments("printMirror", "-PartifactoryUsername=test-user", "-PartifactoryPassword=test-token")
+          .withArguments("printMirror", "-PcodegenomeUsername=test-user", "-PcodegenomePassword=cgp_test-token")
           .withEnvironment(environmentWithoutMirror())
           .withPluginClasspath()
           .build()
           .getOutput())
-          .contains("MAVEN_CENTRAL_MIRROR_URL=https://artifactory.moderne.ninja/artifactory/moderne-cache-3/")
+          .contains("MAVEN_CENTRAL_MIRROR_URL=https://artifacts.codegenomeproject.org/maven-public/")
           .contains("MAVEN_CENTRAL_MIRROR_USERNAME=test-user")
-          .contains("MAVEN_CENTRAL_MIRROR_PASSWORD=test-token");
+          .contains("MAVEN_CENTRAL_MIRROR_PASSWORD=cgp_test-token");
     }
 
     @Test
-    void noMirrorWithoutArtifactoryCredentials() throws Exception {
+    void noMirrorWithoutCredentials() throws Exception {
         writeMirrorProbe();
 
         assertThat(GradleRunner.create()
@@ -511,9 +511,6 @@ class RewriteJavaPluginTest {
 
     /** CI exports these itself, which would otherwise show up whether or not the plugin set them. */
     private static Map<String, String> environmentWithoutMirror() {
-        Map<String, String> env = new HashMap<>(System.getenv());
-        env.keySet().removeIf(name -> name.startsWith("MAVEN_CENTRAL_MIRROR_") ||
-                                      name.startsWith("ORG_GRADLE_PROJECT_artifactory"));
-        return env;
+        return RewriteMavenCentralMirrorPluginTest.environmentWithoutMirror();
     }
 }

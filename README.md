@@ -145,27 +145,30 @@ Our own `@openrewrite` and `@moderne` packages are never bundled: each bundles i
 path. A bundled package that reaches a backpatch through another package's range runs with it, but `npm ls` reports it
 as invalid, because npm's ranges never match a prerelease.
 
-## Artifactory mirror
+## Maven Central mirror
 
 Maven Central rate limits by address, so builds that resolve from it directly start failing with HTTP 429 once enough
-of them have done so from behind the same address. With credentials for Moderne's Artifactory cache, whatever these
-plugins have a hand in resolves through https://artifactory.moderne.ninja/artifactory/moderne-cache-3/ instead:
+of them have done so from behind the same address. With credentials for the Code Genome Project (above), whatever these
+plugins have a hand in resolves through its Maven cache instead, https://artifacts.codegenomeproject.org/maven-public/,
+which fetches each file from Maven Central, the Gradle Plugin Portal and a few other public repositories once.
 
-```properties
-artifactoryUsername=you@example.com
-artifactoryPassword=...
-```
-
-CI exports the same thing as the `MAVEN_CENTRAL_MIRROR_URL`, `MAVEN_CENTRAL_MIRROR_USERNAME` and
-`MAVEN_CENTRAL_MIRROR_PASSWORD` environment variables, which are read when the properties are absent. With neither —
-or with the variables set to secrets that come out empty, as in a fork's pull request — every repository stays where
-it was declared.
+CI can name a mirror of its own with the `MAVEN_CENTRAL_MIRROR_URL`, `MAVEN_CENTRAL_MIRROR_USERNAME` and
+`MAVEN_CENTRAL_MIRROR_PASSWORD` environment variables, which come first, so that a CI's builds read with a credential
+of its own. With neither — or with the variables set to secrets that come out empty, as in a fork's pull request — every
+repository stays where it was declared. The `artifactoryUsername` and `artifactoryPassword` properties, which sent these
+builds to Moderne's Artifactory before, are no longer read.
 
 What gets redirected is any repository pointing at Maven Central (`mavenCentral()`, or `repo.maven.apache.org` and
 `repo1.maven.org` spelled out) or at the Gradle Plugin Portal, which answers for anything it does not host itself with
 a redirect to Maven Central. Each is repointed where it stands, so it keeps its place in the order and its content
-filters, including the Code Genome Project exclusions above. It is also limited to releases, because the mirror
-carries snapshots that neither of the two ever does.
+filters, including the Code Genome Project exclusions above. It is also limited to releases, which is all either of
+the two ever carries, whatever a mirror CI names may.
+
+The Gradle Plugin Portal goes to the portal's own repository beside `maven-public`,
+https://artifacts.codegenomeproject.org/gradle-plugins/, and so does it for a mirror CI names at a `maven-public/` URL.
+`maven-public` serves a module's version list from the first repository that lists it, Central's ahead of the
+portal's, so a plugin both list would otherwise resolve as Central has it: `org.owasp:dependency-check-gradle` stops
+at 10.0.3 on Central and is at 13.0.0 on the portal.
 
 - Every `org.openrewrite.build.*` project plugin does this for the repositories of the project it is applied to,
   whether `recipe-repositories` added them or the build script did.
