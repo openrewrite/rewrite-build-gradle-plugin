@@ -29,6 +29,15 @@ import java.nio.file.Path;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class PreReleaseStatusRuleTest {
+    // latest.release lists versions in every repository, and CGP's maven-public, which these tests resolve Maven Central
+    // through whenever this build has CGP credentials, answers 503 rather than 404 for a module it doesn't have
+    private static final String ONLY_FROM_MAVEN_LOCAL = """
+      exclusiveContent {
+          forRepositories(getByName('MavenLocal'))
+          filter { includeGroup 'com.example' }
+      }
+      """;
+
     @TempDir
     File testProjectDir;
 
@@ -54,14 +63,14 @@ class PreReleaseStatusRuleTest {
     void recipeRepositoriesSkipPreReleasesForLatestRelease() throws IOException {
         publish("1.0.0", "1.1.0-RC1");
 
-        assertThat(resolve("org.openrewrite.build.recipe-repositories", "", "latest.release")).contains("RESOLVED=1.0.0");
+        assertThat(resolve("org.openrewrite.build.recipe-repositories", ONLY_FROM_MAVEN_LOCAL, "latest.release")).contains("RESOLVED=1.0.0");
     }
 
     @Test
     void recipeRepositoriesResolvePinnedReleaseCandidates() throws IOException {
         publish("1.0.0", "1.1.0-RC1");
 
-        assertThat(resolve("org.openrewrite.build.recipe-repositories", "", "1.1.0-RC1")).contains("RESOLVED=1.1.0-RC1");
+        assertThat(resolve("org.openrewrite.build.recipe-repositories", ONLY_FROM_MAVEN_LOCAL, "1.1.0-RC1")).contains("RESOLVED=1.1.0-RC1");
     }
 
     private String resolve(String pluginId, String repositories, String version) throws IOException {
