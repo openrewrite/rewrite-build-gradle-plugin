@@ -29,8 +29,8 @@ import java.nio.file.Path;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class PreReleaseStatusRuleTest {
-    // A dynamic version asks every repository, and CGP's Maven cache answers 503 rather than 404 for a module it
-    // cannot find, which would fail resolution of a module only this test's mavenLocal() has
+    // latest.release lists versions in every repository, and CGP's maven-public, which these tests resolve Maven Central
+    // through whenever this build has CGP credentials, answers 503 rather than 404 for a module it doesn't have
     private static final String ONLY_FROM_MAVEN_LOCAL = """
       exclusiveContent {
           forRepositories(getByName('MavenLocal'))
