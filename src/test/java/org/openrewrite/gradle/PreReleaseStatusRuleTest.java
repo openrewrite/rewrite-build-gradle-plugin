@@ -104,9 +104,7 @@ class PreReleaseStatusRuleTest {
 
         return GradleRunner.create()
           .withProjectDir(testProjectDir)
-          // Offline, latest.release lists the local repository alone. Online it also lists Maven Central or the
-          // mirror the environment names, and a server error there for this made-up module fails the build.
-          .withArguments("printResolved", "--offline", "-Dmaven.repo.local=" + new File(testProjectDir, "repo").getAbsolutePath())
+          .withArguments("printResolved", "-Dmaven.repo.local=" + new File(testProjectDir, "repo").getAbsolutePath())
           .withPluginClasspath()
           .build()
           .getOutput();
