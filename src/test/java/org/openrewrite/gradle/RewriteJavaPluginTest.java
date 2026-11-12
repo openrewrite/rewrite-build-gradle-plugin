@@ -284,6 +284,36 @@ class RewriteJavaPluginTest {
         assertThat(requireNonNull(result.task(":test")).getOutcome()).isEqualTo(SUCCESS);
     }
 
+    @Test
+    void optOutsForRewriteTestToCheckReachTheTestJvmAndRunItsTestsAgain() throws Exception {
+        writeTestProject();
+        writeTest("OptOutsToCheckTest",
+          //language=java
+          """
+            package org.openrewrite.sample;
+
+            import org.junit.jupiter.api.Test;
+
+            import java.nio.file.Files;
+            import java.nio.file.Path;
+
+            class OptOutsToCheckTest {
+                @Test
+                void recordsWhatItIsAskedToCheck() throws Exception {
+                    Files.writeString(Path.of("opt-outs-to-check.txt"),
+                      String.valueOf(System.getProperty("org.openrewrite.test.failOnUnneededOptOuts")));
+                }
+            }
+            """);
+        Path optOutsToCheck = testProjectDir.toPath().resolve("opt-outs-to-check.txt");
+
+        testRunner(false).build();
+        assertThat(optOutsToCheck).hasContent("null");
+
+        testRunner(false).withArguments("test", "-Dorg.openrewrite.test.failOnUnneededOptOuts=all").build();
+        assertThat(optOutsToCheck).hasContent("all");
+    }
+
     //language=java
     private static final String FLAKY_TEST = """
       package org.openrewrite.sample;

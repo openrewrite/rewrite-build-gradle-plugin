@@ -159,6 +159,11 @@ public class RewriteJavaPlugin implements Plugin<Project> {
 
         MavenCentralMirror mirror = MavenCentralMirror.ifAvailable(project.getProviders());
 
+        // -Dorg.openrewrite.test.failOnUnneededOptOuts=all on the command line sets the property for Gradle alone, and
+        // rewrite-test reads it in the test JVM
+        String optOutsToCheck = project.getProviders()
+                .systemProperty("org.openrewrite.test.failOnUnneededOptOuts").getOrNull();
+
         project.getTasks().withType(Test.class).configureEach(task -> {
             // The same variables CI sets, so local test runs resolve through the mirror rather than Maven Central
             if (mirror != null) {
@@ -187,6 +192,10 @@ public class RewriteJavaPlugin implements Plugin<Project> {
             // Lets libraries on the test classpath register JUnit extensions through META-INF/services, such as
             // rewrite-maven's, which shares downloaded POMs among the tests in a test JVM
             task.systemProperty("junit.jupiter.extensions.autodetection.enabled", "true");
+            // A system property of a test task is one of its inputs, so tests that passed without it run again
+            if (optOutsToCheck != null) {
+                task.systemProperty("org.openrewrite.test.failOnUnneededOptOuts", optOutsToCheck);
+            }
             task.jvmArgs(
                     "-XX:+UnlockDiagnosticVMOptions",
                     "-XX:+ShowHiddenFrames"

@@ -207,6 +207,20 @@ tasks.named<Test>("test") {
 }
 ```
 
+## Unneeded opt-outs of rewrite-test's checks
+
+A test can turn off checks that rewrite-test makes, as in `typeValidationOptions(TypeValidation.none())`. To find the
+opt-outs that tests no longer need, set the system property `org.openrewrite.test.failOnUnneededOptOuts` to `all`, or
+to the names of the options to look at:
+
+```shell
+./gradlew test -Dorg.openrewrite.test.failOnUnneededOptOuts=all
+```
+
+`org.openrewrite.build.java-base` hands the property to the test JVMs of every `Test` task, where rewrite-test fails
+each test that turns off a check that passes. The property is an input of the task, so tests that passed without it
+run again.
+
 ## Publishing
 
 Recipe and language libraries publish only to the Code Genome Project. `org.openrewrite.build.publish-cgp` (applied by
