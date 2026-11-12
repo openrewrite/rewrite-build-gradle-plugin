@@ -217,9 +217,9 @@ to the names of the options to look at:
 ./gradlew test -Dorg.openrewrite.test.failOnUnneededOptOuts=all
 ```
 
-Every `Test` task hands the property to its test JVMs, where rewrite-test fails each test that turns off a check that
-passes. The property is an input of the task, so tests that passed without it run again. On CI each such test fails
-twice, as a failed test is retried.
+`org.openrewrite.build.java-base` hands the property to the test JVMs of every `Test` task, where rewrite-test fails
+each test that turns off a check that passes. The property is an input of the task, so tests that passed without it
+run again.
 
 ## Publishing
 
