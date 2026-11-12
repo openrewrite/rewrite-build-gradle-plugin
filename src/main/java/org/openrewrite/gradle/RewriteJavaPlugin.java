@@ -187,6 +187,14 @@ public class RewriteJavaPlugin implements Plugin<Project> {
             // Lets libraries on the test classpath register JUnit extensions through META-INF/services, such as
             // rewrite-maven's, which shares downloaded POMs among the tests in a test JVM
             task.systemProperty("junit.jupiter.extensions.autodetection.enabled", "true");
+            // -Dorg.openrewrite.test.failOnUnneededOptOuts=all on the command line sets the property for Gradle alone,
+            // and rewrite-test reads it in the test JVM. It is an input of the task there, so tests that passed
+            // without it run again.
+            String optOutsToCheck = project.getProviders()
+                    .systemProperty("org.openrewrite.test.failOnUnneededOptOuts").getOrNull();
+            if (optOutsToCheck != null) {
+                task.systemProperty("org.openrewrite.test.failOnUnneededOptOuts", optOutsToCheck);
+            }
             task.jvmArgs(
                     "-XX:+UnlockDiagnosticVMOptions",
                     "-XX:+ShowHiddenFrames"
