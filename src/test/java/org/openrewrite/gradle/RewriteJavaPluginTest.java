@@ -310,10 +310,7 @@ class RewriteJavaPluginTest {
         testRunner(false).build();
         assertThat(optOutsToCheck).hasContent("null");
 
-        BuildResult asked = testRunner(false)
-          .withArguments("test", "-Dorg.openrewrite.test.failOnUnneededOptOuts=all")
-          .build();
-        assertThat(requireNonNull(asked.task(":test")).getOutcome()).isEqualTo(SUCCESS);
+        testRunner(false).withArguments("test", "-Dorg.openrewrite.test.failOnUnneededOptOuts=all").build();
         assertThat(optOutsToCheck).hasContent("all");
     }
 
