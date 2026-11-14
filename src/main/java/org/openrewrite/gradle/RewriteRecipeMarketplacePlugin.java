@@ -33,9 +33,8 @@ public class RewriteRecipeMarketplacePlugin implements Plugin<Project> {
 
         RegularFile recipesCsvFile = project.getLayout().getProjectDirectory().file("src/main/resources/META-INF/rewrite/recipes.csv");
 
-        TaskProvider<RecipeMarketplaceCsvValidateContentTask> recipeCsvValidateContent = project.getTasks().register("recipeCsvValidateContent", RecipeMarketplaceCsvValidateContentTask.class, task -> {
-            task.getCsvFile().convention(recipesCsvFile);
-        });
+        TaskProvider<RecipeMarketplaceCsvValidateContentTask> recipeCsvValidateContent = project.getTasks().register("recipeCsvValidateContent", RecipeMarketplaceCsvValidateContentTask.class, task ->
+            task.getCsvFile().convention(recipesCsvFile));
 
         // Register recipe marketplace CSV tasks
         project.getTasks().register("recipeCsvGenerate", RecipeMarketplaceCsvGenerateTask.class, task -> {
