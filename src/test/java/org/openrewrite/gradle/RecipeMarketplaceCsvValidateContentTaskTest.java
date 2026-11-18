@@ -30,6 +30,7 @@ import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.gradle.testkit.runner.TaskOutcome.FAILED;
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS;
+import static org.gradle.testkit.runner.TaskOutcome.UP_TO_DATE;
 
 class RecipeMarketplaceCsvValidateContentTaskTest {
     @TempDir
@@ -60,6 +61,26 @@ class RecipeMarketplaceCsvValidateContentTaskTest {
 
         assertThat(requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome()).isEqualTo(SUCCESS);
         assertThat(result.getOutput()).contains("Recipe marketplace CSV content validation passed");
+    }
+
+    @Test
+    void upToDateUntilCsvChanges() throws Exception {
+        createGradleBuildFiles();
+        createValidCsv();
+        GradleRunner runner = GradleRunner.create()
+          .withProjectDir(projectDir)
+          .withArguments("recipeCsvValidateContent")
+          .withPluginClasspath();
+
+        assertThat(requireNonNull(runner.build().task(":recipeCsvValidateContent")).getOutcome()).isEqualTo(SUCCESS);
+        assertThat(requireNonNull(runner.build().task(":recipeCsvValidateContent")).getOutcome()).isEqualTo(UP_TO_DATE);
+
+        Files.writeString(csvFile.toPath(),
+          """
+            ecosystem,packageName,name,displayName,description
+            maven,org.example:test-project,org.example.TestRecipe,test recipe,A test recipe.
+            """);
+        assertThat(requireNonNull(runner.buildAndFail().task(":recipeCsvValidateContent")).getOutcome()).isEqualTo(FAILED);
     }
 
     @Test

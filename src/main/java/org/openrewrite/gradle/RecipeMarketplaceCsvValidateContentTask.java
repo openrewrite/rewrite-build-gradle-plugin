@@ -18,14 +18,15 @@ package org.openrewrite.gradle;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.RegularFileProperty;
-import org.gradle.api.tasks.Internal;
-import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.*;
 import org.gradle.work.DisableCachingByDefault;
 import org.openrewrite.Validated;
 import org.openrewrite.marketplace.RecipeMarketplace;
 import org.openrewrite.marketplace.RecipeMarketplaceContentValidator;
 import org.openrewrite.marketplace.RecipeMarketplaceReader;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -37,11 +38,17 @@ public abstract class RecipeMarketplaceCsvValidateContentTask extends DefaultTas
      * The recipes.csv file to validate.
      * Defaults to src/main/resources/META-INF/rewrite/recipes.csv
      * <br/>
-     * Note: Not marked as @InputFile because we want to allow the file to not exist
-     * and gracefully skip validation in that case.
+     * Note: Marked as @InputFiles rather than @InputFile, so that a missing file skips validation instead of failing.
      */
-    @Internal
+    @InputFiles
+    @PathSensitive(PathSensitivity.NONE)
     public abstract RegularFileProperty getCsvFile();
+
+    /**
+     * Written once validation passes, so the task stays up-to-date until its inputs change.
+     */
+    @OutputFile
+    public abstract RegularFileProperty getMarkerFile();
 
     @Override
     public String getDescription() {
@@ -56,12 +63,15 @@ public abstract class RecipeMarketplaceCsvValidateContentTask extends DefaultTas
     @TaskAction
     void validate() {
         Path csvPath = getCsvFile().get().getAsFile().toPath();
-
-        if (!Files.exists(csvPath)) {
+        if (Files.exists(csvPath)) {
+            validateCsv(csvPath);
+        } else {
             getLogger().lifecycle("No recipes.csv found at {}, skipping validation", csvPath.toAbsolutePath());
-            return;
         }
+        writeMarker();
+    }
 
+    private void validateCsv(Path csvPath) {
         getLogger().info("Validating recipes.csv content at: {}", csvPath.toAbsolutePath());
 
         // Read the CSV
@@ -86,5 +96,13 @@ public abstract class RecipeMarketplaceCsvValidateContentTask extends DefaultTas
         }
 
         getLogger().lifecycle("Recipe marketplace CSV content validation passed");
+    }
+
+    private void writeMarker() {
+        try {
+            Files.write(getMarkerFile().get().getAsFile().toPath(), new byte[0]);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 }

@@ -30,6 +30,7 @@ import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.gradle.testkit.runner.TaskOutcome.FAILED;
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS;
+import static org.gradle.testkit.runner.TaskOutcome.UP_TO_DATE;
 
 class RecipeMarketplaceCsvValidateCompletenessTaskTest {
     @TempDir
@@ -61,6 +62,22 @@ class RecipeMarketplaceCsvValidateCompletenessTaskTest {
         assertThat(requireNonNull(result.task(":jar")).getOutcome()).isEqualTo(SUCCESS);
         assertThat(requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome()).isEqualTo(SUCCESS);
         assertThat(result.getOutput()).contains("Recipe marketplace CSV completeness validation passed");
+    }
+
+    @Test
+    void upToDateUntilRecipesChange() throws Exception {
+        createSimpleRecipeProject();
+        createCsvMatchingJar();
+        GradleRunner runner = GradleRunner.create()
+          .withProjectDir(projectDir)
+          .withArguments("recipeCsvValidateCompleteness")
+          .withPluginClasspath();
+
+        assertThat(requireNonNull(runner.build().task(":recipeCsvValidateCompleteness")).getOutcome()).isEqualTo(SUCCESS);
+        assertThat(requireNonNull(runner.build().task(":recipeCsvValidateCompleteness")).getOutcome()).isEqualTo(UP_TO_DATE);
+
+        createRecipeClass("AnotherRecipe", "Another recipe", "Another test recipe.");
+        assertThat(requireNonNull(runner.buildAndFail().task(":recipeCsvValidateCompleteness")).getOutcome()).isEqualTo(FAILED);
     }
 
     @Test

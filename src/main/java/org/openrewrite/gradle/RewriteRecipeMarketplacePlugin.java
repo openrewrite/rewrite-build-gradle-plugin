@@ -22,6 +22,7 @@ import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.file.RegularFile;
 import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.jvm.tasks.Jar;
 
@@ -33,8 +34,11 @@ public class RewriteRecipeMarketplacePlugin implements Plugin<Project> {
 
         RegularFile recipesCsvFile = project.getLayout().getProjectDirectory().file("src/main/resources/META-INF/rewrite/recipes.csv");
 
-        TaskProvider<RecipeMarketplaceCsvValidateContentTask> recipeCsvValidateContent = project.getTasks().register("recipeCsvValidateContent", RecipeMarketplaceCsvValidateContentTask.class, task ->
-            task.getCsvFile().convention(recipesCsvFile));
+        TaskProvider<RecipeMarketplaceCsvValidateContentTask> recipeCsvValidateContent = project.getTasks().register("recipeCsvValidateContent", RecipeMarketplaceCsvValidateContentTask.class, task -> {
+            task.getCsvFile().convention(recipesCsvFile);
+            task.getMarkerFile().convention(markerFile(project, task));
+            task.mustRunAfter("recipeCsvGenerate");
+        });
 
         // Register recipe marketplace CSV tasks
         project.getTasks().register("recipeCsvGenerate", RecipeMarketplaceCsvGenerateTask.class, task -> {
@@ -62,6 +66,8 @@ public class RewriteRecipeMarketplacePlugin implements Plugin<Project> {
                     }
 
                     task.getCsvFile().convention(recipesCsvFile);
+                    task.getMarkerFile().convention(markerFile(project, task));
+                    task.mustRunAfter("recipeCsvGenerate");
                 });
 
         // Create a composite task that runs both validations
@@ -75,5 +81,9 @@ public class RewriteRecipeMarketplacePlugin implements Plugin<Project> {
         project.getPlugins().withType(JavaPlugin.class, javaPlugin ->
             // Add CSV validation to the check phase
             project.getTasks().named("check").configure(check -> check.dependsOn(recipeCsvValidate)));
+    }
+
+    private static Provider<RegularFile> markerFile(Project project, Task task) {
+        return project.getLayout().getBuildDirectory().file("tmp/" + task.getName() + "/validated");
     }
 }
