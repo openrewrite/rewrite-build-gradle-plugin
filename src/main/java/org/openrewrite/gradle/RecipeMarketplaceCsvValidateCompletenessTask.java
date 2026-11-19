@@ -87,11 +87,14 @@ public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends Defau
         getLogger().info("Validating recipes.csv completeness at: {}", csvPath.toAbsolutePath());
         getLogger().info("Against recipe JAR: {}", recipeJarPath);
 
-        // Validate completeness
-        RecipeMarketplaceCompletenessValidator validator = new RecipeMarketplaceCompletenessValidator();
-        Validated<RecipeMarketplace> validation = validator.validate(
-                new RecipeMarketplaceReader().fromCsv(csvPath),
-                jarScanningEnvironment(recipeJarPath));
+        List<Path> classpath = runtimeClasspathJars();
+        Validated<RecipeMarketplace> validation;
+        try (RecipeClassLoader classLoader = new RecipeClassLoader(recipeJarPath, classpath)) {
+            // Scanning only the recipe JAR, not its dependencies, limits validation to the recipes it provides
+            validation = new RecipeMarketplaceCompletenessValidator().validate(
+                    new RecipeMarketplaceReader().fromCsv(csvPath),
+                    Environment.builder().scanJar(recipeJarPath, classpath, classLoader).build());
+        }
 
         if (validation.isInvalid()) {
             Map<String, List<Validated.Invalid<RecipeMarketplace>>> byMessage = validation.failures().stream()
@@ -116,20 +119,12 @@ public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends Defau
         Files.write(getMarkerFile().get().getAsFile().toPath(), new byte[0]);
     }
 
-    /**
-     * Construct an Environment that only loads recipes directly from the given recipe JAR, not from its dependencies.
-     * This ensures that completeness validation is only done against recipes actually provided by the recipe JAR.
-     */
-    private Environment jarScanningEnvironment(Path recipeJarPath) {
-        // Get runtime classpath, as that contains classes needed to load recipes
-        List<Path> classpath = getRuntimeClasspath()
+    private List<Path> runtimeClasspathJars() {
+        return getRuntimeClasspath()
                 .getFiles()
                 .stream()
                 .map(File::toPath)
                 .filter(path -> path.toString().endsWith(".jar")) // Exclude build output directories
                 .collect(toList());
-
-        // Load environment from JAR
-        return Environment.builder().scanJar(recipeJarPath, classpath, new RecipeClassLoader(recipeJarPath, classpath)).build();
     }
 }
