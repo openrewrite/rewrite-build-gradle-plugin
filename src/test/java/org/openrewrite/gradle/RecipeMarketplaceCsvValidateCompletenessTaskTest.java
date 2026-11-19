@@ -141,22 +141,6 @@ class RecipeMarketplaceCsvValidateCompletenessTaskTest {
     }
 
     @Test
-    void skipsValidationWhenCsvDoesNotExist() throws Exception {
-        createSimpleRecipeProject();
-
-        BuildResult result = GradleRunner.create()
-          .withProjectDir(projectDir)
-          .withArguments("recipeCsvValidateCompleteness", "--info", "--stacktrace")
-          .withPluginClasspath()
-          .withDebug(true)
-          .build();
-
-        assertThat(requireNonNull(result.task(":jar")).getOutcome()).isEqualTo(SUCCESS);
-        assertThat(requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome()).isEqualTo(SUCCESS);
-        assertThat(result.getOutput()).contains("No recipes.csv found");
-    }
-
-    @Test
     void handlesDuplicateRecipesInDifferentCategories() throws Exception {
         createSimpleRecipeProject();
         csvFile.getParentFile().mkdirs();

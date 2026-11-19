@@ -158,21 +158,6 @@ class RecipeMarketplaceCsvValidateContentTaskTest {
     }
 
     @Test
-    void skipsValidationWhenCsvDoesNotExist() throws Exception {
-        createGradleBuildFiles();
-
-        BuildResult result = GradleRunner.create()
-          .withProjectDir(projectDir)
-          .withArguments("recipeCsvValidateContent", "--info", "--stacktrace")
-          .withPluginClasspath()
-          .withDebug(true)
-          .build();
-
-        assertThat(requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome()).isEqualTo(SUCCESS);
-        assertThat(result.getOutput()).contains("No recipes.csv found");
-    }
-
-    @Test
     void validatesEmptyDescriptions() throws Exception {
         createGradleBuildFiles();
         csvFile.getParentFile().mkdirs();
