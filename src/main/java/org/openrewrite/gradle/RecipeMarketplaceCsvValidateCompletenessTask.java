@@ -20,7 +20,6 @@ import org.gradle.api.GradleException;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.tasks.*;
-import org.gradle.work.DisableCachingByDefault;
 import org.openrewrite.Validated;
 import org.openrewrite.config.Environment;
 import org.openrewrite.marketplace.RecipeClassLoader;
@@ -29,6 +28,7 @@ import org.openrewrite.marketplace.RecipeMarketplaceCompletenessValidator;
 import org.openrewrite.marketplace.RecipeMarketplaceReader;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -38,17 +38,18 @@ import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 
-@DisableCachingByDefault(because = "Validation task that loads recipes to verify marketplace CSV completeness")
+@CacheableTask
 public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends DefaultTask {
 
     /**
      * The recipes.csv file to validate.
      * Defaults to src/main/resources/META-INF/rewrite/recipes.csv
      * <br/>
-     * Note: Not marked as @InputFile because we want to allow the file to not exist
-     * and gracefully skip validation in that case.
+     * A missing file is handled as in {@link RecipeMarketplaceCsvValidateContentTask#getCsvFile()}.
      */
-    @Internal
+    @InputFiles
+    @SkipWhenEmpty
+    @PathSensitive(PathSensitivity.NONE)
     public abstract RegularFileProperty getCsvFile();
 
     @InputFile
@@ -57,6 +58,12 @@ public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends Defau
 
     @Classpath
     public abstract ConfigurableFileCollection getRuntimeClasspath();
+
+    /**
+     * See {@link RecipeMarketplaceCsvValidateContentTask#getMarkerFile()}.
+     */
+    @OutputFile
+    public abstract RegularFileProperty getMarkerFile();
 
     @Override
     public String getDescription() {
@@ -69,14 +76,8 @@ public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends Defau
     }
 
     @TaskAction
-    void validate() {
+    void validate() throws IOException {
         Path csvPath = getCsvFile().get().getAsFile().toPath();
-
-        if (!Files.exists(csvPath)) {
-            getLogger().lifecycle("No recipes.csv found at {}, skipping validation", csvPath.toAbsolutePath());
-            return;
-        }
-
         Path recipeJarPath = getRecipeJar().get().getAsFile().toPath();
 
         if (!Files.exists(recipeJarPath)) {
@@ -86,11 +87,14 @@ public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends Defau
         getLogger().info("Validating recipes.csv completeness at: {}", csvPath.toAbsolutePath());
         getLogger().info("Against recipe JAR: {}", recipeJarPath);
 
-        // Validate completeness
-        RecipeMarketplaceCompletenessValidator validator = new RecipeMarketplaceCompletenessValidator();
-        Validated<RecipeMarketplace> validation = validator.validate(
-                new RecipeMarketplaceReader().fromCsv(csvPath),
-                jarScanningEnvironment(recipeJarPath));
+        List<Path> classpath = runtimeClasspathJars();
+        Validated<RecipeMarketplace> validation;
+        try (RecipeClassLoader classLoader = new RecipeClassLoader(recipeJarPath, classpath)) {
+            // Scanning only the recipe JAR, not its dependencies, limits validation to the recipes it provides
+            validation = new RecipeMarketplaceCompletenessValidator().validate(
+                    new RecipeMarketplaceReader().fromCsv(csvPath),
+                    Environment.builder().scanJar(recipeJarPath, classpath, classLoader).build());
+        }
 
         if (validation.isInvalid()) {
             Map<String, List<Validated.Invalid<RecipeMarketplace>>> byMessage = validation.failures().stream()
@@ -111,23 +115,16 @@ public abstract class RecipeMarketplaceCsvValidateCompletenessTask extends Defau
             throw new GradleException(errorMessage.toString());
         }
 
-        getLogger().lifecycle("Recipe marketplace CSV completeness validation passed");
+        getLogger().info("Recipe marketplace CSV completeness validation passed");
+        Files.write(getMarkerFile().get().getAsFile().toPath(), new byte[0]);
     }
 
-    /**
-     * Construct an Environment that only loads recipes directly from the given recipe JAR, not from its dependencies.
-     * This ensures that completeness validation is only done against recipes actually provided by the recipe JAR.
-     */
-    private Environment jarScanningEnvironment(Path recipeJarPath) {
-        // Get runtime classpath, as that contains classes needed to load recipes
-        List<Path> classpath = getRuntimeClasspath()
+    private List<Path> runtimeClasspathJars() {
+        return getRuntimeClasspath()
                 .getFiles()
                 .stream()
                 .map(File::toPath)
                 .filter(path -> path.toString().endsWith(".jar")) // Exclude build output directories
                 .collect(toList());
-
-        // Load environment from JAR
-        return Environment.builder().scanJar(recipeJarPath, classpath, new RecipeClassLoader(recipeJarPath, classpath)).build();
     }
 }

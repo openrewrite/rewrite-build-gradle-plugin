@@ -28,8 +28,7 @@ import java.nio.file.Files;
 
 import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.gradle.testkit.runner.TaskOutcome.FAILED;
-import static org.gradle.testkit.runner.TaskOutcome.SUCCESS;
+import static org.gradle.testkit.runner.TaskOutcome.*;
 
 class RecipeMarketplaceCsvValidateTaskTest {
     @TempDir
@@ -134,10 +133,68 @@ class RecipeMarketplaceCsvValidateTaskTest {
           .withDebug(true)
           .build();
 
-        assertThat(requireNonNull(result.task(":recipeCsvValidateContent")).getOutcome()).isEqualTo(SUCCESS);
-        assertThat(requireNonNull(result.task(":recipeCsvValidateCompleteness")).getOutcome()).isEqualTo(SUCCESS);
-        assertThat(requireNonNull(result.task(":recipeCsvValidate")).getOutcome()).isEqualTo(SUCCESS);
-        assertThat(result.getOutput()).contains("No recipes.csv found");
+        assertThat(result.taskPaths(NO_SOURCE)).contains(":recipeCsvValidateContent", ":recipeCsvValidateCompleteness");
+    }
+
+    @Test
+    void passesQuietlyAndRevalidatesOnlyWhenCsvChanges() throws Exception {
+        createSimpleRecipeProject();
+        createValidCsv();
+        GradleRunner runner = GradleRunner.create()
+          .withProjectDir(projectDir)
+          .withArguments("recipeCsvValidate")
+          .withPluginClasspath()
+          .withDebug(true);
+
+        BuildResult first = runner.build();
+        assertThat(first.taskPaths(SUCCESS)).contains(":recipeCsvValidateContent", ":recipeCsvValidateCompleteness");
+        assertThat(first.getOutput()).doesNotContain("validation passed");
+
+        assertThat(runner.build().taskPaths(UP_TO_DATE)).contains(":recipeCsvValidateContent", ":recipeCsvValidateCompleteness");
+
+        Files.writeString(csvFile.toPath(),
+          """
+          ecosystem,packageName,name,displayName,description
+          maven,org.example:test-recipe-project,org.example.TestRecipe,Test recipe,An edited test recipe.
+          """);
+        assertThat(runner.build().taskPaths(SUCCESS)).contains(":recipeCsvValidateContent", ":recipeCsvValidateCompleteness");
+    }
+
+    @Test
+    void validatesCsvGeneratedInSameBuild() throws Exception {
+        createSimpleRecipeProject();
+
+        BuildResult result = GradleRunner.create()
+          .withProjectDir(projectDir)
+          .withArguments("recipeCsvGenerate", "recipeCsvValidate")
+          .withPluginClasspath()
+          .withDebug(true)
+          .build();
+
+        assertThat(result.taskPaths(SUCCESS)).contains(":recipeCsvValidateContent", ":recipeCsvValidateCompleteness");
+    }
+
+    @Test
+    void restoresPassedValidationFromBuildCache() throws Exception {
+        createSimpleRecipeProject();
+        createValidCsv();
+        Files.writeString(settingsFile.toPath(), """
+          rootProject.name = 'test-recipe-project'
+          buildCache {
+              local {
+                  directory = new File(rootDir, 'build-cache')
+              }
+          }
+          """);
+        GradleRunner runner = GradleRunner.create()
+          .withProjectDir(projectDir)
+          .withPluginClasspath()
+          .withDebug(true);
+
+        assertThat(runner.withArguments("recipeCsvValidate", "--build-cache").build().taskPaths(SUCCESS))
+          .contains(":recipeCsvValidateContent", ":recipeCsvValidateCompleteness");
+        assertThat(runner.withArguments("clean", "recipeCsvValidate", "--build-cache").build().taskPaths(FROM_CACHE))
+          .contains(":recipeCsvValidateContent", ":recipeCsvValidateCompleteness");
     }
 
     @Test
