@@ -17,12 +17,14 @@ package org.openrewrite.gradle;
 
 import com.github.jk1.license.LicenseReportExtension;
 import com.github.jk1.license.LicenseReportPlugin;
+import com.github.jk1.license.render.CsvReportRenderer;
 import com.github.jk1.license.render.ReportRenderer;
 import com.hierynomus.gradle.license.tasks.LicenseFormat;
 import nl.javadude.gradle.plugins.license.LicenseExtension;
 import nl.javadude.gradle.plugins.license.LicensePlugin;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.plugins.ExtraPropertiesExtension;
 import org.gradle.jvm.tasks.Jar;
 
 import java.util.*;
@@ -38,11 +40,11 @@ public class RewriteLicensePlugin implements Plugin<Project> {
         project.getPlugins().apply(LicenseReportPlugin.class);
 
         project.getExtensions().configure(LicenseReportExtension.class, ext -> {
-            ext.renderers = new ReportRenderer[]{new com.github.jk1.license.render.CsvReportRenderer()};
+            ext.renderers = new ReportRenderer[]{new CsvReportRenderer()};
         });
 
         project.getTasks().withType(LicenseFormat.class, task ->
-            ((org.gradle.api.plugins.ExtraPropertiesExtension) task.getExtensions().getByName("ext"))
+            ((ExtraPropertiesExtension) task.getExtensions().getByName("ext"))
                     .set("year", Calendar.getInstance().get(Calendar.YEAR)));
 
         project.getTasks().withType(Jar.class).configureEach(jar ->
