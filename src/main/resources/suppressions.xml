@@ -264,20 +264,23 @@
     </suppress>
     <suppress>
         <notes><![CDATA[
-            False positive. CVE-2026-50559 (GHSA-qcxp-gm7m-4j5v) is an HTTP path-based
-            authorization bypass in the Quarkus runtime (io.quarkus:quarkus-vertx-http,
-            Quarkus 3.x) via encoded matrix parameters and encoded slashes. By contrast
-            io.quarkus:quarkus-update-recipes is an OpenRewrite recipe JAR (versioned 1.x)
-            that ships YAML migration recipes for Quarkus apps; it does not contain or use
-            the vulnerable quarkus-vertx-http runtime. CPE name-match on "quarkus" only.
-            Arrives transitively via rewrite-third-party (e.g. through rewrite-recipe-bom).
-            Cross-product CPE overclassifier — the advisory is permanently scoped to the
-            Quarkus runtime, so the recipe jar can never become a true positive for this CVE;
-            suppressed indefinitely.
-            Added: 2026-07-01
+            False positive. Reference only. io.quarkus:quarkus-update-recipes is the
+            OpenRewrite recipe artifact that migrates Quarkus apps between releases: the
+            1.15.6 jar holds 58 YAML recipes plus 42 recipe classes under
+            io.quarkus.updates, and no Quarkus runtime code. It reaches recipe modules
+            shaded into rewrite-third-party. Dependency-check derives
+            cpe:/a:quarkus:quarkus from the io.quarkus coordinates, and the 1.x version
+            sorts below most Quarkus releases, so it matches every runtime advisory with
+            a "< X" range: 28 NVD matches for moderneinc/rewrite-spring alone,
+            CVE-2020-28491 through CVE-2026-50559. Suppressed by CPE rather than per-CVE
+            so the next Quarkus advisory stays quiet too, and indefinitely: the product
+            match is mis-attributed at the source. With no <cve> element this only drops
+            the bogus identifier, so purl-based advisories against the artifact still
+            surface. Mirrors the block in rewrite-third-party/suppressions.xml.
+            Added: 2026-07-01, widened from CVE-2026-50559 to the CPE on 2026-11-23
         ]]></notes>
         <packageUrl regex="true">^pkg:maven/io\.quarkus/quarkus-update-recipes@.*$</packageUrl>
-        <cve>CVE-2026-50559</cve>
+        <cpe>cpe:/a:quarkus:quarkus</cpe>
     </suppress>
     <suppress>
         <notes><![CDATA[
